@@ -2,6 +2,11 @@
 name = "transistor"
 version = "0.1.0"
 authors = ["Julia Naomi <jnboeira@outlook.com>"]
+description = "Crate to parse and emit EDN"
+documentation = "https://docs.rs/transistor/"
+repository = "https://github.com/naomijub/transistor"
+keywords = ["DATOMIC", "Client", "database"]
+license = "GPL-3.0-or-later"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
