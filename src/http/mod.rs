@@ -3,6 +3,10 @@ use reqwest::{
     blocking::{Client}, 
     Result
 };
+use edn_rs::{
+    ser_struct,
+    serialize::Serialize
+};
 
 pub struct Crux {
     host: String,
@@ -47,11 +51,67 @@ pub struct CruxClient {
 }
 
 impl CruxClient {
-    pub fn state(&self) -> Result<String> {
-        self.client.get(&self.uri)
+    pub fn state(&self) -> Result<CruxState> {
+        let resp = self.client.get(&self.uri)
             .headers(self.headers.clone())
             .send()?
-            .text()
+            .text()?;
+        Ok(CruxState::deserialize(resp))
+    }
+}
+
+ser_struct!{
+    #[derive(Debug, PartialEq)]
+    #[allow(non_snake_case)]
+    pub struct CruxState {
+        ndex__index_version: usize,
+        doc_log__consumer_state: String,
+        tx_log__consumer_state:  String,
+        kv__kv_store: String,
+        kv__estimate_num_keys: usize,
+        kv__size: usize
+    }
+}
+
+impl CruxState {
+    fn deserialize(resp: String) -> CruxState {
+        use std::collections::HashMap;
+        let mut hashmap = HashMap::new();
+        let data = resp.replace("{","").replace("}","");
+        let key_val = data.split(", ").collect::<Vec<&str>>().iter()
+            .map(|v| v.split(" ").collect::<Vec<&str>>())
+            .map(|v| (v[0], v[1]))
+            .collect::<Vec<(&str, &str)>>();
+        for (key, val) in key_val.iter() {
+            hashmap.insert(String::from(*key), String::from(*val));
+        }
+
+        hashmap.into()
+    }
+
+    #[cfg(test)]
+    fn default() -> CruxState{
+        CruxState {
+            ndex__index_version: 5usize,
+            doc_log__consumer_state: String::from("nil"),
+            tx_log__consumer_state:  String::from("nil"),
+            kv__kv_store: String::from("crux.kv.rocksdb.RocksKv"),
+            kv__estimate_num_keys: 34usize,
+            kv__size: 88489usize,
+        }
+    }
+}
+
+impl From<std::collections::HashMap<String,String>> for CruxState {
+    fn from(hm: std::collections::HashMap<String,String>) -> Self {
+        CruxState {
+            ndex__index_version: hm[":crux.index/index-version"].parse::<usize>().unwrap_or(0usize),
+            doc_log__consumer_state: hm[":crux.doc-log/consumer-state"].clone(),
+            tx_log__consumer_state:  hm[":crux.tx-log/consumer-state"].clone(),
+            kv__kv_store: hm[":crux.kv/kv-store"].clone().replace("\"", ""),
+            kv__estimate_num_keys: hm[":crux.kv/estimate-num-keys"].parse::<usize>().unwrap_or(0usize),
+            kv__size: hm[":crux.kv/size"].parse::<usize>().unwrap_or(0usize),
+        }
     }
 }
 
@@ -108,7 +168,7 @@ mod test {
 
 #[cfg(test)]
 mod client {
-    use super::Crux;
+    use super::{Crux, CruxState};
     use mockito::mock;
 
     #[test]
@@ -121,6 +181,6 @@ mod client {
 
         let response = Crux::new("localhost", "4000").client().state();
 
-        assert_eq!(response.unwrap(), "{:crux.index/index-version 5, :crux.doc-log/consumer-state nil, :crux.tx-log/consumer-state nil, :crux.kv/kv-store \"crux.kv.rocksdb.RocksKv\", :crux.kv/estimate-num-keys 34, :crux.kv/size 88489}")
+        assert_eq!(response.unwrap(), CruxState::default())
     }
 }
