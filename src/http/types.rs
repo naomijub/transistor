@@ -37,8 +37,8 @@ impl StateResponse {
     pub fn default() -> StateResponse{
         StateResponse {
             index__index_version: 5usize,
-            doc_log__consumer_state: Some(String::from("nil")),
-            tx_log__consumer_state:  Some(String::from("nil")),
+            doc_log__consumer_state: None,
+            tx_log__consumer_state:  None,
             kv__kv_store: String::from("crux.kv.rocksdb.RocksKv"),
             kv__estimate_num_keys: 34usize,
             kv__size: 88489usize,

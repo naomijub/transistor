@@ -106,6 +106,7 @@ mod test {
     fn client() {
         let mut headers = HeaderMap::new();
         headers.insert(AUTHORIZATION, "auth".parse().unwrap());
+        headers.insert(CONTENT_TYPE, "application/edn".parse().unwrap());
 
         let actual = Crux::new("127.0.0.1", "1234").with_authorization("auth").client();
         let expected = CruxClient {
