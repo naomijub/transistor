@@ -6,6 +6,7 @@ use edn_rs::{
 ser_struct!{
     #[derive(Debug, PartialEq)]
     #[allow(non_snake_case)]
+    /// Definition for the response of the `state` endpoint
     pub struct StateResponse {
         index__index_version: usize,
         doc_log__consumer_state: Option<String>,

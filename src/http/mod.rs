@@ -1,12 +1,14 @@
 pub mod types;
 
 use reqwest::{
-    header::{HeaderMap,AUTHORIZATION},
+    header::{HeaderMap,AUTHORIZATION, CONTENT_TYPE},
     blocking::{Client}, 
     Result
 };
 use crate::http::types::StateResponse;
 
+/// Struct to connect define parameters to connect to Crux
+/// `host` and `port` are reuired.
 pub struct Crux {
     host: String,
     port: String,
@@ -18,6 +20,7 @@ impl Crux{
         Self{host: host.to_string(), port: port.to_string(), headers: HeaderMap::new()}
     }
 
+    /// Function to add `AUTHORIZATION` token to the Crux Client
     pub fn with_authorization(mut self, authorization: &str) -> Self {
         self.headers.insert(AUTHORIZATION, authorization.parse().unwrap());
         self
@@ -34,7 +37,9 @@ impl Crux{
         server_url()
     }
 
-    pub fn client(&self) -> CruxClient {
+    /// To query database via http it is necessary to use `CruxClient` 
+    pub fn client(&mut self) -> CruxClient {
+        self.headers.insert(CONTENT_TYPE, "application/edn".parse().unwrap());
         CruxClient {
             client: reqwest::blocking::Client::new(),
             uri: self.uri().clone(),
@@ -43,6 +48,8 @@ impl Crux{
     }
 }
 
+/// `CruxClient` has the `reqwest::Client`, the `uri` to query and the `HeaderMap` with
+/// all the possible headers. Default header is `Content-Type: "application/edn"`
 pub struct CruxClient {
     client: Client,
     uri: String, 
@@ -50,6 +57,8 @@ pub struct CruxClient {
 }
 
 impl CruxClient {
+    /// Function `state` queries endpoint `/` with a `GET` Returned information consists of
+    /// various details about the state of the database and it can be used as a health check.
     pub fn state(&self) -> Result<StateResponse> {
         let resp = self.client.get(&self.uri)
             .headers(self.headers.clone())
