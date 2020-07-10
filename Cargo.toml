@@ -5,10 +5,13 @@ authors = ["Julia Naomi <jnboeira@outlook.com>"]
 description = "Crate to parse and emit EDN"
 documentation = "https://docs.rs/transistor/"
 repository = "https://github.com/naomijub/transistor"
-keywords = ["DATOMIC", "Client", "database"]
+keywords = ["CRUX", "Client", "database"]
 license = "GPL-3.0-or-later"
 edition = "2018"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+reqwest = { version = "0.10.6", features = ["blocking"] }
+edn-rs = "0.5.3"

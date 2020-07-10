@@ -1,3 +1,4 @@
 # Transistor
 
-A Datomic Client crate.
+A Crux Client crate.
+* Gave up on datomic already.
