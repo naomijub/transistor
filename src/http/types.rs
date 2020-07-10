@@ -6,7 +6,7 @@ use edn_rs::{
 ser_struct!{
     #[derive(Debug, PartialEq)]
     #[allow(non_snake_case)]
-    pub struct CruxState {
+    pub struct StateResponse {
         index__index_version: usize,
         doc_log__consumer_state: Option<String>,
         tx_log__consumer_state:  Option<String>,
@@ -16,8 +16,8 @@ ser_struct!{
     }
 }
 
-impl CruxState {
-    pub fn deserialize(resp: String) -> CruxState {
+impl StateResponse {
+    pub fn deserialize(resp: String) -> StateResponse {
         use std::collections::HashMap;
         let mut hashmap = HashMap::new();
         let data = resp.replace("{","").replace("}","");
@@ -33,8 +33,8 @@ impl CruxState {
     }
 
     #[cfg(test)]
-    pub fn default() -> CruxState{
-        CruxState {
+    pub fn default() -> StateResponse{
+        StateResponse {
             index__index_version: 5usize,
             doc_log__consumer_state: Some(String::from("nil")),
             tx_log__consumer_state:  Some(String::from("nil")),
@@ -45,9 +45,9 @@ impl CruxState {
     }
 }
 
-impl From<std::collections::HashMap<String,String>> for CruxState {
+impl From<std::collections::HashMap<String,String>> for StateResponse {
     fn from(hm: std::collections::HashMap<String,String>) -> Self {
-        CruxState {
+        StateResponse {
             index__index_version: hm[":crux.index/index-version"].parse::<usize>().unwrap_or(0usize),
             doc_log__consumer_state: nullable_str(hm[":crux.doc-log/consumer-state"].clone()),
             tx_log__consumer_state:  nullable_str(hm[":crux.tx-log/consumer-state"].clone()),

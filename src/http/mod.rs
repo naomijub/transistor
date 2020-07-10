@@ -5,7 +5,7 @@ use reqwest::{
     blocking::{Client}, 
     Result
 };
-use crate::http::types::CruxState;
+use crate::http::types::StateResponse;
 
 pub struct Crux {
     host: String,
@@ -50,12 +50,12 @@ pub struct CruxClient {
 }
 
 impl CruxClient {
-    pub fn state(&self) -> Result<CruxState> {
+    pub fn state(&self) -> Result<StateResponse> {
         let resp = self.client.get(&self.uri)
             .headers(self.headers.clone())
             .send()?
             .text()?;
-        Ok(CruxState::deserialize(resp))
+        Ok(StateResponse::deserialize(resp))
     }
 }
 
@@ -112,7 +112,7 @@ mod test {
 
 #[cfg(test)]
 mod client {
-    use super::{Crux, CruxState};
+    use super::{Crux, StateResponse};
     use mockito::mock;
 
     #[test]
@@ -125,6 +125,6 @@ mod client {
 
         let response = Crux::new("localhost", "4000").client().state();
 
-        assert_eq!(response.unwrap(), CruxState::default())
+        assert_eq!(response.unwrap(), StateResponse::default())
     }
 }
