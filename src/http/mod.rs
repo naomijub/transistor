@@ -20,8 +20,15 @@ impl Crux{
         self
     }
 
+    #[cfg(not(test))]
     fn uri(&self) -> String {
         format!("http://{}:{}", self.host, self.port)
+    }
+
+    #[cfg(test)]
+    fn uri(&self) -> String {
+        use mockito::server_url;
+        server_url()
     }
 
     pub fn client(&self) -> CruxClient {
@@ -77,9 +84,9 @@ mod test {
 
     #[test]
     fn uri() {
-        let crux = Crux::new("localhost", "3000");
+        let crux = Crux::new("localhost", "1234");
 
-        assert_eq!(crux.uri(), "http://localhost:3000")
+        assert_eq!(crux.uri(), "http://127.0.0.1:1234")
     }
 
     #[test]
@@ -87,14 +94,33 @@ mod test {
         let mut headers = HeaderMap::new();
         headers.insert(AUTHORIZATION, "auth".parse().unwrap());
 
-        let actual = Crux::new("localhost", "3000").with_authorization("auth").client();
+        let actual = Crux::new("127.0.0.1", "1234").with_authorization("auth").client();
         let expected = CruxClient {
             client: reqwest::blocking::Client::new(),
-            uri: "http://localhost:3000".to_string(),
+            uri: "http://127.0.0.1:1234".to_string(),
             headers: headers,
         };
 
         assert_eq!(actual.uri, expected.uri);
         assert_eq!(actual.headers, expected.headers);
+    }
+}
+
+#[cfg(test)]
+mod client {
+    use super::Crux;
+    use mockito::mock;
+
+    #[test]
+    fn state() {
+        let _m = mock("GET", "/")
+        .with_status(200)
+        .with_header("content-type", "text/plain")
+        .with_body("{:crux.index/index-version 5, :crux.doc-log/consumer-state nil, :crux.tx-log/consumer-state nil, :crux.kv/kv-store \"crux.kv.rocksdb.RocksKv\", :crux.kv/estimate-num-keys 34, :crux.kv/size 88489}")
+        .create();
+
+        let response = Crux::new("localhost", "4000").client().state();
+
+        assert_eq!(response.unwrap(), "{:crux.index/index-version 5, :crux.doc-log/consumer-state nil, :crux.tx-log/consumer-state nil, :crux.kv/kv-store \"crux.kv.rocksdb.RocksKv\", :crux.kv/estimate-num-keys 34, :crux.kv/size 88489}")
     }
 }
