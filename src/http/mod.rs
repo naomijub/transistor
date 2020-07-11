@@ -1,9 +1,14 @@
+pub mod types;
+
 use reqwest::{
-    header::{HeaderMap,AUTHORIZATION},
+    header::{HeaderMap,AUTHORIZATION, CONTENT_TYPE},
     blocking::{Client}, 
     Result
 };
+use crate::http::types::StateResponse;
 
+/// Struct to connect define parameters to connect to Crux
+/// `host` and `port` are reuired.
 pub struct Crux {
     host: String,
     port: String,
@@ -15,6 +20,7 @@ impl Crux{
         Self{host: host.to_string(), port: port.to_string(), headers: HeaderMap::new()}
     }
 
+    /// Function to add `AUTHORIZATION` token to the Crux Client
     pub fn with_authorization(mut self, authorization: &str) -> Self {
         self.headers.insert(AUTHORIZATION, authorization.parse().unwrap());
         self
@@ -31,7 +37,9 @@ impl Crux{
         server_url()
     }
 
-    pub fn client(&self) -> CruxClient {
+    /// To query database via http it is necessary to use `CruxClient` 
+    pub fn client(&mut self) -> CruxClient {
+        self.headers.insert(CONTENT_TYPE, "application/edn".parse().unwrap());
         CruxClient {
             client: reqwest::blocking::Client::new(),
             uri: self.uri().clone(),
@@ -40,6 +48,8 @@ impl Crux{
     }
 }
 
+/// `CruxClient` has the `reqwest::Client`, the `uri` to query and the `HeaderMap` with
+/// all the possible headers. Default header is `Content-Type: "application/edn"`
 pub struct CruxClient {
     client: Client,
     uri: String, 
@@ -47,11 +57,14 @@ pub struct CruxClient {
 }
 
 impl CruxClient {
-    pub fn state(&self) -> Result<String> {
-        self.client.get(&self.uri)
+    /// Function `state` queries endpoint `/` with a `GET` Returned information consists of
+    /// various details about the state of the database and it can be used as a health check.
+    pub fn state(&self) -> Result<StateResponse> {
+        let resp = self.client.get(&self.uri)
             .headers(self.headers.clone())
             .send()?
-            .text()
+            .text()?;
+        Ok(StateResponse::deserialize(resp))
     }
 }
 
@@ -93,6 +106,7 @@ mod test {
     fn client() {
         let mut headers = HeaderMap::new();
         headers.insert(AUTHORIZATION, "auth".parse().unwrap());
+        headers.insert(CONTENT_TYPE, "application/edn".parse().unwrap());
 
         let actual = Crux::new("127.0.0.1", "1234").with_authorization("auth").client();
         let expected = CruxClient {
@@ -108,7 +122,7 @@ mod test {
 
 #[cfg(test)]
 mod client {
-    use super::Crux;
+    use super::{Crux, StateResponse};
     use mockito::mock;
 
     #[test]
@@ -121,6 +135,6 @@ mod client {
 
         let response = Crux::new("localhost", "4000").client().state();
 
-        assert_eq!(response.unwrap(), "{:crux.index/index-version 5, :crux.doc-log/consumer-state nil, :crux.tx-log/consumer-state nil, :crux.kv/kv-store \"crux.kv.rocksdb.RocksKv\", :crux.kv/estimate-num-keys 34, :crux.kv/size 88489}")
+        assert_eq!(response.unwrap(), StateResponse::default())
     }
 }
