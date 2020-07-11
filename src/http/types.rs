@@ -2,6 +2,7 @@ use edn_rs::{
     ser_struct,
     serialize::Serialize
 };
+use std::collections::HashMap;
 
 ser_struct!{
     #[derive(Debug, PartialEq)]
@@ -19,10 +20,9 @@ ser_struct!{
 
 impl StateResponse {
     pub fn deserialize(resp: String) -> StateResponse {
-        use std::collections::HashMap;
         let mut hashmap = HashMap::new();
         let data = resp.replace("{","").replace("}","");
-        let key_val = data.split(", ").collect::<Vec<&str>>().iter()
+        let key_val = data.split(", ")
             .map(|v| v.split(" ").collect::<Vec<&str>>())
             .map(|v| (v[0], v[1]))
             .collect::<Vec<(&str, &str)>>();
@@ -46,8 +46,8 @@ impl StateResponse {
     }
 }
 
-impl From<std::collections::HashMap<String,String>> for StateResponse {
-    fn from(hm: std::collections::HashMap<String,String>) -> Self {
+impl From<HashMap<String,String>> for StateResponse {
+    fn from(hm: HashMap<String,String>) -> Self {
         StateResponse {
             index__index_version: hm[":crux.index/index-version"].parse::<usize>().unwrap_or(0usize),
             doc_log__consumer_state: nullable_str(hm[":crux.doc-log/consumer-state"].clone()),
