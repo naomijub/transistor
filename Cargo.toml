@@ -14,7 +14,7 @@ edition = "2018"
 
 [dependencies]
 reqwest = { version = "0.10.6", features = ["blocking"] }
-edn-rs = "0.6.1"
+edn-rs = "0.6.2"
 grok = "1.1"
 
 [dev-dependencies]
