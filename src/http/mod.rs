@@ -3,9 +3,8 @@ pub mod types;
 use reqwest::{
     header::{HeaderMap,AUTHORIZATION, CONTENT_TYPE},
     blocking::{Client}, 
-    Result
 };
-use crate::http::types::StateResponse;
+use crate::http::types::{StateResponse, Error};
 
 /// Struct to connect define parameters to connect to Crux
 /// `host` and `port` are reuired.
@@ -59,12 +58,14 @@ pub struct CruxClient {
 impl CruxClient {
     /// Function `state` queries endpoint `/` with a `GET` Returned information consists of
     /// various details about the state of the database and it can be used as a health check.
-    pub fn state(&self) -> Result<StateResponse> {
+    pub fn state(&self) -> Result<StateResponse, Error> {
         let resp = self.client.get(&self.uri)
             .headers(self.headers.clone())
-            .send()?
-            .text()?;
-        Ok(StateResponse::deserialize(resp))
+            .send()
+            .map_err(|_| Error::RequestError("Failed to send request".to_string()))?
+            .text()
+            .map_err(|_| Error::RequestError("Failed to retrieve response".to_string()))?;
+        StateResponse::deserialize(resp)
     }
 }
 
