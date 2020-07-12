@@ -1,2 +1,2 @@
 pub mod http;
-pub (crate) use edn_rs;
+pub use edn_rs;
