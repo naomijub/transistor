@@ -1,5 +1,7 @@
 language: rust
 sudo: enabled
+services:
+  - docker
 rust:
   - stable
   - beta
@@ -7,6 +9,10 @@ rust:
 matrix:
   allow_failures:
     - rust: nightly
+before_install:
+  - docker run -d -p 3000:3000 juxt/crux-standalone:20.02-1.7.0-alpha
 script:
     - cargo build --verbose
     - cargo test --verbose
+    - cargo run --example state
+    - cargo run --example tx_log
