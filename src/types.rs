@@ -35,9 +35,9 @@ ser_struct!{
 }
 
 impl StateResponse {
-    pub fn deserialize(resp: String) -> StateResponse {
+    pub fn deserialize(resp: String) -> Self {
         let edn = parse_edn(&resp).unwrap();
-        StateResponse {
+        Self {
             index___index_version: edn[":crux.index/index-version"].to_string().parse::<usize>().unwrap_or(0usize),
             doc_log___consumer_state: nullable_str(edn[":crux.doc-log/consumer-state"].to_string()),
             tx_log___consumer_state:  nullable_str(edn[":crux.tx-log/consumer-state"].to_string()),
@@ -48,8 +48,8 @@ impl StateResponse {
     }
 
     #[cfg(test)]
-    pub fn default() -> StateResponse{
-        StateResponse {
+    pub fn default() -> Self{
+        Self {
             index___index_version: 5usize,
             doc_log___consumer_state: None,
             tx_log___consumer_state:  None,
@@ -76,6 +76,14 @@ impl TxLogResponse {
         Self {
             tx___tx_id: edn[":crux.tx/tx-id"].to_string().parse::<usize>().unwrap(), 
             tx___tx_time: edn[":crux.tx/tx-time"].to_string()
+        }
+    }
+
+    #[cfg(test)]
+    pub fn default() -> Self {
+        Self {
+            tx___tx_id: 8usize, 
+            tx___tx_time: "2020-07-16T21:53:14.628-00:00".to_string()
         }
     }
 }
