@@ -5,7 +5,7 @@ authors = ["Julia Naomi <jnboeira@outlook.com>"]
 description = "Crate to parse and emit EDN"
 documentation = "https://docs.rs/transistor/"
 repository = "https://github.com/naomijub/transistor"
-keywords = ["CRUX", "Client", "database"]
+keywords = ["CRUX", "Client", "EDN", "database"]
 license = "GPL-3.0-or-later"
 edition = "2018"
 
@@ -14,7 +14,7 @@ edition = "2018"
 
 [dependencies]
 reqwest = { version = "0.10.6", features = ["blocking"] }
-edn-rs = "0.6.0"
+edn-rs = "0.8.2"
 
 [dev-dependencies]
 mockito = "0.26"

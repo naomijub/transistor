@@ -10,3 +10,5 @@ matrix:
 script:
     - cargo build --verbose
     - cargo test --verbose
+    - cargo run --example state
+    - cargo run --example tx_log

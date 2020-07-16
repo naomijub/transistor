@@ -1,11 +1,11 @@
-pub mod types;
-
 use reqwest::{
     header::{HeaderMap,AUTHORIZATION, CONTENT_TYPE},
     blocking::{Client}, 
     Result
 };
-use crate::http::types::StateResponse;
+use edn_rs::Serialize;
+use crate::types::{StateResponse, TxLogResponse};
+
 
 /// Struct to connect define parameters to connect to Crux
 /// `host` and `port` are reuired.
@@ -16,6 +16,7 @@ pub struct Crux {
 }
 
 impl Crux{
+    /// Define Crux instance with `host:port`
     pub fn new(host: &str, port: &str) -> Self {
         Self{host: host.to_string(), port: port.to_string(), headers: HeaderMap::new()}
     }
@@ -56,6 +57,25 @@ pub struct CruxClient {
     headers: HeaderMap,
 }
 
+/// Action to perform in Crux. Receives a serialized Edn
+/// **First firld of your edn should be `crux__db___id: CruxId`**
+/// Allowed actions:
+/// * `PUT` - inserts into Crux
+///  * `Delete` - updates Crux state to previous value
+pub enum Action {
+    Put(String),
+    Delete(String)
+}
+
+impl Serialize for Action {
+    fn serialize(self) -> String {
+        match self {
+            Action::Put(edn) => format!("[:crux.tx/put {}]", edn),
+            Action::Delete(edn) => format!("[:crux.tx/delete {}]", edn)
+        }
+    }
+}
+
 impl CruxClient {
     /// Function `state` queries endpoint `/` with a `GET` Returned information consists of
     /// various details about the state of the database and it can be used as a health check.
@@ -65,6 +85,24 @@ impl CruxClient {
             .send()?
             .text()?;
         Ok(StateResponse::deserialize(resp))
+    }
+
+    /// Function `tx_log` interacts with endpoint `/tx-log` via `POST` which allow you to send actions `Action`
+    /// to CruxDB.
+    pub fn tx_log(&self, actions: Vec<Action>) -> Result<TxLogResponse> {
+        let actions_str = actions.into_iter().map(|edn| edn.serialize()).collect::<Vec<String>>().join(", ");
+        let mut s = String::new();
+        s.push_str("[");
+        s.push_str(&actions_str);
+        s.push_str("]");
+        
+        println!("{:?}", s);
+        let resp = self.client.post(&format!("{}/tx-log", self.uri))
+            .headers(self.headers.clone())
+            .body(s)
+            .send()?
+            .text()?;
+        Ok(TxLogResponse::deserialize(resp))
     }
 }
 
@@ -122,7 +160,8 @@ mod test {
 
 #[cfg(test)]
 mod client {
-    use super::{Crux, StateResponse};
+    use super::Crux;
+    use crate::types::StateResponse;
     use mockito::mock;
 
     #[test]
