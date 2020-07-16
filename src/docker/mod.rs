@@ -1,7 +1,7 @@
 use reqwest::{
+    Result,
     header::{HeaderMap,AUTHORIZATION, CONTENT_TYPE},
     blocking::{Client}, 
-    Result
 };
 use edn_rs::Serialize;
 use crate::types::{StateResponse, TxLogResponse};
