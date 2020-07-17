@@ -61,16 +61,15 @@ impl StateResponse {
     }
 }
 
-ser_struct!{
-    #[derive(Debug, PartialEq)]
-    #[allow(non_snake_case)]
-    /// Definition for the response of the `POST` on `tx-log` endpoint
-    pub struct TxLogResponse {
-        tx___tx_id: usize, 
-        tx___tx_time: String,
-        tx__event___tx_events: Option<String>
-    }
+#[derive(Debug, PartialEq)]
+#[allow(non_snake_case)]
+/// Definition for the response of the `POST` on `tx-log` endpoint
+pub struct TxLogResponse {
+    tx___tx_id: usize, 
+    tx___tx_time: String,
+    tx__event___tx_events: Option<Vec<String>>
 }
+
 
 impl TxLogResponse {
     pub fn deserialize(resp: String) -> Self {
@@ -78,7 +77,7 @@ impl TxLogResponse {
         Self {
             tx___tx_id: edn[":crux.tx/tx-id"].to_string().parse::<usize>().unwrap(), 
             tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
-            tx__event___tx_events: edn.get(":crux.tx.event/tx-events").map_or(None, |e| Some(e.to_string())),
+            tx__event___tx_events: edn.get(":crux.tx.event/tx-events").map_or(None, |e| Some(e.to_vec().unwrap())),
         }
     }
 
@@ -108,7 +107,10 @@ impl TxLogsResponse {
                     TxLogResponse {
                         tx___tx_id: e[":crux.tx/tx-id"].to_string().parse::<usize>().unwrap(), 
                         tx___tx_time: e[":crux.tx/tx-time"].to_string(),
-                        tx__event___tx_events: e.get(":crux.tx.event/tx-events").map_or(None, |el| Some(el.to_string())),
+                        tx__event___tx_events: match e.get(":crux.tx.event/tx-events") {
+                            Some(e) => e.to_vec(),
+                            _ => None
+                        },
                     }
                 )
                 .collect::<Vec<TxLogResponse>>()
