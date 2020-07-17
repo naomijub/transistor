@@ -4,7 +4,7 @@ use reqwest::{
     blocking::{Client}, 
 };
 use edn_rs::Serialize;
-use crate::types::{StateResponse, TxLogResponse};
+use crate::types::{StateResponse, TxLogResponse, TxLogsResponse};
 
 
 /// Struct to connect define parameters to connect to Crux
@@ -103,6 +103,14 @@ impl CruxClient {
             .send()?
             .text()?;
         Ok(TxLogResponse::deserialize(resp))
+    }
+
+    pub fn tx_logs(&self) -> Result<TxLogsResponse> {
+        let resp = self.client.get(&format!("{}/tx-log", self.uri))
+            .headers(self.headers.clone())
+            .send()?
+            .text()?;
+        Ok(TxLogsResponse::deserialize(resp))
     }
 }
 
