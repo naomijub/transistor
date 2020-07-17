@@ -74,11 +74,7 @@ pub struct TxLogResponse {
 impl TxLogResponse {
     pub fn deserialize(resp: String) -> Self {
         let edn = parse_edn(&resp).unwrap();
-        Self {
-            tx___tx_id: edn[":crux.tx/tx-id"].to_string().parse::<usize>().unwrap(), 
-            tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
-            tx__event___tx_events: edn.get(":crux.tx.event/tx-events").map_or(None, |e| Some(e.to_vec().unwrap())),
-        }
+        edn.into()
     }
 
     #[cfg(test)]
@@ -95,25 +91,37 @@ impl TxLogResponse {
 #[allow(non_snake_case)]
 /// Definition for the response of the `GET` on `tx-log` endpoint
 pub struct TxLogsResponse {
+    #[cfg(test)]
+    pub tx_events: Vec<TxLogResponse>,
+    #[cfg(not(test))]
     tx_events: Vec<TxLogResponse> 
 }
 
 impl TxLogsResponse {
     pub fn deserialize(resp: String) -> Self {
         let edn = parse_edn(&resp).unwrap();
+        edn.into()
+    }
+}
+
+impl From<Edn> for TxLogsResponse {
+    fn from(edn: Edn) -> Self {
         Self {
             tx_events: edn.iter().unwrap()
                 .map(|e| 
-                    TxLogResponse {
-                        tx___tx_id: e[":crux.tx/tx-id"].to_string().parse::<usize>().unwrap(), 
-                        tx___tx_time: e[":crux.tx/tx-time"].to_string(),
-                        tx__event___tx_events: match e.get(":crux.tx.event/tx-events") {
-                            Some(e) => e.to_vec(),
-                            _ => None
-                        },
-                    }
+                    e.to_owned().into()
                 )
                 .collect::<Vec<TxLogResponse>>()
+        }
+    }
+}
+
+impl From<Edn> for TxLogResponse {
+    fn from(edn: Edn) -> Self {
+        Self {
+            tx___tx_id: edn[":crux.tx/tx-id"].to_string().parse::<usize>().unwrap(), 
+            tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
+            tx__event___tx_events: edn.get(":crux.tx.event/tx-events").map(|e| e.to_vec().unwrap())
         }
     }
 }
