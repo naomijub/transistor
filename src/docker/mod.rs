@@ -4,7 +4,7 @@ use reqwest::{
     blocking::{Client}, 
 };
 use edn_rs::Serialize;
-use crate::types::{StateResponse, TxLogResponse};
+use crate::types::{StateResponse, TxLogResponse, TxLogsResponse};
 
 
 /// Struct to connect define parameters to connect to Crux
@@ -103,6 +103,14 @@ impl CruxClient {
             .send()?
             .text()?;
         Ok(TxLogResponse::deserialize(resp))
+    }
+
+    pub fn tx_logs(&self) -> Result<TxLogsResponse> {
+        let resp = self.client.get(&format!("{}/tx-log", self.uri))
+            .headers(self.headers.clone())
+            .send()?
+            .text()?;
+        Ok(TxLogsResponse::deserialize(resp))
     }
 }
 
@@ -216,6 +224,19 @@ mod client {
         let response = Crux::new("localhost", "4000").client().tx_log(vec![action1, action2]);
 
         assert_eq!(response.unwrap(), TxLogResponse::default())
+    }
+
+    #[test]
+    fn tx_logs() {
+        let _m = mock("GET", "/tx-log")
+        .with_status(200)
+        .with_header("content-type", "text/plain")
+        .with_body("({:crux.tx/tx-id 0, :crux.tx/tx-time #inst \"2020-07-09T23:38:06.465-00:00\", :crux.tx.event/tx-events [[:crux.tx/put \"a15f8b81a160b4eebe5c84e9e3b65c87b9b2f18e\" \"125d29eb3bed1bf51d64194601ad4ff93defe0e2\"]]}{:crux.tx/tx-id 1, :crux.tx/tx-time #inst \"2020-07-09T23:39:33.815-00:00\", :crux.tx.event/tx-events [[:crux.tx/put \"a15f8b81a160b4eebe5c84e9e3b65c87b9b2f18e\" \"1b42e0d5137e3833423f7bb958622bee29f91eee\"]]})")
+        .create();
+
+        let response = Crux::new("localhost", "4000").client().tx_logs();
+
+        assert_eq!(response.unwrap().tx_events.len(), 2);    
     }
 }
 

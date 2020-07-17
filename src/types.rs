@@ -1,7 +1,8 @@
 use edn_rs::{
     ser_struct,
     Serialize,
-    parse_edn
+    parse_edn,
+    Edn
 };
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
@@ -60,30 +61,67 @@ impl StateResponse {
     }
 }
 
-ser_struct!{
-    #[derive(Debug, PartialEq)]
-    #[allow(non_snake_case)]
-    /// Definition for the response of the `state` endpoint
-    pub struct TxLogResponse {
-        tx___tx_id: usize, 
-        tx___tx_time: String
-    }
+#[derive(Debug, PartialEq)]
+#[allow(non_snake_case)]
+/// Definition for the response of the `POST` on `tx-log` endpoint
+pub struct TxLogResponse {
+    tx___tx_id: usize, 
+    tx___tx_time: String,
+    tx__event___tx_events: Option<Vec<String>>
 }
+
 
 impl TxLogResponse {
     pub fn deserialize(resp: String) -> Self {
         let edn = parse_edn(&resp).unwrap();
-        Self {
-            tx___tx_id: edn[":crux.tx/tx-id"].to_string().parse::<usize>().unwrap(), 
-            tx___tx_time: edn[":crux.tx/tx-time"].to_string()
-        }
+        edn.into()
     }
 
     #[cfg(test)]
     pub fn default() -> Self {
         Self {
             tx___tx_id: 8usize, 
-            tx___tx_time: "2020-07-16T21:53:14.628-00:00".to_string()
+            tx___tx_time: "2020-07-16T21:53:14.628-00:00".to_string(),
+            tx__event___tx_events: None
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+#[allow(non_snake_case)]
+/// Definition for the response of the `GET` on `tx-log` endpoint
+pub struct TxLogsResponse {
+    #[cfg(test)]
+    pub tx_events: Vec<TxLogResponse>,
+    #[cfg(not(test))]
+    tx_events: Vec<TxLogResponse> 
+}
+
+impl TxLogsResponse {
+    pub fn deserialize(resp: String) -> Self {
+        let edn = parse_edn(&resp).unwrap();
+        edn.into()
+    }
+}
+
+impl From<Edn> for TxLogsResponse {
+    fn from(edn: Edn) -> Self {
+        Self {
+            tx_events: edn.iter().unwrap()
+                .map(|e| 
+                    e.to_owned().into()
+                )
+                .collect::<Vec<TxLogResponse>>()
+        }
+    }
+}
+
+impl From<Edn> for TxLogResponse {
+    fn from(edn: Edn) -> Self {
+        Self {
+            tx___tx_id: edn[":crux.tx/tx-id"].to_string().parse::<usize>().unwrap(), 
+            tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
+            tx__event___tx_events: edn.get(":crux.tx.event/tx-events").map(|e| e.to_vec().unwrap())
         }
     }
 }
