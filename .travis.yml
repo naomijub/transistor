@@ -16,3 +16,4 @@ script:
     - cargo test --verbose
     - cargo run --example state
     - cargo run --example tx_log
+    - cargo run --example evict

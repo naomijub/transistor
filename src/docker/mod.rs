@@ -38,7 +38,7 @@ impl Crux{
         server_url()
     }
 
-    /// To query database via http it is necessary to use `CruxClient` 
+    /// To query database on Docker via http it is necessary to use `CruxClient` 
     pub fn client(&mut self) -> CruxClient {
         self.headers.insert(CONTENT_TYPE, "application/edn".parse().unwrap());
         CruxClient {
@@ -60,18 +60,28 @@ pub struct CruxClient {
 /// Action to perform in Crux. Receives a serialized Edn
 /// **First firld of your edn should be `crux__db___id: CruxId`**
 /// Allowed actions:
-/// * `PUT` - inserts into Crux
-///  * `Delete` - updates Crux state to previous value
+/// * `PUT` - Write a version of a document
+/// * `Delete` - Deletes the specific document at a given valid time
+/// * `Match` - Check the document state against the given document (NOT IMPLEMENTED)
+/// * `Evict` - Evicts a document entirely, including all historical versions (receives only the ID to evict)
 pub enum Action {
     Put(String),
-    Delete(String)
+    Delete(String),
+    Evict(String)
 }
 
 impl Serialize for Action {
     fn serialize(self) -> String {
         match self {
             Action::Put(edn) => format!("[:crux.tx/put {}]", edn),
-            Action::Delete(edn) => format!("[:crux.tx/delete {}]", edn)
+            Action::Delete(edn) => format!("[:crux.tx/delete {}]", edn),
+            Action::Evict(id) => {
+                if id.starts_with(":") {
+                    format!("[:crux.tx/evict {}]", id)
+                } else {
+                    "".to_string()
+                }
+            }
         }
     }
 }
@@ -87,8 +97,9 @@ impl CruxClient {
         Ok(StateResponse::deserialize(resp))
     }
 
-    /// Function `tx_log` interacts with endpoint `/tx-log` via `POST` which allow you to send actions `Action`
+    /// Function `tx_log` requests endpoint `/tx-log` via `POST` which allow you to send actions `Action`
     /// to CruxDB.
+    /// The "write" endpoint, to post transactions.
     pub fn tx_log(&self, actions: Vec<Action>) -> Result<TxLogResponse> {
         let actions_str = actions.into_iter().map(|edn| edn.serialize()).collect::<Vec<String>>().join(", ");
         let mut s = String::new();
@@ -105,6 +116,7 @@ impl CruxClient {
         Ok(TxLogResponse::deserialize(resp))
     }
 
+    /// Function `tx_logs` resquests endpoint `/tx-log` via `GET` and returns a list of all transactions
     pub fn tx_logs(&self) -> Result<TxLogsResponse> {
         let resp = self.client.get(&format!("{}/tx-log", self.uri))
             .headers(self.headers.clone())

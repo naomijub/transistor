@@ -5,6 +5,7 @@ use edn_rs::{
     Edn
 };
 
+/// Id to use as reference in Crux, similar to `ids` with `Uuid`. This id is supposed to be a KEYWORD, `Edn::Key`.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
 pub struct CruxId(String);
 
