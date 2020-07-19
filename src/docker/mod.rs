@@ -130,7 +130,7 @@ impl CruxClient {
     /// Response is a `reqwest::Result<edn_rs::Edn>`.
     pub fn entity(&self, id: String) -> Result<Edn> {
         if !id.starts_with(":") {
-            return Ok(edn!({:status ":bad-request", :message "ID required"}));
+            return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
         }
 
         let mut s = String::new();
@@ -143,12 +143,13 @@ impl CruxClient {
             .body(s)
             .send()?
             .text()?;
+
         let edn_resp = edn_rs::parse_edn(&resp);
         Ok(match edn_resp {
             Ok(e) => e,
             Err(err) => {
                 println!(":CRUX-CLIENT POST /entity [ERROR]: {:?}", err);
-                edn!({:status ":internal-server-error"})
+                edn!({:status ":internal-server-error", :code 500})
             }
         })
     }
