@@ -17,3 +17,4 @@ script:
     - cargo run --example state
     - cargo run --example tx_log
     - cargo run --example evict
+    - cargo run --example entity

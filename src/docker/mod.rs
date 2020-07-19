@@ -3,7 +3,7 @@ use reqwest::{
     header::{HeaderMap,AUTHORIZATION, CONTENT_TYPE},
     blocking::{Client}, 
 };
-use edn_rs::Serialize;
+use edn_rs::{Serialize, edn, Map, Edn};
 use crate::types::{StateResponse, TxLogResponse, TxLogsResponse};
 
 
@@ -107,7 +107,6 @@ impl CruxClient {
         s.push_str(&actions_str);
         s.push_str("]");
         
-        println!("{:?}", s);
         let resp = self.client.post(&format!("{}/tx-log", self.uri))
             .headers(self.headers.clone())
             .body(s)
@@ -123,6 +122,35 @@ impl CruxClient {
             .send()?
             .text()?;
         Ok(TxLogsResponse::deserialize(resp))
+    }
+
+    /// Function `entity` requests endpoint `/entity` via `POST` which retrieves the last document
+    /// in CruxDB.
+    /// Field with `CruxId` is required.
+    /// Response is a `reqwest::Result<edn_rs::Edn>`.
+    pub fn entity(&self, id: String) -> Result<Edn> {
+        if !id.starts_with(":") {
+            return Ok(edn!({:status ":bad-request", :message "ID required"}));
+        }
+
+        let mut s = String::new();
+        s.push_str("{:eid ");
+        s.push_str(&id);
+        s.push_str("}");
+
+        let resp = self.client.post(&format!("{}/entity", self.uri))
+            .headers(self.headers.clone())
+            .body(s)
+            .send()?
+            .text()?;
+        let edn_resp = edn_rs::parse_edn(&resp);
+        Ok(match edn_resp {
+            Ok(e) => e,
+            Err(err) => {
+                println!(":CRUX-CLIENT POST /entity [ERROR]: {:?}", err);
+                edn!({:status ":internal-server-error"})
+            }
+        })
     }
 }
 
@@ -242,7 +270,7 @@ mod client {
     fn tx_logs() {
         let _m = mock("GET", "/tx-log")
         .with_status(200)
-        .with_header("content-type", "text/plain")
+        .with_header("content-type", "application/edn")
         .with_body("({:crux.tx/tx-id 0, :crux.tx/tx-time #inst \"2020-07-09T23:38:06.465-00:00\", :crux.tx.event/tx-events [[:crux.tx/put \"a15f8b81a160b4eebe5c84e9e3b65c87b9b2f18e\" \"125d29eb3bed1bf51d64194601ad4ff93defe0e2\"]]}{:crux.tx/tx-id 1, :crux.tx/tx-time #inst \"2020-07-09T23:39:33.815-00:00\", :crux.tx.event/tx-events [[:crux.tx/put \"a15f8b81a160b4eebe5c84e9e3b65c87b9b2f18e\" \"1b42e0d5137e3833423f7bb958622bee29f91eee\"]]})")
         .create();
 
@@ -250,5 +278,19 @@ mod client {
 
         assert_eq!(response.unwrap().tx_events.len(), 2);    
     }
-}
 
+    #[test]
+    fn entity() {
+        let expected_body = "Map(Map({\":crux.db/id\": Key(\":hello-entity\"), \":first-name\": Str(\"Hello\"), \":last-name\": Str(\"World\")}))";
+        let _m = mock("POST", "/entity")
+        .with_status(200)
+        .match_body("{:eid :ivan}")
+        .with_header("content-type", "application/edn")
+        .with_body(expected_body)
+        .create();
+
+        let edn_body = Crux::new("localhost", "3000").client().entity(":ivan".to_string()).unwrap();
+
+        assert!(edn_body.to_string().contains("Map"));
+    }
+}

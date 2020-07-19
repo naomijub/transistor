@@ -9,7 +9,7 @@ fn main() {
         last_name: "World".to_string()
     };
     println!("{:?}", person.clone().serialize());
-    //"{ :crux.db/id :jorge-3, :first-name \"Michael\", :last-name \"Jorge\", }"
+    //"{ :crux.db/id :hello-evict, :first-name \"Hello\", :last-name \"World\", }"
 
     let put_person = Action::Put(person.clone().serialize());
 
