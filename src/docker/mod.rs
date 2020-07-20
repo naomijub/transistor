@@ -4,7 +4,7 @@ use reqwest::{
     blocking::{Client}, 
 };
 use edn_rs::{Serialize, edn, Map, Edn};
-use crate::types::{StateResponse, TxLogResponse, TxLogsResponse};
+use crate::types::{StateResponse, TxLogResponse, TxLogsResponse, EntityTxResponse};
 
 
 /// Struct to connect define parameters to connect to Crux
@@ -153,6 +153,23 @@ impl CruxClient {
             }
         })
     }
+
+    /// Function `entity-tx` requests endpoint `/entity-tx` via `POST` which retrieves the docs and tx infos
+    /// for the last document saved in CruxDB.
+    pub fn entity_tx(&self, id: String) -> Result<EntityTxResponse> {
+        let mut s = String::new();
+        s.push_str("{:eid ");
+        s.push_str(&id);
+        s.push_str("}");
+
+        let resp = self.client.post(&format!("{}/entity-tx", self.uri))
+            .headers(self.headers.clone())
+            .body(s)
+            .send()?
+            .text()?;
+
+        Ok(EntityTxResponse::deserialize(resp))
+    }
 }
 
 #[cfg(test)]
@@ -210,7 +227,7 @@ mod test {
 #[cfg(test)]
 mod client {
     use super::{Crux, Action};
-    use crate::types::{StateResponse, TxLogResponse, CruxId};
+    use crate::types::{StateResponse, TxLogResponse, CruxId, EntityTxResponse};
     use edn_rs::{ser_struct, Serialize};
     use mockito::mock;
 
@@ -293,5 +310,20 @@ mod client {
         let edn_body = Crux::new("localhost", "3000").client().entity(":ivan".to_string()).unwrap();
 
         assert!(edn_body.to_string().contains("Map"));
+    }
+
+    #[test]
+    fn entity_tx() {
+        let expected_body = "{:crux.db/id \"d72ccae848ce3a371bd313865cedc3d20b1478ca\", :crux.db/content-hash \"1828ebf4466f98ea3f5252a58734208cd0414376\", :crux.db/valid-time #inst \"2020-07-19T04:12:13.788-00:00\", :crux.tx/tx-time #inst \"2020-07-19T04:12:13.788-00:00\", :crux.tx/tx-id 28}";
+        let _m = mock("POST", "/entity-tx")
+        .with_status(200)
+        .match_body("{:eid :ivan}")
+        .with_header("content-type", "application/edn")
+        .with_body(expected_body)
+        .create();
+
+        let body = Crux::new("localhost", "3000").client().entity_tx(":ivan".to_string()).unwrap();
+
+        assert_eq!(body, EntityTxResponse::default());
     }
 }
