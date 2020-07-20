@@ -1,4 +1,7 @@
 language: rust
+os:
+  - linux
+  - windows
 sudo: enabled
 services:
   - docker
