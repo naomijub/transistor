@@ -11,7 +11,7 @@ pub mod types;
 /// * `tx_logs` resquests endpoint `/tx-log` via `GET`. No args.
 /// * `entity` requests endpoint `/entity` via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument.
 /// 
-/// Enum `Action` is available in this module
+/// Enum [`Action`](../transistor/docker/enum.Action.html) is available in this module
 pub mod docker;
 // pub mod http;
 // pub mod kafka;
