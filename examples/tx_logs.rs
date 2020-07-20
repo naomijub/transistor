@@ -3,8 +3,8 @@ use transistor::docker::{Crux};
 fn main() {
     let body = Crux::new("localhost", "3000").client().tx_logs().unwrap();
 
-    println!("Body = {:?}", body);
-    // Body = TxLogsResponse { tx_events: []}
+    println!("Body = {:#?}", body);
+    // Body = TxLogsResponse { tx_events: [
     // TxLogResponse { tx___tx_id: 0, 
     //                 tx___tx_time: "2020-07-09T23:38:06.465-00:00", 
     //                 tx__event___tx_events: Some("[Vector(Vector([Key(\":crux.tx/put\"), Str(\"a15f8b81a160b4eebe5c84e9e3b65c87b9b2f18e\"), Str(\"125d29eb3bed1bf51d64194601ad4ff93defe0e2\")])), ]") }, 

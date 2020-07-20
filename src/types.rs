@@ -25,7 +25,7 @@ impl CruxId {
 ser_struct!{
     #[derive(Debug, PartialEq)]
     #[allow(non_snake_case)]
-    /// Definition for the response of the `state` endpoint
+    /// Definition for the response at the `state` endpoint
     pub struct StateResponse {
         index___index_version: usize,
         doc_log___consumer_state: Option<String>,
@@ -64,11 +64,11 @@ impl StateResponse {
 
 #[derive(Debug, PartialEq)]
 #[allow(non_snake_case)]
-/// Definition for the response of the `POST` on `tx-log` endpoint
+/// Definition for the response of the `POST` at `tx-log` endpoint
 pub struct TxLogResponse {
-    tx___tx_id: usize, 
-    tx___tx_time: String,
-    tx__event___tx_events: Option<Vec<String>>
+    pub tx___tx_id: usize, 
+    pub tx___tx_time: String,
+    pub tx__event___tx_events: Option<Vec<String>>
 }
 
 
@@ -90,12 +90,9 @@ impl TxLogResponse {
 
 #[derive(Debug, PartialEq)]
 #[allow(non_snake_case)]
-/// Definition for the response of the `GET` on `tx-log` endpoint
+/// Definition for the response of the `GET` at `tx-log` endpoint
 pub struct TxLogsResponse {
-    #[cfg(test)]
     pub tx_events: Vec<TxLogResponse>,
-    #[cfg(not(test))]
-    tx_events: Vec<TxLogResponse> 
 }
 
 impl TxLogsResponse {
