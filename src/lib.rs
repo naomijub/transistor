@@ -5,7 +5,7 @@
 /// * `TxLogsResponse` response is the wrapper for a `GET` at endpoint `/tx-logs`, it is a `Vector` of type `TxLogResponse`.
 pub mod types;
 
-/// Docker Client  module. It has the basic struct `Crux` which contains the `CruxClient` for Docker with the following functions:
+/// Docker Client  module. It has the basic struct `Crux` which contains the [`CruxClient`](../transistor/docker/struct.CruxClient.html#impl) for Docker with the following functions:
 /// * `state` queries endpoint `/` with a `GET`. No args.
 /// * `tx_log` requests endpoint `/tx-log` via `POST`. A Vector of `Action` is expected as argument.
 /// * `tx_logs` resquests endpoint `/tx-log` via `GET`. No args.
