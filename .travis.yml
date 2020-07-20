@@ -1,7 +1,4 @@
 language: rust
-os:
-  - linux
-  - windows
 sudo: enabled
 services:
   - docker
@@ -10,10 +7,18 @@ rust:
   - beta
   - nightly
 matrix:
+  include:
+    - os: windows
+      dist: 1803-containers
+      env: VERSION=1.11 VARIANT=windows/windowsservercore-1803
+    - os: linux
+      env: VERSION=1.11 VARIANT=alpine3.7
   allow_failures:
     - rust: nightly
 before_install:
   - docker run -d -p 3000:3000 juxt/crux-standalone:20.02-1.7.0-alpha
+# before_script:
+#   - docker run -d -p 3000:3000 juxt/crux-standalone:20.02-1.7.0-alpha
 script:
     - cargo build --verbose
     - cargo test --verbose
