@@ -4,6 +4,7 @@ use edn_rs::{
     parse_edn,
     Edn
 };
+use std::collections::BTreeMap;
 
 /// Id to use as reference in Crux, similar to `ids` with `Uuid`. This id is supposed to be a KEYWORD, `Edn::Key`.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
@@ -163,6 +164,22 @@ impl From<Edn> for EntityTxResponse {
             tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize),
             tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
         }
+    }
+}
+
+pub struct Documents;
+
+impl Documents {
+    pub fn deserialize(resp: String, hashes: Vec<String>) -> BTreeMap<String, Edn> {
+        let edn = parse_edn(&resp).unwrap();
+
+        let mut hm = BTreeMap::new();
+        hashes.iter().for_each(|h| {
+            let edn_value = edn[h].clone();
+            hm.insert(String::from(h), edn_value);
+        });
+
+        hm
     }
 }
 

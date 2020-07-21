@@ -3,8 +3,9 @@ use reqwest::{
     header::{HeaderMap,AUTHORIZATION, CONTENT_TYPE},
     blocking::{Client}, 
 };
+use std::collections::BTreeMap;
 use edn_rs::{Serialize, edn, Map, Edn};
-use crate::types::{StateResponse, TxLogResponse, TxLogsResponse, EntityTxResponse};
+use crate::types::{StateResponse, TxLogResponse, TxLogsResponse, EntityTxResponse, Documents};
 
 
 /// Struct to connect define parameters to connect to Crux
@@ -181,6 +182,24 @@ impl CruxClient {
 
         Ok(edn_rs::parse_edn(&resp).unwrap())
     }
+
+    /// Function `documents` requests endpoint `/documents` via `POST` which retrieves the current Documents values indexed by ID. 
+    /// Argument is a vector containing hashes like `1828ebf4466f98ea3f5252a58734208cd0414376`, `vec!["1828ebf4466f98ea3f5252a58734208cd0414376", "6279916e3020d6dc928077f53529e95d205a9465"]`
+    /// Hashes can be obtained with `entity_tx` function.
+    pub fn documents(&self, content_hashes: Vec<String>) -> Result<BTreeMap<String, Edn>> {
+        let mut s = String::new();
+        s.push_str("#{");
+        s.push_str(&content_hashes.iter().map(|hash| format!("{:?}", hash)).collect::<Vec<String>>().join(", "));
+        s.push_str("}");
+
+        let resp = self.client.post(&format!("{}/documents", self.uri))
+            .headers(self.headers.clone())
+            .body(s)
+            .send()?
+            .text()?;
+
+        Ok(Documents::deserialize(resp, content_hashes))
+    }
 }
 
 #[cfg(test)]
@@ -239,8 +258,9 @@ mod test {
 mod client {
     use super::{Crux, Action};
     use crate::types::{StateResponse, TxLogResponse, CruxId, EntityTxResponse};
-    use edn_rs::{ser_struct, Serialize};
+    use edn_rs::{ser_struct, Serialize, Edn, Map};
     use mockito::mock;
+    use std::collections::BTreeMap;
 
     ser_struct! {
         #[derive(Debug, Clone)]
@@ -349,5 +369,36 @@ mod client {
         let response = Crux::new("localhost", "3000").client().document_by_id("1828ebf4466f98ea3f5252a58734208cd0414376".to_string());
 
         assert_eq!(response.unwrap().to_string(), "{:crux.db/id: Key(\":jorge-3\"), :first-name: Str(\"Michael\"), :last-name: Str(\"Jorge\"), }");    
+    }
+
+    #[test]
+    fn documents() {
+        let expected_body = "{\"6279916e3020d6dc928077f53529e95d205a9465\" {:crux.db/id :Pablo-Picasso, :last-name :jose, :first-name :Pablo}, \"1828ebf4466f98ea3f5252a58734208cd0414376\" {:crux.db/id :hello-entity, :first-name \"Hello\", :last-name \"World\"}}";
+        let _m = mock("POST", "/documents")
+            .with_status(200)
+            .with_header("content-type", "application/edn")
+            .with_body(expected_body)
+            .create();
+        let args = vec!["1828ebf4466f98ea3f5252a58734208cd0414376".to_string(), "6279916e3020d6dc928077f53529e95d205a9465".to_string()];
+
+        let body = Crux::new("localhost", "3000").client().documents(args).unwrap();
+
+        assert_eq!(body, documents_response());
+    }
+
+    fn documents_response() -> BTreeMap<String, Edn> {
+        use edn_rs::map;
+        let mut hm = BTreeMap::new();
+        let val1 = map!{":crux.db/id".to_string() => Edn::Key(":hello-entity".to_string()), ":first-name".to_string() => Edn::Str("Hello".to_string()), ":last-name".to_string() => Edn::Str("World".to_string())};
+        let val2 = map!{":crux.db/id".to_string() => Edn::Key(":Pablo-Picasso".to_string()), ":first-name".to_string() => Edn::Key(":Pablo".to_string()), ":last-name".to_string() => Edn::Key(":jose".to_string())};
+        hm.insert(
+            String::from("1828ebf4466f98ea3f5252a58734208cd0414376".to_string()),
+            Edn::Map(Map::new(val1))
+        );
+        hm.insert(
+            String::from("6279916e3020d6dc928077f53529e95d205a9465".to_string()),
+            Edn::Map(Map::new(val2))
+        );
+        hm
     }
 }
