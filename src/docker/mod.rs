@@ -154,7 +154,7 @@ impl CruxClient {
         })
     }
 
-    /// Function `entity-tx` requests endpoint `/entity-tx` via `POST` which retrieves the docs and tx infos
+    /// Function `entity_tx` requests endpoint `/entity-tx` via `POST` which retrieves the docs and tx infos
     /// for the last document saved in CruxDB.
     pub fn entity_tx(&self, id: String) -> Result<EntityTxResponse> {
         let mut s = String::new();
@@ -169,6 +169,17 @@ impl CruxClient {
             .text()?;
 
         Ok(EntityTxResponse::deserialize(resp))
+    }
+
+     /// Function `document_by_id` requests endpoint `/document/{:content-hash}` via `GET` which retrieves the current Document value.
+     /// `{:content-hash}` is a hash like `1828ebf4466f98ea3f5252a58734208cd0414376` and can be obtained with `entity_tx` function.
+    pub fn document_by_id(&self, content_hash: String) -> Result<Edn> {
+        let resp = self.client.get(&format!("{}/document/{}", self.uri, content_hash))
+            .headers(self.headers.clone())
+            .send()?
+            .text()?;
+
+        Ok(edn_rs::parse_edn(&resp).unwrap())
     }
 }
 
@@ -325,5 +336,18 @@ mod client {
         let body = Crux::new("localhost", "3000").client().entity_tx(":ivan".to_string()).unwrap();
 
         assert_eq!(body, EntityTxResponse::default());
+    }
+
+    #[test]
+    fn document_by_id() {
+        let _m = mock("GET", "/document/1828ebf4466f98ea3f5252a58734208cd0414376")
+        .with_status(200)
+        .with_header("content-type", "application/edn")
+        .with_body("{:crux.db/id :jorge-3, :first-name \"Michael\", :last-name \"Jorge\"}")
+        .create();
+
+        let response = Crux::new("localhost", "3000").client().document_by_id("1828ebf4466f98ea3f5252a58734208cd0414376".to_string());
+
+        assert_eq!(response.unwrap().to_string(), "{:crux.db/id: Key(\":jorge-3\"), :first-name: Str(\"Michael\"), :last-name: Str(\"Jorge\"), }");    
     }
 }
