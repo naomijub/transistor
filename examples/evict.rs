@@ -11,15 +11,16 @@ fn main() {
     println!("{:?}", person.clone().serialize());
     //"{ :crux.db/id :hello-evict, :first-name \"Hello\", :last-name \"World\", }"
 
+    let client = Crux::new("localhost", "3000").client();
+    
     let put_person = Action::Put(person.clone().serialize());
-
-    let body = Crux::new("localhost", "3000").client().tx_log(vec![put_person]).unwrap();
+    let body = client.tx_log(vec![put_person]).unwrap();
     // "[[:crux.tx/put { :crux.db/id :jorge-3, :first-name \"Michael\", :last-name \"Jorge\", }]]"
     println!("\n Body = {:?}", body);
     //  Body = "{:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}"
 
     let evict_person = Action::Evict(person.crux__db___id.serialize());
-    let evict_body = Crux::new("localhost", "3000").client().tx_log(vec![evict_person]).unwrap();
+    let evict_body = client.tx_log(vec![evict_person]).unwrap();
     println!("\n Evict Body = {:?}", evict_body);
 
 }
