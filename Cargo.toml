@@ -6,7 +6,7 @@ description = "Crux Datalog Client"
 documentation = "https://docs.rs/transistor/"
 repository = "https://github.com/naomijub/transistor"
 keywords = ["CRUX", "Client", "EDN", "database", "Datalog"]
-license = "GPL-3.0-or-later"
+license = "LGPL-3.0"
 edition = "2018"
 
 
