@@ -63,7 +63,6 @@ pub struct CruxClient {
 /// Allowed actions:
 /// * `PUT` - Write a version of a document
 /// * `Delete` - Deletes the specific document at a given valid time
-/// * `Match` - Check the document state against the given document (NOT IMPLEMENTED)
 /// * `Evict` - Evicts a document entirely, including all historical versions (receives only the ID to evict)
 pub enum Action {
     Put(String),
