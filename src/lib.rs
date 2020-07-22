@@ -1,3 +1,5 @@
+pub use edn_rs;
+
 /// Generic Request/Response Types for Crux. 
 /// Availables types are:
 /// * `CruxId` is the field that receives a String and serielizes it to a EDN Keyword.
@@ -7,6 +9,7 @@
 pub mod types;
 
 /// Docker Client  module. It contains the [`DockerClient`](../docker/struct.DockerClient.html#impl) for Docker.
+/// 
 /// `DockerClient` Contains the following functions:
 /// * `state` queries endpoint `/` with a `GET`. No args.
 /// * `tx_log` requests endpoint `/tx-log` via `POST`. A Vector of `Action` is expected as argument.
@@ -17,11 +20,12 @@ pub mod types;
 /// * `documents` resquests endpoint `/documents` via `POST`. The argument of this reuqest is a vector of `content-hashes` that converts to an edn set as a body.
 /// 
 /// Enum [`Action`](../docker/enum.Action.html) is available in this module
+/// Examples can be found in the [examples directory](https://github.com/naomijub/transistor/tree/master/examples).
 pub mod docker;
 // pub mod http;
 // pub mod kafka;
 
-/// This module contains the basic client struct `Crux` which configures `host:port` and `authorization` to return a `client`.
+/// This module contains the basic client, struct `Crux`, which configures `host:port` and `authorization`, and returns the needed `client`.
 pub mod client;
 
-pub use edn_rs;
+

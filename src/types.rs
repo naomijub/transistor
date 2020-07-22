@@ -167,7 +167,7 @@ impl From<Edn> for EntityTxResponse {
     }
 }
 
-pub struct Documents;
+pub (crate) struct Documents;
 
 impl Documents {
     pub fn deserialize(resp: String, hashes: Vec<String>) -> BTreeMap<String, Edn> {
