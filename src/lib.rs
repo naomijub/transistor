@@ -12,6 +12,8 @@ pub mod types;
 /// * `tx_log` requests endpoint `/tx-log` via `POST`. A Vector of `Action` is expected as argument.
 /// * `tx_logs` resquests endpoint `/tx-log` via `GET`. No args.
 /// * `entity` requests endpoint `/entity` via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument.
+/// * `document_by_id` resquests endpoint `/document/{:content-hash}` via `GET`. `{:content-hash}` can be obtained with function `entity_tx`.
+/// * `documents` resquests endpoint `/documents` via `POST`. The argument of this reuqest is a vector of `content-hashes` that converts to an edn set as a body.
 /// 
 /// Enum [`Action`](../docker/enum.Action.html) is available in this module
 pub mod docker;
