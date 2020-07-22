@@ -68,7 +68,7 @@ impl StateResponse {
 pub struct TxLogResponse {
     pub tx___tx_id: usize, 
     pub tx___tx_time: String,
-    pub tx__event___tx_events: Option<Vec<String>>
+    pub tx__event___tx_events: Option<Vec<Vec<String>>>
 }
 
 
@@ -119,7 +119,7 @@ impl From<Edn> for TxLogResponse {
         Self {
             tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize), 
             tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
-            tx__event___tx_events: edn.get(":crux.tx.event/tx-events").map(|e| e.to_vec().unwrap())
+            tx__event___tx_events: edn.get(":crux.tx.event/tx-events").map(|e| e.iter().unwrap().map(|el| el.to_vec().unwrap()).collect::<Vec<Vec<String>>>())
         }
     }
 }
