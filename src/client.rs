@@ -5,7 +5,7 @@ use reqwest::{
 use crate::docker::DockerClient;
 
 /// Struct to define parameters to connect to Crux
-/// `host` and `port` are reuired.
+/// `host` and `port` are required.
 /// `authorization` in `HeaderMap` is optional.
 pub struct Crux {
     host: String,

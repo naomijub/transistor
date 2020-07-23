@@ -11,7 +11,7 @@ A Rust Crux Client crate/lib. For now, this crate intends to support 2 ways to i
 To add this crate to your project you should add the following line to `dependencies` in `Cargo.toml`:
 >
 > ```
-> transistor = "0.2.4"
+> transistor = "0.3.1"
 > ```
 
 * For information on Crux and how to use it, please follow the link to [opencrux](https://opencrux.com/docs#restapi). Note that the current crate version (`Docker only`) uses a few modified endpoints due to its Docker implementation.
@@ -72,7 +72,7 @@ let body = client.tx_log(vec![action1, action2]).unwrap();
 // {:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}
 ```
 
-* `tx_logs` resquests endpoint [`/tx-log`](https://opencrux.com/docs#rest-tx-log) via `GET`. No args. Returns a list of all transactions.
+* `tx_logs` requests endpoint [`/tx-log`](https://opencrux.com/docs#rest-tx-log) via `GET`. No args. Returns a list of all transactions.
 ```rust
 use transistor::client::Crux;
 
@@ -161,15 +161,15 @@ let tx_body = client.entity_tx(person.crux__db___id.serialize()).unwrap();
 // }
 ```
 
-* `document_by_id` resquests endpoint [`/document/{:content-hash}`](https://opencrux.com/docs#rest-document) via `GET`. `{:content-hash}` can be obtained with function `entity_tx`. Returns the document for a given content hash.
+* `document_by_id` requests endpoint [`/document/{:content-hash}`](https://opencrux.com/docs#rest-document) via `GET`. `{:content-hash}` can be obtained with function `entity_tx`. Returns the document for a given content hash.
 ```rust
 use transistor::docker::{Action};
 use transistor::client::Crux;
 use transistor::types::{CruxId};
 
 let person = Person {
-    crux__db___id: CruxId::new("hello-entity"), 
-    first_name: "Hello".to_string(), 
+    crux__db___id: CruxId::new("hello-entity"),
+    first_name: "Hello".to_string(),
     last_name: "World".to_string()
 };
 
@@ -185,19 +185,19 @@ let document = client.document_by_id(tx_body.db___content_hash).unwrap();
 // }
 ```
 
-* `documents` resquests endpoint [`/documents`](https://opencrux.com/docs#rest-documents) via `POST`. The argument of this reuqest is a vector of `content-hashes` that converts to an edn set as a body. Returns a map of document ids and respective documents for a given set of content hashes submitted in the request body.
+* `documents` requests endpoint [`/documents`](https://opencrux.com/docs#rest-documents) via `POST`. The argument of this reuqest is a vector of `content-hashes` that converts to an edn set as a body. Returns a map of document ids and respective documents for a given set of content hashes submitted in the request body.
 ```rust
 use transistor::docker::{Action};
 use transistor::client::Crux;
 use transistor::types::{CruxId};
 
 let person1 = Person {
-    crux__db___id: CruxId::new("hello-entity"), 
+    crux__db___id: CruxId::new("hello-entity"),
     ...
 };
 
 let person2 = Person {
-    crux__db___id: CruxId::new("hello-documents"), 
+    crux__db___id: CruxId::new("hello-documents"),
     ...
 };
 

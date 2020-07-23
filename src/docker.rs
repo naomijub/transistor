@@ -47,7 +47,7 @@ impl Serialize for Action {
 }
 
 impl DockerClient {
-    /// Function `state` queries endpoint `/` with a `GET` Returned information consists of
+    /// Function `state` queries endpoint `/` with a `GET`. Returned information consists of
     /// various details about the state of the database and it can be used as a health check.
     pub fn state(&self) -> Result<StateResponse> {
         let resp = self.client.get(&self.uri)
@@ -75,7 +75,7 @@ impl DockerClient {
         Ok(TxLogResponse::deserialize(resp))
     }
 
-    /// Function `tx_logs` resquests endpoint `/tx-log` via `GET` and returns a list of all transactions
+    /// Function `tx_logs` requests endpoint `/tx-log` via `GET` and returns a list of all transactions
     pub fn tx_logs(&self) -> Result<TxLogsResponse> {
         let resp = self.client.get(&format!("{}/tx-log", self.uri))
             .headers(self.headers.clone())
