@@ -11,7 +11,7 @@ A Rust Crux Client crate/lib. For now, this crate intends to support 2 ways to i
 To add this crate to your project you should add the following line to `dependencies` in `Cargo.toml`:
 >
 > ```
-> transistor = "0.2.4"
+> transistor = "0.3.1"
 > ```
 
 * For information on Crux and how to use it, please follow the link to [opencrux](https://opencrux.com/docs#restapi). Note that the current crate version (`Docker only`) uses a few modified endpoints due to its Docker implementation.
