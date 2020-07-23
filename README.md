@@ -2,8 +2,9 @@
 
 A Crux Client crate. For now, this crate intends to support 2 ways to interact with Crux:
 
-* Via `Docker` with a [`crux-standalone`](https://opencrux.com/docs#config-docker) version [docker-hub](https://hub.docker.com/r/juxt/crux-standalone).
-* **TODO:** Via [`HTTP`](https://opencrux.com/docs#config-http) using the [`RESTapi`](https://opencrux.com/docs#restapi).
+- [x] Via `Docker` with a [`crux-standalone`](https://opencrux.com/docs#config-docker) version [docker-hub](https://hub.docker.com/r/juxt/crux-standalone).
+- [ ] Via [`HTTP`](https://opencrux.com/docs#config-http) using the [`REST API`](https://opencrux.com/docs#restapi).
+- [ ] Via kafka. Maybe?
 
 > Other solutions may be added after the first release.
 
@@ -15,7 +16,7 @@ A Crux Client crate. For now, this crate intends to support 2 ways to interact w
 All operations with Transistor start in the module `client` with `Crux::new("localhost", "3000")`.  The struct `Crux` is responsabile for defining request `HeadersMap` and the request `URL`. The `URL` definition is required and it is done by the static function `new`, which receives as argument a `host` and a `port` and returns a `Crux` instance. To change `HeadersMap` info so that you can add `AUTHORIZATION` you can use the function `with_authorization` that receives as argument the authorization token and mutates the `Crux` instance.
 * `HeaderMap` already contains the header `Content-Type: application/edn`.
 
-Finally, to create a Crux Client the function `client` should be called. This function returns a struct that contains all possible implementarions to query Crux Docker.
+Finally, to create a Crux Client the function `<type>_client` should be called, for example `docker_client`. This function returns a struct that contains all possible implementarions to query Crux Docker.
 ```rust
 use transistor::client::Crux;
 
@@ -42,7 +43,7 @@ let body = client.state().unwrap();
 // }
 ```
 
-* `tx_log` requests endpoint `/tx-log` via `POST`. A Vector of `Action` is expected as argument. The "write" endpoint, to post transactions..
+* `tx_log` requests endpoint `/tx-log` via `POST`. A Vector of `Action` is expected as argument. The "write" endpoint, to post transactions.
 ```rust
 use transistor::docker::{Action};
 use transistor::client::Crux;
@@ -239,4 +240,4 @@ let documents = client.documents(contesnt_hashes).unwrap();
 * [`Evict`](https://opencrux.com/docs#transactions-evict) - Evicts a document entirely, including all historical versions (receives only the ID to evict)
 
 ## Dependencies
-A strong dependency of this crate is the [edn-rs](https://crates.io/crates/edn-rs) crate, as many of the return types are in the [Edn format](https://github.com/edn-format/edn). The sync http client is `reqwest` with the feature `blocking`.
+A strong dependency of this crate is the [edn-rs](https://crates.io/crates/edn-rs) crate, as many of the return types are in the [Edn format](https://github.com/edn-format/edn). The sync http client is `reqwest` with `blocking` feature enabled.
