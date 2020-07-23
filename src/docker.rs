@@ -5,7 +5,7 @@ use reqwest::{
 };
 use std::collections::BTreeMap;
 use edn_rs::{Serialize, edn, Map, Edn};
-use crate::types::{StateResponse, TxLogResponse, TxLogsResponse, EntityTxResponse, Documents};
+use crate::types::response::{StateResponse, TxLogResponse, TxLogsResponse, EntityTxResponse, Documents};
 
 
 /// `DockerClient` has the `reqwest::blocking::Client`, the `uri` to query and the `HeaderMap` with
@@ -165,7 +165,10 @@ impl DockerClient {
 mod docker {
     use super::Action;
     use crate::client::Crux;
-    use crate::types::{StateResponse, TxLogResponse, CruxId, EntityTxResponse};
+    use crate::types::{
+        CruxId,
+        response::{StateResponse, TxLogResponse, EntityTxResponse}, 
+        };
     use edn_rs::{ser_struct, Serialize, Edn, Map};
     use mockito::mock;
     use std::collections::BTreeMap;

@@ -3,6 +3,8 @@ pub use edn_rs;
 /// Generic Request/Response Types for Crux. 
 /// Availables types are:
 /// * `CruxId` is the field that receives a String and serielizes it to a EDN Keyword.
+/// 
+/// Availables types for `response`are:
 /// * `StateResponse` response for Crux RESTapi at endpoint `/state`.
 /// * `TxLogResponse` response for Crux RESTapi at endpoint `/tx-log`. For `POSTs`, `tx__event___tx_events (:crux-tx.event/tx_events)` comes with `None`.
 /// * `TxLogsResponse` response is the wrapper for a `GET` at endpoint `/tx-logs`, it is a `Vector` of type `TxLogResponse`.
@@ -27,5 +29,4 @@ pub mod docker;
 
 /// This module contains the basic client, struct `Crux`, which configures `host:port` and `authorization`, and returns the needed `client`.
 pub mod client;
-
 
