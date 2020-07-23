@@ -1,6 +1,6 @@
 # Transistor
 
-A Crux Client crate. For now, this crate intends to support 2 ways to interact with Crux:
+A Rust Crux Client crate/lib. For now, this crate intends to support 2 ways to interact with Crux:
 
 - [x] Via `Docker` with a [`crux-standalone`](https://opencrux.com/docs#config-docker) version [docker-hub](https://hub.docker.com/r/juxt/crux-standalone).
 - [ ] Via [`HTTP`](https://opencrux.com/docs#config-http) using the [`REST API`](https://opencrux.com/docs#restapi).
