@@ -29,7 +29,7 @@ let client = Crux::new("127.0.0.1","3000").docker_client();
 
 ## Docker Client
 Once you have called `docker_client` you will have an instance of the `DockerClient` struct which has a bunch of functions to query Crux on Docker:
-* `state` queries endpoint `/` with a `GET`. No args. Returns various details about the state of the database.
+* `state` queries endpoint [`/`](https://opencrux.com/docs#rest-home) with a `GET`. No args. Returns various details about the state of the database.
 ```rust
 let body = client.state().unwrap();
 
@@ -43,7 +43,7 @@ let body = client.state().unwrap();
 // }
 ```
 
-* `tx_log` requests endpoint `/tx-log` via `POST`. A Vector of `Action` is expected as argument. The "write" endpoint, to post transactions.
+* `tx_log` requests endpoint [`/tx-log`](https://opencrux.com/docs#rest-tx-log-post) via `POST`. A Vector of `Action` is expected as argument. The "write" endpoint, to post transactions.
 ```rust
 use transistor::docker::{Action};
 use transistor::client::Crux;
@@ -66,7 +66,7 @@ let body = client.tx_log(vec![action1, action2]).unwrap();
 // {:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}
 ```
 
-* `tx_logs` resquests endpoint `/tx-log` via `GET`. No args. Returns a list of all transactions.
+* `tx_logs` resquests endpoint [`/tx-log`](https://opencrux.com/docs#rest-tx-log) via `GET`. No args. Returns a list of all transactions.
 ```rust
 use transistor::client::Crux;
 
@@ -105,7 +105,7 @@ let body = client.tx_logs().unwrap();
 // } 
 ```
 
-* `entity` requests endpoint `/entity` via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument. Returns an entity for a given ID and optional valid-time/transaction-time co-ordinates.
+* `entity` requests endpoint [`/entity`](https://opencrux.com/docs#rest-entity) via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument. Returns an entity for a given ID and optional valid-time/transaction-time co-ordinates.
 ```rust
 let person = Person {
     crux__db___id: CruxId::new("hello-entity"), 
@@ -132,7 +132,7 @@ let edn_body = client.entity(person.crux__db___id.serialize()).unwrap();
 // )
 ```
 
-* `entity_tx` requests endpoint `/entity-tx` via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument. Returns the transaction that most recently set a key.
+* `entity_tx` requests endpoint [`/entity-tx`](https://opencrux.com/docs#rest-entity-tx) via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument. Returns the transaction that most recently set a key.
 ```rust
 use transistor::docker::{Action};
 use transistor::client::Crux;
@@ -155,7 +155,7 @@ let tx_body = client.entity_tx(person.crux__db___id.serialize()).unwrap();
 // }
 ```
 
-* `document_by_id` resquests endpoint `/document/{:content-hash}` via `GET`. `{:content-hash}` can be obtained with function `entity_tx`. Returns the document for a given content hash.
+* `document_by_id` resquests endpoint [`/document/{:content-hash}`](https://opencrux.com/docs#rest-document) via `GET`. `{:content-hash}` can be obtained with function `entity_tx`. Returns the document for a given content hash.
 ```rust
 use transistor::docker::{Action};
 use transistor::client::Crux;
@@ -179,7 +179,7 @@ let document = client.document_by_id(tx_body.db___content_hash).unwrap();
 // }
 ```
 
-* `documents` resquests endpoint `/documents` via `POST`. The argument of this reuqest is a vector of `content-hashes` that converts to an edn set as a body. Returns a map of document ids and respective documents for a given set of content hashes submitted in the request body.
+* `documents` resquests endpoint [`/documents`](https://opencrux.com/docs#rest-documents) via `POST`. The argument of this reuqest is a vector of `content-hashes` that converts to an edn set as a body. Returns a map of document ids and respective documents for a given set of content hashes submitted in the request body.
 ```rust
 use transistor::docker::{Action};
 use transistor::client::Crux;
