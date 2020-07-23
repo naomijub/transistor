@@ -8,58 +8,18 @@ use edn_rs::{Serialize, edn, Map, Edn};
 use crate::types::{StateResponse, TxLogResponse, TxLogsResponse, EntityTxResponse, Documents};
 
 
-/// Struct to connect define parameters to connect to Crux
-/// `host` and `port` are reuired.
-pub struct Crux {
-    host: String,
-    port: String,
-    headers: HeaderMap
+/// `DockerClient` has the `reqwest::blocking::Client`, the `uri` to query and the `HeaderMap` with
+/// all the possible headers. Default header is `Content-Type: "application/edn"`.
+/// Synchronous request.
+pub struct DockerClient {
+    pub (crate) client: Client,
+    pub (crate) uri: String, 
+    pub (crate) headers: HeaderMap,
 }
 
-impl Crux{
-    /// Define Crux instance with `host:port`
-    pub fn new(host: &str, port: &str) -> Self {
-        Self{host: host.to_string(), port: port.to_string(), headers: HeaderMap::new()}
-    }
-
-    /// Function to add `AUTHORIZATION` token to the Crux Client
-    pub fn with_authorization(mut self, authorization: &str) -> Self {
-        self.headers.insert(AUTHORIZATION, authorization.parse().unwrap());
-        self
-    }
-
-    #[cfg(not(test))]
-    fn uri(&self) -> String {
-        format!("http://{}:{}", self.host, self.port)
-    }
-
-    #[cfg(test)]
-    fn uri(&self) -> String {
-        use mockito::server_url;
-        server_url()
-    }
-
-    /// To query database on Docker via http it is necessary to use `CruxClient` 
-    pub fn client(&mut self) -> CruxClient {
-        self.headers.insert(CONTENT_TYPE, "application/edn".parse().unwrap());
-        CruxClient {
-            client: reqwest::blocking::Client::new(),
-            uri: self.uri().clone(),
-            headers: self.headers.clone()
-        }
-    }
-}
-
-/// `CruxClient` has the `reqwest::Client`, the `uri` to query and the `HeaderMap` with
-/// all the possible headers. Default header is `Content-Type: "application/edn"`
-pub struct CruxClient {
-    client: Client,
-    uri: String, 
-    headers: HeaderMap,
-}
-
-/// Action to perform in Crux. Receives a serialized Edn
+/// Action to perform in Crux. Receives a serialized Edn. 
 /// **First field of your edn should be `crux__db___id: CruxId`**
+/// 
 /// Allowed actions:
 /// * `PUT` - Write a version of a document
 /// * `Delete` - Deletes the specific document at a given valid time
@@ -86,7 +46,7 @@ impl Serialize for Action {
     }
 }
 
-impl CruxClient {
+impl DockerClient {
     /// Function `state` queries endpoint `/` with a `GET` Returned information consists of
     /// various details about the state of the database and it can be used as a health check.
     pub fn state(&self) -> Result<StateResponse> {
@@ -127,7 +87,7 @@ impl CruxClient {
     /// Function `entity` requests endpoint `/entity` via `POST` which retrieves the last document
     /// in CruxDB.
     /// Field with `CruxId` is required.
-    /// Response is a `reqwest::Result<edn_rs::Edn>`.
+    /// Response is a `reqwest::Result<edn_rs::Edn>` with the last Entity with that ID.
     pub fn entity(&self, id: String) -> Result<Edn> {
         if !id.starts_with(":") {
             return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
@@ -155,7 +115,7 @@ impl CruxClient {
     }
 
     /// Function `entity_tx` requests endpoint `/entity-tx` via `POST` which retrieves the docs and tx infos
-    /// for the last document saved in CruxDB.
+    /// for the last document for that ID saved in CruxDB.
     pub fn entity_tx(&self, id: String) -> Result<EntityTxResponse> {
         let mut s = String::new();
         s.push_str("{:eid ");
@@ -202,60 +162,9 @@ impl CruxClient {
 }
 
 #[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn new() {
-        let actual = Crux::new("host", "port");
-        let expected = Crux {
-            host: String::from("host"),
-            port: String::from("port"),
-            headers: HeaderMap::new(),
-        };
-
-        assert_eq!(actual.host, expected.host);
-        assert_eq!(actual.port, expected.port);
-        assert_eq!(actual.headers, expected.headers);
-    }
-
-    #[test]
-    fn authorization() {
-        let crux = Crux::new("host", "port").with_authorization("auth");
-        let mut headers = HeaderMap::new();
-        headers.insert(AUTHORIZATION, "auth".parse().unwrap());
-
-        assert_eq!(crux.headers, headers);
-    }
-
-    #[test]
-    fn uri() {
-        let crux = Crux::new("localhost", "1234");
-
-        assert_eq!(crux.uri(), "http://127.0.0.1:1234")
-    }
-
-    #[test]
-    fn client() {
-        let mut headers = HeaderMap::new();
-        headers.insert(AUTHORIZATION, "auth".parse().unwrap());
-        headers.insert(CONTENT_TYPE, "application/edn".parse().unwrap());
-
-        let actual = Crux::new("127.0.0.1", "1234").with_authorization("auth").client();
-        let expected = CruxClient {
-            client: reqwest::blocking::Client::new(),
-            uri: "http://127.0.0.1:1234".to_string(),
-            headers: headers,
-        };
-
-        assert_eq!(actual.uri, expected.uri);
-        assert_eq!(actual.headers, expected.headers);
-    }
-}
-
-#[cfg(test)]
-mod client {
-    use super::{Crux, Action};
+mod docker {
+    use super::Action;
+    use crate::client::Crux;
     use crate::types::{StateResponse, TxLogResponse, CruxId, EntityTxResponse};
     use edn_rs::{ser_struct, Serialize, Edn, Map};
     use mockito::mock;
@@ -279,7 +188,7 @@ mod client {
         .with_body("{:crux.index/index-version 5, :crux.doc-log/consumer-state nil, :crux.tx-log/consumer-state nil, :crux.kv/kv-store \"crux.kv.rocksdb.RocksKv\", :crux.kv/estimate-num-keys 34, :crux.kv/size 88489}")
         .create();
 
-        let response = Crux::new("localhost", "4000").client().state();
+        let response = Crux::new("localhost", "4000").docker_client().state();
 
         assert_eq!(response.unwrap(), StateResponse::default())
     }
@@ -309,7 +218,7 @@ mod client {
         let action1 = Action::Put(person1.serialize());
         let action2 = Action::Put(person2.serialize());
 
-        let response = Crux::new("localhost", "4000").client().tx_log(vec![action1, action2]);
+        let response = Crux::new("localhost", "4000").docker_client().tx_log(vec![action1, action2]);
 
         assert_eq!(response.unwrap(), TxLogResponse::default())
     }
@@ -322,7 +231,7 @@ mod client {
         .with_body("({:crux.tx/tx-id 0, :crux.tx/tx-time #inst \"2020-07-09T23:38:06.465-00:00\", :crux.tx.event/tx-events [[:crux.tx/put \"a15f8b81a160b4eebe5c84e9e3b65c87b9b2f18e\" \"125d29eb3bed1bf51d64194601ad4ff93defe0e2\"]]}{:crux.tx/tx-id 1, :crux.tx/tx-time #inst \"2020-07-09T23:39:33.815-00:00\", :crux.tx.event/tx-events [[:crux.tx/put \"a15f8b81a160b4eebe5c84e9e3b65c87b9b2f18e\" \"1b42e0d5137e3833423f7bb958622bee29f91eee\"]]})")
         .create();
 
-        let response = Crux::new("localhost", "4000").client().tx_logs();
+        let response = Crux::new("localhost", "4000").docker_client().tx_logs();
 
         assert_eq!(response.unwrap().tx_events.len(), 2);    
     }
@@ -337,7 +246,7 @@ mod client {
         .with_body(expected_body)
         .create();
 
-        let edn_body = Crux::new("localhost", "3000").client().entity(":ivan".to_string()).unwrap();
+        let edn_body = Crux::new("localhost", "3000").docker_client().entity(":ivan".to_string()).unwrap();
 
         assert!(edn_body.to_string().contains("Map"));
     }
@@ -352,7 +261,7 @@ mod client {
         .with_body(expected_body)
         .create();
 
-        let body = Crux::new("localhost", "3000").client().entity_tx(":ivan".to_string()).unwrap();
+        let body = Crux::new("localhost", "3000").docker_client().entity_tx(":ivan".to_string()).unwrap();
 
         assert_eq!(body, EntityTxResponse::default());
     }
@@ -365,7 +274,7 @@ mod client {
         .with_body("{:crux.db/id :jorge-3, :first-name \"Michael\", :last-name \"Jorge\"}")
         .create();
 
-        let response = Crux::new("localhost", "3000").client().document_by_id("1828ebf4466f98ea3f5252a58734208cd0414376".to_string());
+        let response = Crux::new("localhost", "3000").docker_client().document_by_id("1828ebf4466f98ea3f5252a58734208cd0414376".to_string());
 
         assert_eq!(response.unwrap().to_string(), "{:crux.db/id: Key(\":jorge-3\"), :first-name: Str(\"Michael\"), :last-name: Str(\"Jorge\"), }");    
     }
@@ -380,7 +289,7 @@ mod client {
             .create();
         let args = vec!["1828ebf4466f98ea3f5252a58734208cd0414376".to_string(), "6279916e3020d6dc928077f53529e95d205a9465".to_string()];
 
-        let body = Crux::new("localhost", "3000").client().documents(args).unwrap();
+        let body = Crux::new("localhost", "3000").docker_client().documents(args).unwrap();
 
         assert_eq!(body, documents_response());
     }

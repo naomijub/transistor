@@ -1,4 +1,5 @@
-use transistor::docker::{Crux,Action};
+use transistor::docker::{Action};
+use transistor::client::Crux;
 use transistor::types::{CruxId};
 use transistor::edn_rs::{ser_struct, Serialize};
 
@@ -15,7 +16,7 @@ fn main() {
         last_name: "Documents".to_string()
     };
 
-    let client = Crux::new("localhost", "3000").client();
+    let client = Crux::new("localhost", "3000").docker_client();
     let put_person1 = Action::Put(person1.clone().serialize());
     let put_person2 = Action::Put(person2.clone().serialize());
 

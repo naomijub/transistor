@@ -1,7 +1,7 @@
-use transistor::docker::Crux;
+use transistor::client::Crux;
 
 fn main() {
-    let body = Crux::new("localhost", "3000").client().state().unwrap();
+    let body = Crux::new("localhost", "3000").docker_client().state().unwrap();
 
     println!("body = {:?}", body);
     // body = StateResponse { 
