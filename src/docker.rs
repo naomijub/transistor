@@ -1,6 +1,6 @@
 use reqwest::{
     Result,
-    header::{HeaderMap,AUTHORIZATION, CONTENT_TYPE},
+    header::{HeaderMap},
     blocking::{Client}, 
 };
 use std::collections::BTreeMap;
