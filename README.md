@@ -8,6 +8,12 @@ A Crux Client crate. For now, this crate intends to support 2 ways to interact w
 
 > Other solutions may be added after the first release.
 
+To add this crate to your project you should add the following line to `dependencies` in `Cargo.toml`:
+>
+> ```
+> transistor = "0.2.4"
+> ```
+
 * For information on Crux and how to use it, please follow the link to [opencrux](https://opencrux.com/docs#restapi). Note that the current crate version (`Docker only`) uses a few modified endpoints due to its Docker implementation.
 
 * For examples on usage, please refer to [examples directory](https://github.com/naomijub/transistor/tree/master/examples).
@@ -241,3 +247,6 @@ let documents = client.documents(contesnt_hashes).unwrap();
 
 ## Dependencies
 A strong dependency of this crate is the [edn-rs](https://crates.io/crates/edn-rs) crate, as many of the return types are in the [Edn format](https://github.com/edn-format/edn). The sync http client is `reqwest` with `blocking` feature enabled.
+
+## Licensing
+This project is licensed under LGPP-3.0 (GNU Lesser General Public License v3.0).
