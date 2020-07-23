@@ -46,9 +46,10 @@ mod test {
         Serialize,
     };
     use super::Query;
+    // use crate::{clause};
     
     #[test]
-    fn query_with_find_andwhere() {
+    fn query_with_find_and_where() {
         let exoected = "{:query\n {:find [p1]\n  :where [[p1 :first-name n]\n[p1 :last-name \"Jorge\"]]}}";
         let q = Query::find(vec!["p1"])
         .where_clause(vec!["p1 :first-name n", "p1 :last-name \"Jorge\""])
@@ -56,4 +57,53 @@ mod test {
 
         assert_eq!(q.unwrap().serialize(), exoected);
     }
+
+    // #[test]
+    // fn where_clause() {
+    //     let c = clause![p1 :hello n];
+
+    //     assert_eq!(c,"[p1 :hello n]");
+    // }
+
+    // #[test]
+    // fn named_where_clause() {
+    //     let c = clause![p1 :hello/world n];
+
+    //     assert_eq!(c,"[p1 :hello/world n]");
+    // }
+
+    // #[test]
+    // fn simple_dashed_where_clause() {
+    //     let c = clause![p1 :hello-world n];
+
+    //     assert_eq!(c,"[p1 :hello-world n]");
+    // }
+
+    // #[test]
+    // fn long_dashed_where_clause() {
+    //     let c = clause![p1 :hello-julia-world n];
+
+    //     assert_eq!(c,"[p1 :hello-julia-world n]");
+    // }
+
+    // #[test]
+    // fn named_long_dashed_where_clause() {
+    //     let c = clause![p1 :hello-julia-world/crux n];
+
+    //     assert_eq!(c,"[p1 :hello-julia-world/crux n]");
+    // }
+
+    // #[test]
+    // fn str_where_clause() {
+    //     let c = clause![p1 :hello-julia-world/crux "n"];
+
+    //     assert_eq!(c,"[p1 :hello-julia-world/crux \"n\"]");
+    // }
+
+    // #[test]
+    // fn named_str_where_clause() {
+    //     let c = clause![p1 :hello/crux "n"];
+
+    //     assert_eq!(c,"[p1 :hello/crux \"n\"]");
+    // }
 }
