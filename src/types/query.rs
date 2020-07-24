@@ -3,24 +3,29 @@ use edn_rs::Serialize;
 #[derive(Clone)]
 pub struct Query {
     find: Vec<String>,
-    whr: Option<Vec<String>>,
+    where_: Option<Vec<String>>,
 }
 
 impl Query {
     pub fn find(find: Vec<&str>) -> Self {
         Self {
             find: find.into_iter().map(String::from).collect::<Vec<String>>(),
-            whr: None,
+            where_: None,
         }
     }
 
-    pub fn where_clause(mut self, whr: Vec<&str>) -> Self {
-        self.whr = Some(whr.into_iter().map(String::from).collect::<Vec<String>>());
+    pub fn where_clause(mut self, where_: Vec<&str>) -> Self {
+        self.where_ = Some(
+            where_
+                .into_iter()
+                .map(String::from)
+                .collect::<Vec<String>>(),
+        );
         self
     }
 
     pub fn build(self) -> Result<Self, String> {
-        if self.whr.is_none() {
+        if self.where_.is_none() {
             Err(String::from("Where clause is required"))
         } else {
             Ok(self)
@@ -33,7 +38,7 @@ impl Serialize for Query {
         let mut q = String::from("{:query\n {:find [");
         q.push_str(&self.find.join(" "));
         q.push_str("]\n  :where [[");
-        q.push_str(&self.whr.unwrap_or(vec!["".to_string()]).join("]\n["));
+        q.push_str(&self.where_.unwrap_or(vec!["".to_string()]).join("]\n["));
         q.push_str("]]}}");
         q
     }
