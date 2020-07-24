@@ -1,19 +1,19 @@
-use transistor::docker::{Action};
 use transistor::client::Crux;
-use transistor::types::{CruxId};
+use transistor::docker::Action;
 use transistor::edn_rs::{ser_struct, Serialize};
+use transistor::types::CruxId;
 
 fn main() {
     let person = Person {
-        crux__db___id: CruxId::new("hello-evict"), 
-        first_name: "Hello".to_string(), 
-        last_name: "World".to_string()
+        crux__db___id: CruxId::new("hello-evict"),
+        first_name: "Hello".to_string(),
+        last_name: "World".to_string(),
     };
     println!("{:?}", person.clone().serialize());
     //"{ :crux.db/id :hello-evict, :first-name \"Hello\", :last-name \"World\", }"
 
     let client = Crux::new("localhost", "3000").docker_client();
-    
+
     let put_person = Action::Put(person.clone().serialize());
     let body = client.tx_log(vec![put_person]).unwrap();
     // "[[:crux.tx/put { :crux.db/id :jorge-3, :first-name \"Michael\", :last-name \"Jorge\", }]]"
@@ -23,7 +23,6 @@ fn main() {
     let evict_person = Action::Evict(person.crux__db___id.serialize());
     let evict_body = client.tx_log(vec![evict_person]).unwrap();
     println!("\n Evict Body = {:?}", evict_body);
-
 }
 
 ser_struct! {

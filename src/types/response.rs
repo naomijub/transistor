@@ -1,12 +1,7 @@
-use edn_rs::{
-    ser_struct,
-    Serialize,
-    parse_edn,
-    Edn
-};
-use std::collections::BTreeMap;
+use edn_rs::{parse_edn, ser_struct, Edn, Serialize};
+use std::collections::{BTreeMap, BTreeSet};
 
-ser_struct!{
+ser_struct! {
     #[derive(Debug, PartialEq, Clone)]
     #[allow(non_snake_case)]
     /// Definition for the response of a `GET` at `state` endpoint
@@ -26,19 +21,21 @@ impl StateResponse {
         Self {
             index___index_version: edn[":crux.index/index-version"].to_uint().unwrap_or(0usize),
             doc_log___consumer_state: nullable_str(edn[":crux.doc-log/consumer-state"].to_string()),
-            tx_log___consumer_state:  nullable_str(edn[":crux.tx-log/consumer-state"].to_string()),
+            tx_log___consumer_state: nullable_str(edn[":crux.tx-log/consumer-state"].to_string()),
             kv___kv_store: edn[":crux.kv/kv-store"].to_string().replace("\"", ""),
-            kv___estimate_num_keys: edn[":crux.kv/estimate-num-keys"].to_uint().unwrap_or(0usize),
+            kv___estimate_num_keys: edn[":crux.kv/estimate-num-keys"]
+                .to_uint()
+                .unwrap_or(0usize),
             kv___size: edn[":crux.kv/size"].to_uint().unwrap_or(0usize),
         }
     }
 
     #[cfg(test)]
-    pub fn default() -> Self{
+    pub fn default() -> Self {
         Self {
             index___index_version: 5usize,
             doc_log___consumer_state: None,
-            tx_log___consumer_state:  None,
+            tx_log___consumer_state: None,
             kv___kv_store: String::from("crux.kv.rocksdb.RocksKv"),
             kv___estimate_num_keys: 34usize,
             kv___size: 88489usize,
@@ -50,11 +47,10 @@ impl StateResponse {
 #[allow(non_snake_case)]
 /// Definition for the response of a `POST` at `tx-log` endpoint
 pub struct TxLogResponse {
-    pub tx___tx_id: usize, 
+    pub tx___tx_id: usize,
     pub tx___tx_time: String,
-    pub tx__event___tx_events: Option<Vec<Vec<String>>>
+    pub tx__event___tx_events: Option<Vec<Vec<String>>>,
 }
-
 
 impl TxLogResponse {
     pub fn deserialize(resp: String) -> Self {
@@ -65,9 +61,9 @@ impl TxLogResponse {
     #[cfg(test)]
     pub fn default() -> Self {
         Self {
-            tx___tx_id: 8usize, 
+            tx___tx_id: 8usize,
             tx___tx_time: "2020-07-16T21:53:14.628-00:00".to_string(),
-            tx__event___tx_events: None
+            tx__event___tx_events: None,
         }
     }
 }
@@ -89,11 +85,11 @@ impl TxLogsResponse {
 impl From<Edn> for TxLogsResponse {
     fn from(edn: Edn) -> Self {
         Self {
-            tx_events: edn.iter().unwrap()
-                .map(|e| 
-                    e.to_owned().into()
-                )
-                .collect::<Vec<TxLogResponse>>()
+            tx_events: edn
+                .iter()
+                .unwrap()
+                .map(|e| e.to_owned().into())
+                .collect::<Vec<TxLogResponse>>(),
         }
     }
 }
@@ -101,13 +97,17 @@ impl From<Edn> for TxLogsResponse {
 impl From<Edn> for TxLogResponse {
     fn from(edn: Edn) -> Self {
         Self {
-            tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize), 
+            tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize),
             tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
-            tx__event___tx_events: edn.get(":crux.tx.event/tx-events").map(|e| e.iter().unwrap().map(|el| el.to_vec().unwrap()).collect::<Vec<Vec<String>>>())
+            tx__event___tx_events: edn.get(":crux.tx.event/tx-events").map(|e| {
+                e.iter()
+                    .unwrap()
+                    .map(|el| el.to_vec().unwrap())
+                    .collect::<Vec<Vec<String>>>()
+            }),
         }
     }
 }
-
 
 #[derive(Debug, PartialEq, Clone)]
 #[allow(non_snake_case)]
@@ -117,7 +117,7 @@ pub struct EntityTxResponse {
     pub db___content_hash: String,
     pub db___valid_time: String,
     pub tx___tx_id: usize,
-    pub tx___tx_time: String
+    pub tx___tx_time: String,
 }
 
 impl EntityTxResponse {
@@ -127,8 +127,8 @@ impl EntityTxResponse {
     }
 
     #[cfg(test)]
-    pub fn default() -> Self { 
-        Self{
+    pub fn default() -> Self {
+        Self {
             db___id: "d72ccae848ce3a371bd313865cedc3d20b1478ca".to_string(),
             db___content_hash: "1828ebf4466f98ea3f5252a58734208cd0414376".to_string(),
             db___valid_time: "2020-07-19T04:12:13.788-00:00".to_string(),
@@ -150,10 +150,10 @@ impl From<Edn> for EntityTxResponse {
     }
 }
 
-pub (crate) struct Documents;
+pub(crate) struct Documents;
 
 impl Documents {
-    pub fn deserialize(resp: String, hashes: Vec<String>) -> BTreeMap<String, Edn> {
+    pub(crate) fn deserialize(resp: String, hashes: Vec<String>) -> BTreeMap<String, Edn> {
         let edn = parse_edn(&resp).unwrap();
 
         let mut hm = BTreeMap::new();
@@ -166,6 +166,19 @@ impl Documents {
     }
 }
 
+pub(crate) struct QueryResponse;
+
+impl QueryResponse {
+    pub(crate) fn deserialize(resp: String) -> BTreeSet<Vec<String>> {
+        let edn = parse_edn(&resp.clone()).unwrap();
+
+        edn.set_iter()
+            .unwrap()
+            .map(|e| e.to_vec().unwrap())
+            .collect::<BTreeSet<Vec<String>>>()
+    }
+}
+
 fn nullable_str(s: String) -> Option<String> {
     if s.contains("nil") {
         None
@@ -173,4 +186,3 @@ fn nullable_str(s: String) -> Option<String> {
         Some(s)
     }
 }
-

@@ -1,13 +1,13 @@
-use transistor::docker::{Action};
 use transistor::client::Crux;
-use transistor::types::{CruxId};
+use transistor::docker::Action;
 use transistor::edn_rs::{ser_struct, Serialize};
+use transistor::types::CruxId;
 
 fn main() {
     let person = Person {
-        crux__db___id: CruxId::new("hello-entity"), 
-        first_name: "Hello".to_string(), 
-        last_name: "World".to_string()
+        crux__db___id: CruxId::new("hello-entity"),
+        first_name: "Hello".to_string(),
+        last_name: "World".to_string(),
     };
     println!("{:?}", person.clone().serialize());
     //"{ :crux.db/id :hello-entity, :first-name \"Hello\", :last-name \"World\", }"

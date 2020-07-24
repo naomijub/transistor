@@ -1,19 +1,19 @@
-use transistor::docker::{Action};
 use transistor::client::Crux;
-use transistor::types::{CruxId};
+use transistor::docker::Action;
 use transistor::edn_rs::{ser_struct, Serialize};
+use transistor::types::CruxId;
 
 fn main() {
     let person1 = Person {
-        crux__db___id: CruxId::new("jorge-3"), 
-        first_name: "Michael".to_string(), 
-        last_name: "Jorge".to_string()
+        crux__db___id: CruxId::new("jorge-3"),
+        first_name: "Michael".to_string(),
+        last_name: "Jorge".to_string(),
     };
 
     let person2 = Person {
-        crux__db___id: CruxId::new("manuel-1"), 
-        first_name: "Diego".to_string(), 
-        last_name: "Manuel".to_string()
+        crux__db___id: CruxId::new("manuel-1"),
+        first_name: "Diego".to_string(),
+        last_name: "Manuel".to_string(),
     };
     println!("{:?}", person1.clone().serialize());
     //"{ :crux.db/id :jorge-3, :first-name \"Michael\", :last-name \"Jorge\", }"
@@ -23,9 +23,12 @@ fn main() {
     let action1 = Action::Put(person1.serialize());
     let action2 = Action::Put(person2.serialize());
 
-    let body = Crux::new("localhost", "3000").docker_client().tx_log(vec![action1, action2]).unwrap();
+    let body = Crux::new("localhost", "3000")
+        .docker_client()
+        .tx_log(vec![action1, action2])
+        .unwrap();
     // Request body for vec![action1, action2]
-    // "[[:crux.tx/put { :crux.db/id :jorge-3, :first-name \"Michael\", :last-name \"Jorge\", }], 
+    // "[[:crux.tx/put { :crux.db/id :jorge-3, :first-name \"Michael\", :last-name \"Jorge\", }],
     //   [:crux.tx/put { :crux.db/id :manuel-1, :first-name \"Diego\", :last-name \"Manuel\", }]]"
 
     println!("\n Body = {:?}", body);
