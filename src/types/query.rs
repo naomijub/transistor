@@ -38,10 +38,7 @@ impl Query {
 impl Serialize for Query {
     fn serialize(self) -> String {
         let mut q = String::from("{:query\n {:find [");
-        self.find.iter().for_each(|f| {
-            q.push_str(f);
-            q.push_str(" ")
-        });
+        q.push_str(&self.find.join(" "));
         q.push_str("]\n  :where [[");
         q.push_str(&self.whr.unwrap_or(vec!["".to_string()]).join("]\n["));
         q.push_str("]]}}");
