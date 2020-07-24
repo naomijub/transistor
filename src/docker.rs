@@ -8,9 +8,8 @@ use edn_rs::{edn, Edn, Map, Serialize};
 use reqwest::{blocking::Client, header::HeaderMap, Result};
 use std::collections::{BTreeMap, BTreeSet};
 
-/// `DockerClient` has the `reqwest::blocking::Client`, the `uri` to query and the `HeaderMap` with
-/// all the possible headers. Default header is `Content-Type: "application/edn"`.
-/// Synchronous request.
+/// `DockerClient` has the `reqwest::blocking::Client`,  the `uri` to query and the `HeaderMap` with
+/// all the possible headers. Default header is `Content-Type: "application/edn"`. Synchronous request.
 pub struct DockerClient {
     pub(crate) client: Client,
     pub(crate) uri: String,

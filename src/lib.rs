@@ -4,7 +4,7 @@ pub use edn_rs;
 /// Availables types are:
 /// * `CruxId` is the field that receives a String and serielizes it to a EDN Keyword.
 ///
-/// Availables types for `response`are:
+/// Availables types for `response` are:
 /// * `StateResponse` response for Crux RESTapi at endpoint `/state`.
 /// * `TxLogResponse` response for Crux RESTapi at endpoint `/tx-log`. For `POSTs`, `tx__event___tx_events (:crux-tx.event/tx_events)` comes with `None`.
 /// * `TxLogsResponse` response is the wrapper for a `GET` at endpoint `/tx-logs`, it is a `Vector` of type `TxLogResponse`.
