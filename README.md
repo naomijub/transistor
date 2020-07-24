@@ -8,7 +8,13 @@ A Rust Crux Client crate/lib. For now, this crate intends to support 2 ways to i
 
 > Other solutions may be added after the first release.
 
-To add this crate to your project you should add the following line to `dependencies` in `Cargo.toml`:
+* For information on Crux and how to use it, please follow the link to [opencrux](https://opencrux.com/docs#restapi). Note that the current crate version (`Docker only`) uses a few modified endpoints due to its Docker implementation.
+
+* For examples on usage, please refer to [examples directory](https://github.com/naomijub/transistor/tree/master/examples).
+
+## Usage 
+
+To add this crate to your project you should add one of the following line to your `dependencies` field in `Cargo.toml`:
 >
 > ```
 [dependencies]
@@ -21,11 +27,6 @@ To use `query` function:
 [dependencies]
 > transistor = "0.4.0-BETA"
 > ```
-
-
-* For information on Crux and how to use it, please follow the link to [opencrux](https://opencrux.com/docs#restapi). Note that the current crate version (`Docker only`) uses a few modified endpoints due to its Docker implementation.
-
-* For examples on usage, please refer to [examples directory](https://github.com/naomijub/transistor/tree/master/examples).
 
 ## Creating a Crux Client
 All operations with Transistor start in the module `client` with `Crux::new("localhost", "3000")`.  The struct `Crux` is responsabile for defining request `HeadersMap` and the request `URL`. The `URL` definition is required and it is done by the static function `new`, which receives as argument a `host` and a `port` and returns a `Crux` instance. To change `HeadersMap` info so that you can add `AUTHORIZATION` you can use the function `with_authorization` that receives as argument the authorization token and mutates the `Crux` instance.
