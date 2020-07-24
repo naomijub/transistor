@@ -9,20 +9,13 @@ pub struct Query {
 impl Query {
     pub fn find(find: Vec<&str>) -> Self {
         Self {
-            find: find
-                .into_iter()
-                .map(|f| String::from(f))
-                .collect::<Vec<String>>(),
+            find: find.into_iter().map(String::from).collect::<Vec<String>>(),
             whr: None,
         }
     }
 
     pub fn where_clause(mut self, whr: Vec<&str>) -> Self {
-        self.whr = Some(
-            whr.into_iter()
-                .map(|f| String::from(f))
-                .collect::<Vec<String>>(),
-        );
+        self.whr = Some(whr.into_iter().map(String::from).collect::<Vec<String>>());
         self
     }
 
