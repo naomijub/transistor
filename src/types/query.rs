@@ -46,12 +46,12 @@ mod test {
 
     #[test]
     fn query_with_find_and_where() {
-        let exoected =
+        let expected =
             "{:query\n {:find [p1]\n  :where [[p1 :first-name n]\n[p1 :last-name \"Jorge\"]]}}";
         let q = Query::find(vec!["p1"])
             .where_clause(vec!["p1 :first-name n", "p1 :last-name \"Jorge\""])
             .build();
 
-        assert_eq!(q.unwrap().serialize(), exoected);
+        assert_eq!(q.unwrap().serialize(), expected);
     }
 }
