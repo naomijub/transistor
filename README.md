@@ -17,14 +17,14 @@ A Rust Crux Client crate/lib. For now, this crate intends to support 2 ways to i
 To add this crate to your project you should add one of the following line to your `dependencies` field in `Cargo.toml`:
 >
 > ```
-[dependencies]
+> [dependencies]
 > transistor = "0.3.1"
 > ```
 
 To use `query` function:
 >
 > ```
-[dependencies]
+> [dependencies]
 > transistor = "0.4.0-BETA"
 > ```
 
