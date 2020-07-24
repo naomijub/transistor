@@ -1,6 +1,4 @@
-use reqwest::{
-    header::{HeaderMap,AUTHORIZATION, CONTENT_TYPE},
-};
+use reqwest::header::{HeaderMap, AUTHORIZATION, CONTENT_TYPE};
 
 use crate::docker::DockerClient;
 
@@ -10,18 +8,23 @@ use crate::docker::DockerClient;
 pub struct Crux {
     host: String,
     port: String,
-    headers: HeaderMap
+    headers: HeaderMap,
 }
 
-impl Crux{
+impl Crux {
     /// Define Crux instance with `host:port`
     pub fn new(host: &str, port: &str) -> Self {
-        Self{host: host.to_string(), port: port.to_string(), headers: HeaderMap::new()}
+        Self {
+            host: host.to_string(),
+            port: port.to_string(),
+            headers: HeaderMap::new(),
+        }
     }
 
     /// Function to add `AUTHORIZATION` token to the Crux Client
     pub fn with_authorization(mut self, authorization: &str) -> Self {
-        self.headers.insert(AUTHORIZATION, authorization.parse().unwrap());
+        self.headers
+            .insert(AUTHORIZATION, authorization.parse().unwrap());
         self
     }
 
@@ -36,13 +39,14 @@ impl Crux{
         server_url()
     }
 
-    /// To query database on Docker via http it is necessary to use `DockerClient` 
+    /// To query database on Docker via http it is necessary to use `DockerClient`
     pub fn docker_client(&mut self) -> DockerClient {
-        self.headers.insert(CONTENT_TYPE, "application/edn".parse().unwrap());
+        self.headers
+            .insert(CONTENT_TYPE, "application/edn".parse().unwrap());
         DockerClient {
             client: reqwest::blocking::Client::new(),
             uri: self.uri().clone(),
-            headers: self.headers.clone()
+            headers: self.headers.clone(),
         }
     }
 }
@@ -87,7 +91,9 @@ mod test {
         headers.insert(AUTHORIZATION, "auth".parse().unwrap());
         headers.insert(CONTENT_TYPE, "application/edn".parse().unwrap());
 
-        let actual = Crux::new("127.0.0.1", "1234").with_authorization("auth").docker_client();
+        let actual = Crux::new("127.0.0.1", "1234")
+            .with_authorization("auth")
+            .docker_client();
         let expected = DockerClient {
             client: reqwest::blocking::Client::new(),
             uri: "http://127.0.0.1:1234".to_string(),

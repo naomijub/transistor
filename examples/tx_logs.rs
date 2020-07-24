@@ -1,7 +1,10 @@
-use transistor::client::{Crux};
+use transistor::client::Crux;
 
 fn main() {
-    let body = Crux::new("localhost", "3000").docker_client().tx_logs().unwrap();
+    let body = Crux::new("localhost", "3000")
+        .docker_client()
+        .tx_logs()
+        .unwrap();
 
     println!("Body = {:#?}", body);
     // Body = TxLogsResponse {
@@ -34,5 +37,5 @@ fn main() {
     //         },
     //         ...
     //     ]
-    // }    
+    // }
 }

@@ -1,19 +1,19 @@
-use transistor::docker::{Action};
 use transistor::client::Crux;
-use transistor::types::{CruxId};
+use transistor::docker::Action;
 use transistor::edn_rs::{ser_struct, Serialize};
+use transistor::types::CruxId;
 
 fn main() {
     let person1 = Person {
-        crux__db___id: CruxId::new("hello-entity"), 
-        first_name: "Hello".to_string(), 
-        last_name: "World".to_string()
+        crux__db___id: CruxId::new("hello-entity"),
+        first_name: "Hello".to_string(),
+        last_name: "World".to_string(),
     };
 
     let person2 = Person {
-        crux__db___id: CruxId::new("hello-documents"), 
-        first_name: "Hello".to_string(), 
-        last_name: "Documents".to_string()
+        crux__db___id: CruxId::new("hello-documents"),
+        first_name: "Hello".to_string(),
+        last_name: "Documents".to_string(),
     };
 
     let client = Crux::new("localhost", "3000").docker_client();
@@ -22,8 +22,6 @@ fn main() {
 
     let _ = client.tx_log(vec![put_person1]).unwrap();
     let _ = client.tx_log(vec![put_person2]).unwrap();
-
-
 
     let tx_body1 = client.entity_tx(person1.crux__db___id.serialize()).unwrap();
     let tx_body2 = client.entity_tx(person2.crux__db___id.serialize()).unwrap();
