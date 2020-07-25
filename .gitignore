@@ -1,3 +1,4 @@
 /target
 Cargo.lock
 datomic-pro-*.jar
+.DS_Store
