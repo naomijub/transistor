@@ -8,9 +8,8 @@ use edn_rs::{edn, Edn, Map, Serialize};
 use reqwest::{blocking::Client, header::HeaderMap, Result};
 use std::collections::{BTreeMap, BTreeSet};
 
-/// `DockerClient` has the `reqwest::blocking::Client`, the `uri` to query and the `HeaderMap` with
-/// all the possible headers. Default header is `Content-Type: "application/edn"`.
-/// Synchronous request.
+/// `DockerClient` has the `reqwest::blocking::Client`,  the `uri` to query and the `HeaderMap` with
+/// all the possible headers. Default header is `Content-Type: "application/edn"`. Synchronous request.
 pub struct DockerClient {
     pub(crate) client: Client,
     pub(crate) uri: String,
@@ -18,7 +17,8 @@ pub struct DockerClient {
 }
 
 /// Action to perform in Crux. Receives a serialized Edn.
-/// **First field of your edn should be `crux__db___id: CruxId`**
+/// 
+/// **First field of your struct should be `crux__db___id: CruxId`**
 ///
 /// Allowed actions:
 /// * `PUT` - Write a version of a document
@@ -184,6 +184,8 @@ impl DockerClient {
         Ok(Documents::deserialize(resp, content_hashes))
     }
 
+    /// Function `query` requests endpoint `/query` via `POST` which retrives a Set containing a vector of the values defined by the function [`Query::find` - github example](https://github.com/naomijub/transistor/blob/master/examples/simple_query.rs#L53).
+    /// Argument is a `query` of the type `Query`.
     pub fn query(&self, query: Query) -> Result<BTreeSet<Vec<String>>> {
         let resp = self
             .client
@@ -202,6 +204,7 @@ mod docker {
     use super::Action;
     use crate::client::Crux;
     use crate::types::{
+        query::Query,
         response::{EntityTxResponse, StateResponse, TxLogResponse},
         CruxId,
     };
@@ -362,5 +365,29 @@ mod docker {
             Edn::Map(Map::new(val2)),
         );
         hm
+    }
+
+    #[test]
+    fn simple_query() {
+        let expected_body = "#{[:postgres \"Postgres\" true] [:mysql \"MySQL\" true]}";
+        let _m = mock("POST", "/query")
+            .with_status(200)
+            .with_header("content-type", "application/edn")
+            .with_body(expected_body)
+            .create();
+
+        let query = Query::find(vec!["p1", "n", "s"])
+            .where_clause(vec!["p1 :name n", "p1 :is-sql s", "p1 :is-sql true"])
+            .build();
+        let body = Crux::new("localhost", "3000")
+            .docker_client()
+            .query(query.unwrap())
+            .unwrap();
+
+        let response = format!("{:?}", body);
+        assert_eq!(
+            response,
+            "{[\":mysql\", \"MySQL\", \"true\"], [\":postgres\", \"Postgres\", \"true\"]}"
+        );
     }
 }

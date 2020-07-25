@@ -8,15 +8,25 @@ A Rust Crux Client crate/lib. For now, this crate intends to support 2 ways to i
 
 > Other solutions may be added after the first release.
 
-To add this crate to your project you should add the following line to `dependencies` in `Cargo.toml`:
->
-> ```
-> transistor = "0.3.1"
-> ```
-
 * For information on Crux and how to use it, please follow the link to [opencrux](https://opencrux.com/docs#restapi). Note that the current crate version (`Docker only`) uses a few modified endpoints due to its Docker implementation.
 
 * For examples on usage, please refer to [examples directory](https://github.com/naomijub/transistor/tree/master/examples).
+
+## Usage 
+
+To add this crate to your project you should add one of the following line to your `dependencies` field in `Cargo.toml`:
+>
+> ```
+> [dependencies]
+> transistor = "0.3.1"
+> ```
+
+To use `query` function:
+>
+> ```
+> [dependencies]
+> transistor = "0.4.0-BETA"
+> ```
 
 ## Creating a Crux Client
 All operations with Transistor start in the module `client` with `Crux::new("localhost", "3000")`.  The struct `Crux` is responsabile for defining request `HeadersMap` and the request `URL`. The `URL` definition is required and it is done by the static function `new`, which receives as argument a `host` and a `port` and returns a `Crux` instance. To change `HeadersMap` info so that you can add `AUTHORIZATION` you can use the function `with_authorization` that receives as argument the authorization token and mutates the `Crux` instance.
@@ -239,11 +249,35 @@ let documents = client.documents(contesnt_hashes).unwrap();
 //     ),
 // }
 ```
+* `query` requests endpoint [`/query`](https://opencrux.com/docs#rest-query) via `POST`. Argument is a `query` of the type `Query`. Retrives a Set containing a vector of the values defined by the function `Query::find`.
+```rust
+use transistor::client::Crux;
+use transistor::types::{query::Query};
+
+let client = Crux::new("localhost", "3000").docker_client();
+
+let query_is_sql = Query::find(vec!["p1", "n"])
+    .where_clause(vec!["p1 :name n", "p1 :is-sql true"])
+    .build();
+// Query:
+// {:query
+//     {:find [p1 n]
+//      :where [[p1 :name n]
+//              [p1 :is-sql true]]}}
+
+let is_sql = client.query(query_is_sql.unwrap()).unwrap();
+// {[":mysql", "MySQL"], [":postgres", "Postgres"]} BTreeSet
+```
 
 `Action` is an enum with a set of options to use in association with the function `tx_log`:
 * [`PUT`](https://opencrux.com/docs#transactions-put) - Write a version of a document
 * [`Delete`](https://opencrux.com/docs#transactions-delete) - Deletes the specific document at a given valid time
 * [`Evict`](https://opencrux.com/docs#transactions-evict) - Evicts a document entirely, including all historical versions (receives only the ID to evict)
+
+`Query` is a struct responsible for creating the fields and serializing them into the correct `query` format. It has a function for each field and a `build` function to help check if it is correctyly formatted.
+* `find` is a static function to define the elements inside the `:find` clause.
+* `where_clause` is a function that defines the vector os elements inside the `:where []` array.
+
 
 ## Dependencies
 A strong dependency of this crate is the [edn-rs](https://crates.io/crates/edn-rs) crate, as many of the return types are in the [Edn format](https://github.com/edn-format/edn). The sync http client is `reqwest` with `blocking` feature enabled.

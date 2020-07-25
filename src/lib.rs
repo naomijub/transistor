@@ -4,7 +4,7 @@ pub use edn_rs;
 /// Availables types are:
 /// * `CruxId` is the field that receives a String and serielizes it to a EDN Keyword.
 ///
-/// Availables types for `response`are:
+/// Availables types for `response` are:
 /// * `StateResponse` response for Crux RESTapi at endpoint `/state`.
 /// * `TxLogResponse` response for Crux RESTapi at endpoint `/tx-log`. For `POSTs`, `tx__event___tx_events (:crux-tx.event/tx_events)` comes with `None`.
 /// * `TxLogsResponse` response is the wrapper for a `GET` at endpoint `/tx-logs`, it is a `Vector` of type `TxLogResponse`.
@@ -20,8 +20,10 @@ pub mod types;
 /// * `entity_tx` requests endpoint `/entity-tx` via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument.
 /// * `document_by_id` requests endpoint `/document/{:content-hash}` via `GET`. `{:content-hash}` can be obtained with function `entity_tx`.
 /// * `documents` requests endpoint `/documents` via `POST`. The argument of this reuqest is a vector of `content-hashes` that converts to an edn set as a body.
+/// * `query` requests endpoint `/query` via `POST`. Argument is a `query` of the type `Query`. Retrives a Set containing a vector of the values defined by the function `Query::find`.
 ///
-/// Enum [`Action`](../docker/enum.Action.html) is available in this module
+/// Enum [`Action`](../docker/enum.Action.html) is available in this module.
+/// 
 /// Examples can be found in the [examples directory](https://github.com/naomijub/transistor/tree/master/examples).
 pub mod docker;
 // pub mod http;

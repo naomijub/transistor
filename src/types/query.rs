@@ -1,5 +1,8 @@
 use edn_rs::Serialize;
 
+/// A `Query` is a special kind of body that we submit to the `query` function. It has the following fields:
+/// * `find` is responsible for defining which elements of the query you want shown in the response, it is **required**. Argument is a vector with elements to be queried, `vec!["a", "b", "c"]`. It is parsed as `:find [a b c]`, qhere `a, b, c` are the elements defined in `where` clause.
+/// * `where_clause` is responsible for defining which rules will be applied to filter elements, it is **required**. Argument is a vector with the string containing the filtering function, `vec!["a :db-key1 b", "a :db-key2 c", "a :db-key3 <some value>"]`. It is parsed as `:where [ [a :db-key1 b] [a :db-key2 c] [a :db-key3 <some value>] ]`.
 #[derive(Clone)]
 pub struct Query {
     find: Vec<String>,
@@ -7,6 +10,7 @@ pub struct Query {
 }
 
 impl Query {
+    /// `find` is the function responsible for defining the `:find` key in the query.
     pub fn find(find: Vec<&str>) -> Self {
         Self {
             find: find.into_iter().map(String::from).collect::<Vec<String>>(),
@@ -14,6 +18,7 @@ impl Query {
         }
     }
 
+    /// `where_clause` is the function responsible for defining the `:where` key in the query.
     pub fn where_clause(mut self, where_: Vec<&str>) -> Self {
         self.where_ = Some(
             where_
@@ -24,6 +29,7 @@ impl Query {
         self
     }
 
+    /// `build` function helps you assert that required fields were implemented.
     pub fn build(self) -> Result<Self, String> {
         if self.where_.is_none() {
             Err(String::from("Where clause is required"))

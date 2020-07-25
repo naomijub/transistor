@@ -10,11 +10,14 @@ pub struct CruxId(String);
 impl Serialize for CruxId {
     fn serialize(mut self) -> String {
         self.0.insert(0, ':');
-        format!("{}", self.0)
+
+        format!("{}", self.0.replace(" ", "-"))
     }
 }
 
 impl CruxId {
+    /// `CruxId::new` receives a regular string and parses it to the `Edn::Key` format.
+    /// `CruxId::new("Jorge da Silva") -> Edn::Key(":Jorge-da-Silva")`
     pub fn new(id: &str) -> Self {
         Self { 0: id.to_string() }
     }
