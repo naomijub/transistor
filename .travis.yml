@@ -23,3 +23,4 @@ script:
     - cargo run --example documents
     - cargo run --example document_by_id
     - cargo run --example simple_query
+    - cargo run --example query_error

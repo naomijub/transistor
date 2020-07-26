@@ -4,7 +4,7 @@ use edn_rs::Serialize;
 /// A `Query` is a special kind of body that we submit to the `query` function. It has the following fields:
 /// * `find` is responsible for defining which elements of the query you want shown in the response, it is **required**. Argument is a vector with elements to be queried, `vec!["a", "b", "c"]`. It is parsed as `:find [a b c]`, qhere `a, b, c` are the elements defined in `where` clause.
 /// * `where_clause` is responsible for defining which rules will be applied to filter elements, it is **required**. Argument is a vector with the string containing the filtering function, `vec!["a :db-key1 b", "a :db-key2 c", "a :db-key3 <some value>"]`. It is parsed as `:where [ [a :db-key1 b] [a :db-key2 c] [a :db-key3 <some value>] ]`.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Query {
     find: Vec<String>,
     where_: Option<Vec<String>>,
@@ -57,6 +57,7 @@ impl Serialize for Query {
 mod test {
     use super::Query;
     use edn_rs::Serialize;
+    use crate::client::Crux;
 
     #[test]
     fn query_with_find_and_where() {
@@ -67,5 +68,15 @@ mod test {
             .build();
 
         assert_eq!(q.unwrap().serialize(), expected);
+    }
+
+    #[test]
+    #[should_panic(expected = "Where clause is required")]
+    fn expect_query_format_error() {
+        let client = Crux::new("","").docker_client();
+        let query_where_is_none = Query::find(vec!["p1", "n"])
+        .build().unwrap();
+
+        let _ = client.query(query_where_is_none).unwrap();
     }
 }
