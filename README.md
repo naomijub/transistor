@@ -250,6 +250,7 @@ let documents = client.documents(contesnt_hashes).unwrap();
 // }
 ```
 * `query` requests endpoint [`/query`](https://opencrux.com/docs#rest-query) via `POST`. Argument is a `query` of the type `Query`. Retrives a Set containing a vector of the values defined by the function `Query::find`.
+Available functions are `find`, `where_clause`, `args`, `order_by`, `limit`, `offset`.
 ```rust
 use transistor::client::Crux;
 use transistor::types::{query::Query};
