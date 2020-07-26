@@ -23,7 +23,7 @@ pub mod types;
 /// * `query` requests endpoint `/query` via `POST`. Argument is a `query` of the type `Query`. Retrives a Set containing a vector of the values defined by the function `Query::find`.
 ///
 /// Enum [`Action`](../docker/enum.Action.html) is available in this module.
-/// 
+///
 /// Examples can be found in the [examples directory](https://github.com/naomijub/transistor/tree/master/examples).
 pub mod docker;
 // pub mod http;

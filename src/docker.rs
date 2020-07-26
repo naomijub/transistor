@@ -17,7 +17,7 @@ pub struct DockerClient {
 }
 
 /// Action to perform in Crux. Receives a serialized Edn.
-/// 
+///
 /// **First field of your struct should be `crux__db___id: CruxId`**
 ///
 /// Allowed actions:

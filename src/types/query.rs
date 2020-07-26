@@ -10,7 +10,7 @@ pub struct Query {
     args: Option<Args>,
     order_by: Option<OrderBy>,
     limit: Option<Limit>,
-    offset: Option<Offset>
+    offset: Option<Offset>,
 }
 #[derive(Clone)]
 struct Find(Vec<String>);
@@ -32,7 +32,9 @@ impl Query {
     /// Becomes: `:find [time, device-id, temperature, humidity]`.
     pub fn find(find: Vec<&str>) -> Self {
         Self {
-            find: Find{0: find.into_iter().map(String::from).collect::<Vec<String>>()},
+            find: Find {
+                0: find.into_iter().map(String::from).collect::<Vec<String>>(),
+            },
             where_: None,
             args: None,
             order_by: None,
@@ -47,12 +49,11 @@ impl Query {
     /// Becomes:
     /// `:where [[c :condition/time time] [c :condition/device-id device-id] [c :condition/temperature temperature] [c :condition/humidity humidity]]`.
     pub fn where_clause(mut self, where_: Vec<&str>) -> Self {
-        let w = where_.iter().map(|s| s.replace("[","").replace("]","")).collect::<Vec<String>>();
-        self.where_ = Some(
-            Where {
-                0: w
-            }
-        );
+        let w = where_
+            .iter()
+            .map(|s| s.replace("[", "").replace("]", ""))
+            .collect::<Vec<String>>();
+        self.where_ = Some(Where { 0: w });
         self
     }
 
@@ -61,12 +62,11 @@ impl Query {
     /// Ex: `vec!["?n \"Ivan\" ?l \"Ivanov\"", "?n \"Petr\" ?l \"Petrov\""]`.
     /// Becomes: `:args [{?n "Ivan" ?l "Ivanov"} {?n "Petr" ?l "Petrov"}]`.
     pub fn args(mut self, args: Vec<&str>) -> Self {
-        let a = args.iter().map(|s| s.replace("{","").replace("}","")).collect::<Vec<String>>();
-        self.args = Some(
-            Args {
-                0: a 
-            }
-        );
+        let a = args
+            .iter()
+            .map(|s| s.replace("{", "").replace("}", ""))
+            .collect::<Vec<String>>();
+        self.args = Some(Args { 0: a });
         self
     }
 
@@ -75,12 +75,11 @@ impl Query {
     /// Ex: `vec!["time :desc", "device-id :asc"]`.
     /// Becomes: `:order-by [[time :desc] [device-id :asc]]`.
     pub fn order_by(mut self, order_by: Vec<&str>) -> Self {
-        let o = order_by.iter().map(|s| s.replace("{","").replace("}","")).collect::<Vec<String>>();
-        self.order_by = Some(
-            OrderBy {
-                0: o
-            }
-        );
+        let o = order_by
+            .iter()
+            .map(|s| s.replace("{", "").replace("}", ""))
+            .collect::<Vec<String>>();
+        self.order_by = Some(OrderBy { 0: o });
         self
     }
 
@@ -88,11 +87,7 @@ impl Query {
     /// Input is a usize with the query limit size.
     /// `.limit(5usize)` Becomes: `:limit 5`.
     pub fn limit(mut self, limit: usize) -> Self {
-        self.limit = Some(
-            Limit {
-                0: limit
-            }
-        );
+        self.limit = Some(Limit { 0: limit });
         self
     }
 
@@ -100,11 +95,7 @@ impl Query {
     /// Input is a usize with the query offset.
     /// `.offset(5usize)` Becomes: `:offset 5`.
     pub fn offset(mut self, offset: usize) -> Self {
-        self.offset = Some(
-            Offset {
-                0: offset
-            }
-        );
+        self.offset = Some(Offset { 0: offset });
         self
     }
 
