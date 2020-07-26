@@ -1,3 +1,4 @@
+use crate::types::error::CruxError;
 use edn_rs::Serialize;
 
 /// A `Query` is a special kind of body that we submit to the `query` function. It has the following fields:
@@ -30,9 +31,11 @@ impl Query {
     }
 
     /// `build` function helps you assert that required fields were implemented.
-    pub fn build(self) -> Result<Self, String> {
+    pub fn build(self) -> Result<Self, CruxError> {
         if self.where_.is_none() {
-            Err(String::from("Where clause is required"))
+            Err(CruxError::QueryFormatError(String::from(
+                "Where clause is required",
+            )))
         } else {
             Ok(self)
         }
