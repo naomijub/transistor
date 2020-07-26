@@ -284,6 +284,18 @@ mod docker {
     }
 
     #[test]
+    #[should_panic(expected = "The following Edn cannot be parsed to TxLogs: Symbol(\\\"Holy\\\")")]
+    fn tx_log_error() {
+        let _m = mock("GET", "/tx-log")
+        .with_status(200)
+        .with_header("content-type", "application/edn")
+        .with_body("Holy errors!")
+        .create();
+
+        let _error = Crux::new("localhost", "4000").docker_client().tx_logs().unwrap();
+    }
+
+    #[test]
     fn entity() {
         let expected_body = "Map(Map({\":crux.db/id\": Key(\":hello-entity\"), \":first-name\": Str(\"Hello\"), \":last-name\": Str(\"World\")}))";
         let _m = mock("POST", "/entity")

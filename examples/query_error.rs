@@ -2,15 +2,16 @@ use transistor::client::Crux;
 use transistor::types::{query::Query};
 
 fn main() -> Result<(), transistor::types::error::CruxError>{
-    let client = Crux::new("localhost", "3000").docker_client();
+    let _client = Crux::new("localhost", "3000").docker_client();
 
     // field `n` doesn't exist
-    let query_error_response = Query::find(vec!["p1", "n"])
+    let _query_error_response = Query::find(vec!["p1", "n"])
         .where_clause(vec!["p1 :name g", "p1 :is-sql true"])
         .build();
 
-    let error = client.query(query_error_response?)?;
-    println!("Stacktrace \n{:?}", error);
+    // let error = client.query(query_error_response?)?;
+    // println!("Stacktrace \n{:?}", error);
+
     // Stacktrace
     // QueryError("{:via
     //      [{:type java.lang.IllegalArgumentException,

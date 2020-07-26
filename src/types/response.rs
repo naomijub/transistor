@@ -88,6 +88,7 @@ impl From<Edn> for TxLogsResponse {
         Self {
             tx_events: edn
                 .iter()
+                .ok_or(CruxError::ParseEdnError(format!("The following Edn cannot be parsed to TxLogs: {:?}", edn)))
                 .unwrap()
                 .map(|e| e.to_owned().into())
                 .collect::<Vec<TxLogResponse>>(),
@@ -102,6 +103,7 @@ impl From<Edn> for TxLogResponse {
             tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
             tx__event___tx_events: edn.get(":crux.tx.event/tx-events").map(|e| {
                 e.iter()
+                    .ok_or(CruxError::ParseEdnError(format!("The following Edn cannot be parsed to TxLog: {:?}", edn)))
                     .unwrap()
                     .map(|el| el.to_vec().unwrap())
                     .collect::<Vec<Vec<String>>>()
@@ -181,6 +183,7 @@ impl QueryResponse {
 
         Ok(edn
             .set_iter()
+            .ok_or(CruxError::ParseEdnError(format!("The following Edn cannot be parsed to BTreeSet: {:?}", edn)))
             .unwrap()
             .map(|e| e.to_vec().unwrap())
             .collect::<BTreeSet<Vec<String>>>())
