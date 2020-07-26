@@ -1,8 +1,12 @@
 use edn_rs::Serialize;
 
-/// A `Query` is a special kind of body that we submit to the `query` function. It has the following fields:
+/// A [`Query`](https://opencrux.com/docs#queries) is a special kind of body that we submit to the `query` function. It has the following fields:
 /// * `find` is responsible for defining which elements of the query you want shown in the response, it is **required**. Argument is a vector with elements to be queried, `vec!["a", "b", "c"]`. It is parsed as `:find [a b c]`, qhere `a, b, c` are the elements defined in `where` clause.
-/// * `where_clause` is responsible for defining which rules will be applied to filter elements, it is **required**. Argument is a vector with the string containing the filtering function, `vec!["a :db-key1 b", "a :db-key2 c", "a :db-key3 <some value>"]`. It is parsed as `:where [ [a :db-key1 b] [a :db-key2 c] [a :db-key3 <some value>] ]`.
+/// * `where_clause` is responsible for defining which rules will be applied to filter elements, it is **required**. Argument is a vector with the strings containing the filtering function, `vec!["a :db-key1 b", "a :db-key2 c", "a :db-key3 <some value>"]`. It is parsed as `:where [ [a :db-key1 b] [a :db-key2 c] [a :db-key3 <some value>] ]`.
+/// * `args` is responsible for defining arguments to be replaced in `where_clause`, **optional**. Argument is a vector with strings containing the matches `vec!["?n \"Ivan\" ?l \"Ivanov\"", "?n \"Petr\" ?l \"Petrov\""]`.
+/// * `order_by` is responsible for defining the order in which the response will be represented, **optional**. Argument is a vector with strings containing the element and how to order (`:asc` or `:desc`) `vec!["time :desc", "device-id :asc"]`.
+/// * `limit` is responsible for defining the limit size of the response, **optional**. Argument is a usize.
+/// * `offset` is responsible for defining the offset of the response, **optional**. Argument is a usize.
 #[derive(Clone)]
 pub struct Query {
     find: Find,
