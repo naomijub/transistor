@@ -278,6 +278,10 @@ let is_sql = client.query(query_is_sql.unwrap()).unwrap();
 `Query` is a struct responsible for creating the fields and serializing them into the correct `query` format. It has a function for each field and a `build` function to help check if it is correctyly formatted.
 * `find` is a static function to define the elements inside the `:find` clause.
 * `where_clause` is a function that defines the vector os elements inside the `:where []` array.
+* `order_by` is a static function to define the elements inside the `:order-by` clause.
+* `args` is a static function to define the elements inside the `:args` clause.
+* `limit` is a static function to define the elements inside the `:limit` clause.
+* `offset` is a static function to define the elements inside the `:offset` clause.
 
 
 ## Dependencies
