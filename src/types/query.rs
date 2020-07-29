@@ -81,7 +81,7 @@ impl Query {
     pub fn order_by(mut self, order_by: Vec<&str>) -> Self {
         let o = order_by
             .iter()
-            .map(|s| s.replace("{", "").replace("}", ""))
+            .map(|s| s.replace("[", "").replace("]", ""))
             .collect::<Vec<String>>();
         self.order_by = Some(OrderBy { 0: o });
         self
