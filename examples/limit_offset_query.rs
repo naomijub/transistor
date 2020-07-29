@@ -1,9 +1,12 @@
 use transistor::client::Crux;
 use transistor::docker::Action;
 use transistor::edn_rs::{ser_struct, Serialize};
-use transistor::types::{query::Query, CruxId};
+use transistor::types::{
+    error::CruxError,
+    {query::Query, CruxId}
+};
 
-fn main() {
+fn main() -> Result<(), CruxError> {
     let crux = Database {
         crux__db___id: CruxId::new("crux"),
         name: "Crux Datalog".to_string(),
@@ -42,24 +45,25 @@ fn main() {
     let action5 = Action::Put(sqlserver.serialize());
 
     let _ = client
-        .tx_log(vec![action1, action2, action3, action4, action5])
-        .unwrap();
+        .tx_log(vec![action1, action2, action3, action4, action5])?;
     // Request body for vec![action1, action2]
     // "[[:crux.tx/put { :crux.db/id :crux, :name \"Crux Datalog\", :is-sql false, }],
     //   [:crux.tx/put { :crux.db/id :mysql, :name \"MySQL\", :is-sql true, }],
     //   [:crux.tx/put { :crux.db/id :postgres, :name \"Postgres\", :is-sql true, }]]"
 
     let query_is_sql = Query::find(vec!["p1", "n"])
-        .where_clause(vec!["p1 :name n"])
+        .where_clause(vec!["p1 :name n"])?
         .order_by(vec!["n :desc"])
         .limit(3)
         .offset(1)
         .build();
     // "{:query\n {:find [p1 n]\n:where [[p1 :name n]]\n:order-by [[n :desc]]\n:limit 3\n:offset 1\n}}"
 
-    let is_sql = client.query(query_is_sql.unwrap()).unwrap();
+    let is_sql = client.query(query_is_sql?)?;
     println!("{:?}", is_sql);
     // {[":crux", "Crux Datalog"], [":mysql", "MySQL"], [":postgres", "Postgres"]}
+
+    Ok(())
 }
 
 ser_struct! {

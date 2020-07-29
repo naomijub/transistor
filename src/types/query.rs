@@ -53,13 +53,17 @@ impl Query {
     /// Ex: `vec!["c :condition/time time", "c :condition/device-id device-id", "c :condition/temperature temperature", "c :condition/humidity humidity"]`.
     /// Becomes:
     /// `:where [[c :condition/time time] [c :condition/device-id device-id] [c :condition/temperature temperature] [c :condition/humidity humidity]]`.
-    pub fn where_clause(mut self, where_: Vec<&str>) -> Self {
+    pub fn where_clause(mut self, where_: Vec<&str>) -> Result<Self,CruxError> {
+        let args = where_.join(" ");
+        if !self.find.0.iter().all(|e| args.contains(e)) {
+            return Err(CruxError::QueryFormatError(format!("Not all element of find, {:?}, are present in the where clause, {:?}",self.find.0, where_ )));
+        }
         let w = where_
             .iter()
             .map(|s| s.replace("[", "").replace("]", ""))
             .collect::<Vec<String>>();
         self.where_ = Some(Where { 0: w });
-        self
+        Ok(self)
     }
 
     /// `args` is the function responsible for defining the optional `:args` key in the query.
@@ -203,7 +207,7 @@ mod test {
         let expected =
             "{:query\n {:find [p1]\n:where [[p1 :first-name n]\n[p1 :last-name \"Jorge\"]]\n}}";
         let q = Query::find(vec!["p1"])
-            .where_clause(vec!["p1 :first-name n", "p1 :last-name \"Jorge\""])
+            .where_clause(vec!["p1 :first-name n", "p1 :last-name \"Jorge\""]).unwrap()
             .build();
 
         assert_eq!(q.unwrap().serialize(), expected);
@@ -224,7 +228,7 @@ mod test {
         let expected =
             "{:query\n {:find [p1]\n:where [[p1 :first-name n]\n[p1 :last-name \"Jorge\"]]\n:order-by [[p1 :Asc]]\n}}";
         let q = Query::find(vec!["p1"])
-            .where_clause(vec!["p1 :first-name n", "p1 :last-name \"Jorge\""])
+            .where_clause(vec!["p1 :first-name n", "p1 :last-name \"Jorge\""]).unwrap()
             .order_by(vec!["p1 :Asc"])
             .build();
 
@@ -236,7 +240,7 @@ mod test {
         let expected =
             "{:query\n {:find [p1]\n:where [[p1 :first-name n]\n[p1 :last-name ?n]]\n:args [{?n \"Jorge\"}]\n}}";
         let q = Query::find(vec!["p1"])
-            .where_clause(vec!["p1 :first-name n", "p1 :last-name ?n"])
+            .where_clause(vec!["p1 :first-name n", "p1 :last-name ?n"]).unwrap()
             .args(vec!["?n \"Jorge\""])
             .build();
 
@@ -248,7 +252,7 @@ mod test {
         let expected =
             "{:query\n {:find [p1]\n:where [[p1 :first-name n]\n[p1 :last-name n]]\n:limit 5\n:offset 10\n}}";
         let q = Query::find(vec!["p1"])
-            .where_clause(vec!["p1 :first-name n", "p1 :last-name n"])
+            .where_clause(vec!["p1 :first-name n", "p1 :last-name n"]).unwrap()
             .limit(5)
             .offset(10)
             .build();
@@ -261,7 +265,7 @@ mod test {
         let expected =
             "{:query\n {:find [p1]\n:where [[p1 :first-name n]\n[p1 :last-name ?n]]\n:args [{?n \"Jorge\"}]\n:order-by [[p1 :Asc]]\n:limit 5\n:offset 10\n}}";
         let q = Query::find(vec!["p1"])
-            .where_clause(vec!["p1 :first-name n", "p1 :last-name ?n"])
+            .where_clause(vec!["p1 :first-name n", "p1 :last-name ?n"]).unwrap()
             .args(vec!["?n \"Jorge\""])
             .order_by(vec!["p1 :Asc"])
             .limit(5)
