@@ -176,9 +176,6 @@ pub(crate) struct QueryResponse;
 
 impl QueryResponse {
     pub(crate) fn deserialize(resp: String) -> Result<BTreeSet<Vec<String>>, CruxError> {
-        if !resp.starts_with("#") {
-            return Err(CruxError::QueryError(resp));
-        }
         let edn = parse_edn(&resp.clone()).unwrap();
         if edn.set_iter().is_some() {
             Ok(edn.set_iter()
