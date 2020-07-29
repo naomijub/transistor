@@ -35,6 +35,9 @@ impl Query {
     /// Input should be the elements to be queried by the `where_clause`.
     /// Ex: `vec!["time", "device-id", "temperature", "humidity"]`.
     /// Becomes: `:find [time, device-id, temperature, humidity]`.
+    /// 
+    /// Error cases:
+    /// * All elements should start with `?`, example `vec!["?p1", "?n", "?g"]`. If theey do not start the CruxError::QueryFormatError containing `All elements of find clause should start with '?', element '{}' doesn't conform` is thrown.
     pub fn find(find: Vec<&str>) -> Result<Self, CruxError> {
         if find.iter().any(|e| !e.starts_with("?")) {
             let error = find.iter().find(|e| !e.starts_with("?")).unwrap();
@@ -58,6 +61,9 @@ impl Query {
     /// Ex: `vec!["c :condition/time time", "c :condition/device-id device-id", "c :condition/temperature temperature", "c :condition/humidity humidity"]`.
     /// Becomes:
     /// `:where [[c :condition/time time] [c :condition/device-id device-id] [c :condition/temperature temperature] [c :condition/humidity humidity]]`.
+    /// 
+    /// Error cases:
+    /// * All elements present in find clause should be present in where clause. If your find clause is `"?p", "?n", "?s"`, and your where clause is `"?p1 :alpha ?n", "?p1 :beta true"` an error `Not all element of find, `"?p", "?n", "?s"`, are present in the where clause, ?s is missing` is thrown.
     pub fn where_clause(mut self, where_: Vec<&str>) -> Result<Self,CruxError> {
         if self.find.0.iter().any(|e| !where_.join(" ").contains(e)) {
             let error = self.find.0.iter().find(|e| !where_.join(" ").contains(*e)).unwrap();
@@ -88,6 +94,10 @@ impl Query {
     /// Input is the elements to be ordered by, the first element is the first order, the second is the further orthers. Allowed keys are `:Asc`and `:desc`.
     /// Ex: `vec!["time :desc", "device-id :asc"]`.
     /// Becomes: `:order-by [[time :desc] [device-id :asc]]`.
+    /// 
+    /// Error cases:
+    /// * The second element of each order clause should be `:asc` or `:desc`, if different, like `:eq` in `"?p1 :asc", "?n :desc", "?s :eq"`, error `Order element should be ':asc' or ':desc'` is thrown.
+    /// * The first element of each order clause should be present in the find clause. If the order clause is `"?p1 :asc", "?n :desc", "?g :asc"` and the find clause is `"?p1", "?n"` the error `All elements to be ordered should be present in find clause, ?g not present` is thrown.
     pub fn order_by(mut self, order_by: Vec<&str>) -> Result<Self, CruxError> {
         let f = self.find.0.join(" ");
         if !order_by.iter()
