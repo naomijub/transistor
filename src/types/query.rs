@@ -88,13 +88,28 @@ impl Query {
     /// Input is the elements to be ordered by, the first element is the first order, the second is the further orthers. Allowed keys are `:Asc`and `:desc`.
     /// Ex: `vec!["time :desc", "device-id :asc"]`.
     /// Becomes: `:order-by [[time :desc] [device-id :asc]]`.
-    pub fn order_by(mut self, order_by: Vec<&str>) -> Self {
+    pub fn order_by(mut self, order_by: Vec<&str>) -> Result<Self, CruxError> {
+        let f = self.find.0.join(" ");
+        if !order_by.iter()
+            .map(|e| e.split(" ").collect::<Vec<&str>>())
+            .map(|e| e[1])
+            .all(|e| e.to_lowercase() == ":asc" || e.to_lowercase() == ":desc") {
+                return Err(CruxError::QueryFormatError("Order element should be ':asc' or ':desc'".to_string()))
+        }
+        if !order_by.iter()
+            .map(|e| e.split(" ").collect::<Vec<&str>>())
+            .map(|e| e[0])
+            .all(|e| f.contains(e)) {
+                let error = order_by.iter().map(|e| e.split(" ").collect::<Vec<&str>>()).map(|e| e[0]).find(|e| !f.contains(e)).unwrap();
+                return Err(CruxError::QueryFormatError(format!("All elements to be ordered should be present in find clause, {} not present", error)))
+        }
+
         let o = order_by
             .iter()
             .map(|s| s.replace("[", "").replace("]", ""))
             .collect::<Vec<String>>();
         self.order_by = Some(OrderBy { 0: o });
-        self
+        Ok(self)
     }
 
     /// `limit` is the function responsible for defining the optional `:limit` key in the query.
@@ -231,10 +246,10 @@ mod test {
     #[test]
     fn query_with_order() {
         let expected =
-            "{:query\n {:find [?p1]\n:where [[?p1 :first-name n]\n[?p1 :last-name \"Jorge\"]]\n:order-by [[?p1 :Asc]]\n}}";
+            "{:query\n {:find [?p1]\n:where [[?p1 :first-name n]\n[?p1 :last-name \"Jorge\"]]\n:order-by [[?p1 :asc]]\n}}";
         let q = Query::find(vec!["?p1"]).unwrap()
             .where_clause(vec!["?p1 :first-name n", "?p1 :last-name \"Jorge\""]).unwrap()
-            .order_by(vec!["?p1 :Asc"])
+            .order_by(vec!["?p1 :asc"]).unwrap()
             .build();
 
         assert_eq!(q.unwrap().serialize(), expected);
@@ -272,7 +287,7 @@ mod test {
         let q = Query::find(vec!["?p1"]).unwrap()
             .where_clause(vec!["?p1 :first-name n", "?p1 :last-name ?n"]).unwrap()
             .args(vec!["?n \"Jorge\""])
-            .order_by(vec!["?p1 :Asc"])
+            .order_by(vec!["?p1 :Asc"]).unwrap()
             .limit(5)
             .offset(10)
             .build();
@@ -285,6 +300,24 @@ mod test {
     fn where_query_format_error() {
         let _query = Query::find(vec!["?p1", "?n", "?s"]).unwrap()
             .where_clause(vec!["?p1 :name ?g", "?p1 :is-sql ?s", "?p1 :is-sql true"]).unwrap()
+            .build();
+    }
+
+    #[test]
+    #[should_panic(expected = "Order element should be \\\':asc\\\' or \\\':desc\\\'")]
+    fn order_should_panic_for_unknow_order_element() {
+        let _query = Query::find(vec!["?p1", "?n", "?s"]).unwrap()
+            .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql ?s", "?p1 :is-sql true"]).unwrap()
+            .order_by(vec!["?p1 :asc", "?n :desc", "?s :eq"]).unwrap()
+            .build();
+    }
+
+    #[test]
+    #[should_panic(expected = "All elements to be ordered should be present in find clause, ?g not present")]
+    fn order_element_should_be_present_in_find_clause() {
+        let _query = Query::find(vec!["?p1", "?n", "?s"]).unwrap()
+            .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql ?s", "?p1 :is-sql true"]).unwrap()
+            .order_by(vec!["?p1 :asc", "?n :desc", "?g :asc"]).unwrap()
             .build();
     }
 }

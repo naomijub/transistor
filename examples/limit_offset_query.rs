@@ -53,7 +53,7 @@ fn main() -> Result<(), CruxError> {
 
     let query_is_sql = Query::find(vec!["?p1", "?n"])?
         .where_clause(vec!["?p1 :name ?n"])?
-        .order_by(vec!["?n :desc"])
+        .order_by(vec!["?n :desc"])?
         .limit(3)
         .offset(1)
         .build();

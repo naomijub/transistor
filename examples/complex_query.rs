@@ -53,7 +53,7 @@ fn main() -> Result<(), CruxError>{
 
     let query_is_sql = Query::find(vec!["?p1", "?n"])?
         .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql ?sql"])?
-        .order_by(vec!["?n :asc"])
+        .order_by(vec!["?n :asc"])?
         .args(vec!["?sql true"])
         .build();
     // "{:query\n {:find [?p1 ?n]\n:where [[?p1 :name ?n]\n[?p1 :is-sql ?sql]]\n:args [{?sql true}]\n:order-by [[?n :asc]]\n}}"
