@@ -10,7 +10,7 @@ pub enum CruxError {
     RequestError(Error),
     /// Query response error, most likely a Clojure stacktrace from Crux response.
     QueryError(String),
-    /// Provide Query struct did not match schema.
+    /// Provided Query struct did not match schema.
     QueryFormatError(String),
 }
 
