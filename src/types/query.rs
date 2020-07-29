@@ -1,3 +1,4 @@
+use crate::types::error::CruxError;
 use edn_rs::Serialize;
 
 /// A [`Query`](https://opencrux.com/docs#queries) is a special kind of body that we submit to the `query` function. It has the following fields:
@@ -104,9 +105,11 @@ impl Query {
     }
 
     /// `build` function helps you assert that required fields were implemented.
-    pub fn build(self) -> Result<Self, String> {
+    pub fn build(self) -> Result<Self, CruxError> {
         if self.where_.is_none() {
-            Err(String::from("Where clause is required"))
+            Err(CruxError::QueryFormatError(String::from(
+                "Where clause is required",
+            )))
         } else {
             Ok(self)
         }
@@ -193,6 +196,7 @@ impl Serialize for Offset {
 mod test {
     use super::Query;
     use edn_rs::Serialize;
+    use crate::client::Crux;
 
     #[test]
     fn query_with_find_and_where() {
@@ -205,6 +209,16 @@ mod test {
         assert_eq!(q.unwrap().serialize(), expected);
     }
 
+    #[test]
+    #[should_panic(expected = "Where clause is required")]
+    fn expect_query_format_error() {
+        let client = Crux::new("","").docker_client();
+        let query_where_is_none = Query::find(vec!["p1", "n"])
+        .build().unwrap();
+
+        let _ = client.query(query_where_is_none).unwrap();
+    }
+    
     #[test]
     fn query_with_order() {
         let expected =

@@ -1,3 +1,4 @@
+use crate::types::error::CruxError;
 use edn_rs::{parse_edn, ser_struct, Edn, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -16,9 +17,9 @@ ser_struct! {
 }
 
 impl StateResponse {
-    pub fn deserialize(resp: String) -> Self {
-        let edn = parse_edn(&resp).unwrap();
-        Self {
+    pub fn deserialize(resp: String) -> Result<Self, CruxError> {
+        let edn = parse_edn(&resp)?;
+        Ok(Self {
             index___index_version: edn[":crux.index/index-version"].to_uint().unwrap_or(0usize),
             doc_log___consumer_state: nullable_str(edn[":crux.doc-log/consumer-state"].to_string()),
             tx_log___consumer_state: nullable_str(edn[":crux.tx-log/consumer-state"].to_string()),
@@ -27,7 +28,7 @@ impl StateResponse {
                 .to_uint()
                 .unwrap_or(0usize),
             kv___size: edn[":crux.kv/size"].to_uint().unwrap_or(0usize),
-        }
+        })
     }
 
     #[cfg(test)]
@@ -53,9 +54,9 @@ pub struct TxLogResponse {
 }
 
 impl TxLogResponse {
-    pub fn deserialize(resp: String) -> Self {
-        let edn = parse_edn(&resp).unwrap();
-        edn.into()
+    pub fn deserialize(resp: String) -> Result<Self, CruxError> {
+        let edn = parse_edn(&resp)?;
+        Ok(edn.into())
     }
 
     #[cfg(test)]
@@ -76,9 +77,9 @@ pub struct TxLogsResponse {
 }
 
 impl TxLogsResponse {
-    pub fn deserialize(resp: String) -> Self {
-        let edn = parse_edn(&resp).unwrap();
-        edn.into()
+    pub fn deserialize(resp: String) -> Result<Self, CruxError> {
+        let edn = parse_edn(&resp)?;
+        Ok(edn.into())
     }
 }
 
@@ -87,6 +88,7 @@ impl From<Edn> for TxLogsResponse {
         Self {
             tx_events: edn
                 .iter()
+                .ok_or(CruxError::ParseEdnError(format!("The following Edn cannot be parsed to TxLogs: {:?}", edn)))
                 .unwrap()
                 .map(|e| e.to_owned().into())
                 .collect::<Vec<TxLogResponse>>(),
@@ -101,6 +103,7 @@ impl From<Edn> for TxLogResponse {
             tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
             tx__event___tx_events: edn.get(":crux.tx.event/tx-events").map(|e| {
                 e.iter()
+                    .ok_or(CruxError::ParseEdnError(format!("The following Edn cannot be parsed to TxLog: {:?}", edn)))
                     .unwrap()
                     .map(|el| el.to_vec().unwrap())
                     .collect::<Vec<Vec<String>>>()
@@ -121,9 +124,9 @@ pub struct EntityTxResponse {
 }
 
 impl EntityTxResponse {
-    pub fn deserialize(resp: String) -> Self {
-        let edn = parse_edn(&resp).unwrap();
-        edn.into()
+    pub fn deserialize(resp: String) -> Result<Self, CruxError> {
+        let edn = parse_edn(&resp)?;
+        Ok(edn.into())
     }
 
     #[cfg(test)]
@@ -153,8 +156,11 @@ impl From<Edn> for EntityTxResponse {
 pub(crate) struct Documents;
 
 impl Documents {
-    pub(crate) fn deserialize(resp: String, hashes: Vec<String>) -> BTreeMap<String, Edn> {
-        let edn = parse_edn(&resp).unwrap();
+    pub(crate) fn deserialize(
+        resp: String,
+        hashes: Vec<String>,
+    ) -> Result<BTreeMap<String, Edn>, CruxError> {
+        let edn = parse_edn(&resp)?;
 
         let mut hm = BTreeMap::new();
         hashes.iter().for_each(|h| {
@@ -162,25 +168,27 @@ impl Documents {
             hm.insert(String::from(h), edn_value);
         });
 
-        hm
+        Ok(hm)
     }
 }
 
 pub(crate) struct QueryResponse;
 
 impl QueryResponse {
-    pub(crate) fn deserialize(resp: String) -> BTreeSet<Vec<String>> {
+    pub(crate) fn deserialize(resp: String) -> Result<BTreeSet<Vec<String>>, CruxError> {
         let edn = parse_edn(&resp.clone()).unwrap();
         if edn.set_iter().is_some() {
-            edn.set_iter()
+            Ok(edn.set_iter()
+                .ok_or(CruxError::ParseEdnError(format!("The following Edn cannot be parsed to BTreeSet: {:?}", edn)))
                 .unwrap()
                 .map(|e| e.to_vec().unwrap())
-                .collect::<BTreeSet<Vec<String>>>()
+                .collect::<BTreeSet<Vec<String>>>())
         } else {
-            edn.iter()
+            Ok(edn.iter()
+                .ok_or(CruxError::ParseEdnError(format!("The following Edn cannot be parsed to BTreeSet: {:?}", edn)))
                 .unwrap()
                 .map(|e| e.to_vec().unwrap())
-                .collect::<BTreeSet<Vec<String>>>()
+                .collect::<BTreeSet<Vec<String>>>())
         }
     }
 }

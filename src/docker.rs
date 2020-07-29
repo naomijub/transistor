@@ -1,11 +1,12 @@
 use crate::types::{
+    error::CruxError,
     query::Query,
     response::{
         Documents, EntityTxResponse, QueryResponse, StateResponse, TxLogResponse, TxLogsResponse,
     },
 };
 use edn_rs::{edn, Edn, Map, Serialize};
-use reqwest::{blocking::Client, header::HeaderMap, Result};
+use reqwest::{blocking::Client, header::HeaderMap};
 use std::collections::{BTreeMap, BTreeSet};
 
 /// `DockerClient` has the `reqwest::blocking::Client`,  the `uri` to query and the `HeaderMap` with
@@ -49,20 +50,20 @@ impl Serialize for Action {
 impl DockerClient {
     /// Function `state` queries endpoint `/` with a `GET`. Returned information consists of
     /// various details about the state of the database and it can be used as a health check.
-    pub fn state(&self) -> Result<StateResponse> {
+    pub fn state(&self) -> Result<StateResponse, CruxError> {
         let resp = self
             .client
             .get(&self.uri)
             .headers(self.headers.clone())
             .send()?
             .text()?;
-        Ok(StateResponse::deserialize(resp))
+        StateResponse::deserialize(resp)
     }
 
     /// Function `tx_log` requests endpoint `/tx-log` via `POST` which allow you to send actions `Action`
     /// to CruxDB.
     /// The "write" endpoint, to post transactions.
-    pub fn tx_log(&self, actions: Vec<Action>) -> Result<TxLogResponse> {
+    pub fn tx_log(&self, actions: Vec<Action>) -> Result<TxLogResponse, CruxError> {
         let actions_str = actions
             .into_iter()
             .map(|edn| edn.serialize())
@@ -80,25 +81,25 @@ impl DockerClient {
             .body(s)
             .send()?
             .text()?;
-        Ok(TxLogResponse::deserialize(resp))
+        TxLogResponse::deserialize(resp)
     }
 
     /// Function `tx_logs` requests endpoint `/tx-log` via `GET` and returns a list of all transactions
-    pub fn tx_logs(&self) -> Result<TxLogsResponse> {
+    pub fn tx_logs(&self) -> Result<TxLogsResponse, CruxError> {
         let resp = self
             .client
             .get(&format!("{}/tx-log", self.uri))
             .headers(self.headers.clone())
             .send()?
             .text()?;
-        Ok(TxLogsResponse::deserialize(resp))
+        TxLogsResponse::deserialize(resp)
     }
 
     /// Function `entity` requests endpoint `/entity` via `POST` which retrieves the last document
     /// in CruxDB.
     /// Field with `CruxId` is required.
     /// Response is a `reqwest::Result<edn_rs::Edn>` with the last Entity with that ID.
-    pub fn entity(&self, id: String) -> Result<Edn> {
+    pub fn entity(&self, id: String) -> Result<Edn, CruxError> {
         if !id.starts_with(":") {
             return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
         }
@@ -128,7 +129,7 @@ impl DockerClient {
 
     /// Function `entity_tx` requests endpoint `/entity-tx` via `POST` which retrieves the docs and tx infos
     /// for the last document for that ID saved in CruxDB.
-    pub fn entity_tx(&self, id: String) -> Result<EntityTxResponse> {
+    pub fn entity_tx(&self, id: String) -> Result<EntityTxResponse, CruxError> {
         let mut s = String::new();
         s.push_str("{:eid ");
         s.push_str(&id);
@@ -142,12 +143,12 @@ impl DockerClient {
             .send()?
             .text()?;
 
-        Ok(EntityTxResponse::deserialize(resp))
+        EntityTxResponse::deserialize(resp)
     }
 
     /// Function `document_by_id` requests endpoint `/document/{:content-hash}` via `GET` which retrieves the current Document value.
     /// `{:content-hash}` is a hash like `1828ebf4466f98ea3f5252a58734208cd0414376` and can be obtained with `entity_tx` function.
-    pub fn document_by_id(&self, content_hash: String) -> Result<Edn> {
+    pub fn document_by_id(&self, content_hash: String) -> Result<Edn, CruxError> {
         let resp = self
             .client
             .get(&format!("{}/document/{}", self.uri, content_hash))
@@ -155,13 +156,16 @@ impl DockerClient {
             .send()?
             .text()?;
 
-        Ok(edn_rs::parse_edn(&resp).unwrap())
+        Ok(edn_rs::parse_edn(&resp)?)
     }
 
     /// Function `documents` requests endpoint `/documents` via `POST` which retrieves the current Documents values indexed by ID.
     /// Argument is a vector containing hashes like `1828ebf4466f98ea3f5252a58734208cd0414376`, `vec!["1828ebf4466f98ea3f5252a58734208cd0414376", "6279916e3020d6dc928077f53529e95d205a9465"]`
     /// Hashes can be obtained with `entity_tx` function.
-    pub fn documents(&self, content_hashes: Vec<String>) -> Result<BTreeMap<String, Edn>> {
+    pub fn documents(
+        &self,
+        content_hashes: Vec<String>,
+    ) -> Result<BTreeMap<String, Edn>, CruxError> {
         let mut s = String::new();
         s.push_str("#{");
         s.push_str(
@@ -181,12 +185,12 @@ impl DockerClient {
             .send()?
             .text()?;
 
-        Ok(Documents::deserialize(resp, content_hashes))
+        Documents::deserialize(resp, content_hashes)
     }
 
     /// Function `query` requests endpoint `/query` via `POST` which retrives a Set containing a vector of the values defined by the function [`Query::find` - github example](https://github.com/naomijub/transistor/blob/master/examples/simple_query.rs#L53).
     /// Argument is a `query` of the type `Query`.
-    pub fn query(&self, query: Query) -> Result<BTreeSet<Vec<String>>> {
+    pub fn query(&self, query: Query) -> Result<BTreeSet<Vec<String>>, CruxError> {
         let resp = self
             .client
             .post(&format!("{}/query", self.uri))
@@ -195,7 +199,7 @@ impl DockerClient {
             .send()?
             .text()?;
 
-        Ok(QueryResponse::deserialize(resp))
+        QueryResponse::deserialize(resp)
     }
 }
 
@@ -277,6 +281,18 @@ mod docker {
         let response = Crux::new("localhost", "4000").docker_client().tx_logs();
 
         assert_eq!(response.unwrap().tx_events.len(), 2);
+    }
+
+    #[test]
+    #[should_panic(expected = "The following Edn cannot be parsed to TxLogs: Symbol(\\\"Holy\\\")")]
+    fn tx_log_error() {
+        let _m = mock("GET", "/tx-log")
+        .with_status(200)
+        .with_header("content-type", "application/edn")
+        .with_body("Holy errors!")
+        .create();
+
+        let _error = Crux::new("localhost", "4000").docker_client().tx_logs().unwrap();
     }
 
     #[test]
