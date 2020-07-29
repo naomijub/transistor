@@ -9,7 +9,7 @@ A Rust Crux Client crate/lib. For now, this crate intends to support 2 ways to i
 > Other solutions may be added after the first release.
 
 * For information on Crux and how to use it, please follow the link to [opencrux](https://opencrux.com/docs#restapi). Note that the current crate version (`Docker only`) uses a few modified endpoints due to its Docker implementation.
-
+* [**Crux FAQ**](https://opencrux.com/docs#faqs)
 * For examples on usage, please refer to [examples directory](https://github.com/naomijub/transistor/tree/master/examples).
 
 ## Usage 
@@ -18,14 +18,7 @@ To add this crate to your project you should add one of the following line to yo
 >
 > ```
 > [dependencies]
-> transistor = "0.3.1"
-> ```
-
-To use `query` function:
->
-> ```
-> [dependencies]
-> transistor = "0.4.0-BETA"
+> transistor = "0.4.0"
 > ```
 
 ## Creating a Crux Client
