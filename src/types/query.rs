@@ -54,8 +54,7 @@ impl Query {
     /// Becomes:
     /// `:where [[c :condition/time time] [c :condition/device-id device-id] [c :condition/temperature temperature] [c :condition/humidity humidity]]`.
     pub fn where_clause(mut self, where_: Vec<&str>) -> Result<Self,CruxError> {
-        let args = where_.join(" ");
-        if !self.find.0.iter().all(|e| args.contains(e)) {
+        if self.find.0.iter().any(|e| !where_.join(" ").contains(e)) {
             return Err(CruxError::QueryFormatError(format!("Not all element of find, {:?}, are present in the where clause, {:?}",self.find.0, where_ )));
         }
         let w = where_
@@ -273,5 +272,13 @@ mod test {
             .build();
 
         assert_eq!(q.unwrap().serialize(), expected);
+    }
+
+    #[test]
+    #[should_panic(expected = "Not all element of find, [\\\"?p1\\\", \\\"?n\\\", \\\"?s\\\"], are present in the where clause, [\\\"?p1 :name ?g\\\", \\\"?p1 :is-sql ?s\\\", \\\"?p1 :is-sql true\\\"]")]
+    fn where_query_format_error() {
+        let _query = Query::find(vec!["?p1", "?n", "?s"])
+            .where_clause(vec!["?p1 :name ?g", "?p1 :is-sql ?s", "?p1 :is-sql true"]).unwrap()
+            .build();
     }
 }
