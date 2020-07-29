@@ -392,8 +392,8 @@ mod docker {
             .with_body(expected_body)
             .create();
 
-        let query = Query::find(vec!["p1", "n", "s"])
-            .where_clause(vec!["p1 :name n", "p1 :is-sql s", "p1 :is-sql true"]).unwrap()
+        let query = Query::find(vec!["?p1", "?n", "?s"]).unwrap()
+            .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql ?s", "?p1 :is-sql true"]).unwrap()
             .build();
         let body = Crux::new("localhost", "3000")
             .docker_client()

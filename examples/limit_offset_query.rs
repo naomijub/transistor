@@ -51,13 +51,13 @@ fn main() -> Result<(), CruxError> {
     //   [:crux.tx/put { :crux.db/id :mysql, :name \"MySQL\", :is-sql true, }],
     //   [:crux.tx/put { :crux.db/id :postgres, :name \"Postgres\", :is-sql true, }]]"
 
-    let query_is_sql = Query::find(vec!["p1", "n"])
-        .where_clause(vec!["p1 :name n"])?
-        .order_by(vec!["n :desc"])
+    let query_is_sql = Query::find(vec!["?p1", "?n"])?
+        .where_clause(vec!["?p1 :name ?n"])?
+        .order_by(vec!["?n :desc"])
         .limit(3)
         .offset(1)
         .build();
-    // "{:query\n {:find [p1 n]\n:where [[p1 :name n]]\n:order-by [[n :desc]]\n:limit 3\n:offset 1\n}}"
+    // "{:query\n {:find [?p1 ?n]\n:where [[?p1 :name ?n]]\n:order-by [[?n :desc]]\n:limit 3\n:offset 1\n}}"
 
     let is_sql = client.query(query_is_sql?)?;
     println!("{:?}", is_sql);

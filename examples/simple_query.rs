@@ -42,28 +42,28 @@ fn main() -> Result<(), CruxError> {
     //   [:crux.tx/put { :crux.db/id :mysql, :name \"MySQL\", :is-sql true, }],
     //   [:crux.tx/put { :crux.db/id :postgres, :name \"Postgres\", :is-sql true, }]]"
 
-    let query_is_sql = Query::find(vec!["p1", "n"])
-        .where_clause(vec!["p1 :name n", "p1 :is-sql true"])?
+    let query_is_sql = Query::find(vec!["?p1", "?n"])?
+        .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql true"])?
         .build();
     // Query:
     // {:query
-    //     {:find [p1 n]
-    //      :where [[p1 :name n]
-    //              [p1 :is-sql true]]}}
+    //     {:find [?p1 ?n]
+    //      :where [[?p1 :name ?n]
+    //              [?p1 :is-sql true]]}}
 
     let is_sql = client.query(query_is_sql?)?;
     println!("{:?}", is_sql);
     // {[":mysql", "MySQL"], [":postgres", "Postgres"]} BTreeSet
 
-    let query_is_no_sql = Query::find(vec!["p1", "n", "s"])
-        .where_clause(vec!["p1 :name n", "p1 :is-sql s", "p1 :is-sql false"])?
+    let query_is_no_sql = Query::find(vec!["?p1", "?n", "?s"])?
+        .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql ?s", "?p1 :is-sql false"])?
         .build();
     // Query:
     // {:query
-    //     {:find [p1 n s]
-    //      :where [[p1 :name n]
-    //              [p1 :is-sql s]
-    //              [p1 :is-sql false]]}}
+    //     {:find [?p1 ?n ?s]
+    //      :where [[?p1 :name ?n]
+    //              [?p1 :is-sql ?s]
+    //              [?p1 :is-sql false]]}}
 
     let is_no_sql = client.query(query_is_no_sql?)?;
     println!("{:?}", is_no_sql);
