@@ -171,11 +171,17 @@ pub(crate) struct QueryResponse;
 impl QueryResponse {
     pub(crate) fn deserialize(resp: String) -> BTreeSet<Vec<String>> {
         let edn = parse_edn(&resp.clone()).unwrap();
-
-        edn.set_iter()
-            .unwrap()
-            .map(|e| e.to_vec().unwrap())
-            .collect::<BTreeSet<Vec<String>>>()
+        if edn.set_iter().is_some() {
+            edn.set_iter()
+                .unwrap()
+                .map(|e| e.to_vec().unwrap())
+                .collect::<BTreeSet<Vec<String>>>()
+        } else {
+            edn.iter()
+                .unwrap()
+                .map(|e| e.to_vec().unwrap())
+                .collect::<BTreeSet<Vec<String>>>()
+        }
     }
 }
 
