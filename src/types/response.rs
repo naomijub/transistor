@@ -179,14 +179,20 @@ impl QueryResponse {
         if !resp.starts_with("#") {
             return Err(CruxError::QueryError(resp));
         }
-        let edn = parse_edn(&resp.clone())?;
-
-        Ok(edn
-            .set_iter()
-            .ok_or(CruxError::ParseEdnError(format!("The following Edn cannot be parsed to BTreeSet: {:?}", edn)))
-            .unwrap()
-            .map(|e| e.to_vec().unwrap())
-            .collect::<BTreeSet<Vec<String>>>())
+        let edn = parse_edn(&resp.clone()).unwrap();
+        if edn.set_iter().is_some() {
+            Ok(edn.set_iter()
+                .ok_or(CruxError::ParseEdnError(format!("The following Edn cannot be parsed to BTreeSet: {:?}", edn)))
+                .unwrap()
+                .map(|e| e.to_vec().unwrap())
+                .collect::<BTreeSet<Vec<String>>>())
+        } else {
+            Ok(edn.iter()
+                .ok_or(CruxError::ParseEdnError(format!("The following Edn cannot be parsed to BTreeSet: {:?}", edn)))
+                .unwrap()
+                .map(|e| e.to_vec().unwrap())
+                .collect::<BTreeSet<Vec<String>>>())
+        }
     }
 }
 

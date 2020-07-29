@@ -250,6 +250,7 @@ let documents = client.documents(contesnt_hashes).unwrap();
 // }
 ```
 * `query` requests endpoint [`/query`](https://opencrux.com/docs#rest-query) via `POST`. Argument is a `query` of the type `Query`. Retrives a Set containing a vector of the values defined by the function `Query::find`.
+Available functions are `find`, `where_clause`, `args`, `order_by`, `limit`, `offset`.
 ```rust
 use transistor::client::Crux;
 use transistor::types::{query::Query};
@@ -275,8 +276,12 @@ let is_sql = client.query(query_is_sql.unwrap()).unwrap();
 * [`Evict`](https://opencrux.com/docs#transactions-evict) - Evicts a document entirely, including all historical versions (receives only the ID to evict)
 
 `Query` is a struct responsible for creating the fields and serializing them into the correct `query` format. It has a function for each field and a `build` function to help check if it is correctyly formatted.
-* `find` is a static function to define the elements inside the `:find` clause.
-* `where_clause` is a function that defines the vector os elements inside the `:where []` array.
+* `find` is a static builder function to define the elements inside the `:find` clause.
+* `where_clause` is a builder function that defines the vector os elements inside the `:where []` array.
+* `order_by` is a builder function to define the elements inside the `:order-by` clause.
+* `args` is a builder function to define the elements inside the `:args` clause.
+* `limit` is a builder function to define the elements inside the `:limit` clause.
+* `offset` is a builder function to define the elements inside the `:offset` clause.
 
 
 ## Dependencies
