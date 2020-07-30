@@ -84,7 +84,7 @@ impl Query {
     /// 
     /// Error cases:
     /// * The first element of the argument key-value tuple should start with `?`. An input `vec!["n true"]` will return an error `All elements should start with '?'`.
-    /// * All arguments key should be present in the where clause. If the were clause `?p1 :name ?n", "?p1 :is-sql ?s", "?p1 :is-sql true"` adn an args clause `vec!["?s true ?x 1243"]` will return an error `All elements should be present in where clause`.
+    /// * All arguments key should be present in the where clause. If the where clause `?p1 :name ?n", "?p1 :is-sql ?s", "?p1 :is-sql true"` and an args clause `vec!["?s true ?x 1243"]` will return an error `All elements should be present in where clause`.
     pub fn args(mut self, args: Vec<&str>) -> Result<Self, CruxError> {
         let error = match self.has_args_errors(args.clone()) {
             (true, false) => "All elements should be present in where clause",
