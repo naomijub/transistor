@@ -35,8 +35,16 @@ impl Query {
     /// Input should be the elements to be queried by the `where_clause`.
     /// Ex: `vec!["time", "device-id", "temperature", "humidity"]`.
     /// Becomes: `:find [time, device-id, temperature, humidity]`.
-    pub fn find(find: Vec<&str>) -> Self {
-        Self {
+    /// 
+    /// Error cases:
+    /// * All elements should start with `?`, example `vec!["?p1", "?n", "?g"]`. If theey do not start the CruxError::QueryFormatError containing `All elements of find clause should start with '?', element '{}' doesn't conform` is thrown.
+    pub fn find(find: Vec<&str>) -> Result<Self, CruxError> {
+        if find.iter().any(|e| !e.starts_with("?")) {
+            let error = find.iter().find(|e| !e.starts_with("?")).unwrap();
+            return Err(CruxError::QueryFormatError(format!("All elements of find clause should start with '?', element '{}' doesn't conform", error)));
+        }
+
+        Ok(Self {
             find: Find {
                 0: find.into_iter().map(String::from).collect::<Vec<String>>(),
             },
@@ -45,7 +53,7 @@ impl Query {
             order_by: None,
             limit: None,
             offset: None,
-        }
+        })
     }
 
     /// `where_clause` is the function responsible for defining the required `:where` key in the query.
@@ -53,39 +61,80 @@ impl Query {
     /// Ex: `vec!["c :condition/time time", "c :condition/device-id device-id", "c :condition/temperature temperature", "c :condition/humidity humidity"]`.
     /// Becomes:
     /// `:where [[c :condition/time time] [c :condition/device-id device-id] [c :condition/temperature temperature] [c :condition/humidity humidity]]`.
-    pub fn where_clause(mut self, where_: Vec<&str>) -> Self {
+    /// 
+    /// Error cases:
+    /// * All elements present in find clause should be present in where clause. If your find clause is `"?p", "?n", "?s"`, and your where clause is `"?p1 :alpha ?n", "?p1 :beta true"` an error `Not all element of find, `"?p", "?n", "?s"`, are present in the where clause, ?s is missing` is thrown.
+    pub fn where_clause(mut self, where_: Vec<&str>) -> Result<Self,CruxError> {
+        if self.find.0.iter().any(|e| !where_.join(" ").contains(e)) {
+            let error = self.find.0.iter().find(|e| !where_.join(" ").contains(*e)).unwrap();
+            return Err(CruxError::QueryFormatError(format!("Not all element of find, {}, are present in the where clause, {} is missing",self.find.0.join(", "), error)));
+        }
         let w = where_
             .iter()
             .map(|s| s.replace("[", "").replace("]", ""))
             .collect::<Vec<String>>();
         self.where_ = Some(Where { 0: w });
-        self
+        Ok(self)
     }
 
     /// `args` is the function responsible for defining the optional `:args` key in the query.
     /// Input are elements you want to replace in the `where_clause`, a good practice is to name them with `?` before.
     /// Ex: `vec!["?n \"Ivan\" ?l \"Ivanov\"", "?n \"Petr\" ?l \"Petrov\""]`.
     /// Becomes: `:args [{?n "Ivan" ?l "Ivanov"} {?n "Petr" ?l "Petrov"}]`.
-    pub fn args(mut self, args: Vec<&str>) -> Self {
+    /// 
+    /// Error cases:
+    /// * The first element of the argument key-value tuple should start with `?`. An input `vec!["n true"]` will return an error `All elements should start with '?'`.
+    /// * All arguments key should be present in the where clause. If the where clause `?p1 :name ?n", "?p1 :is-sql ?s", "?p1 :is-sql true"` and an args clause `vec!["?s true ?x 1243"]` will return an error `All elements should be present in where clause`.
+    pub fn args(mut self, args: Vec<&str>) -> Result<Self, CruxError> {
+        let error = match self.has_args_errors(args.clone()) {
+            (true, false) => "All elements should be present in where clause",
+            (false, true) => "All elements should start with '?'",
+            (true, true) => "All elements should be present in where clause and all elements should start with '?'",
+            (false, false) => "",
+        };
+
+        if !error.is_empty() {
+            return Err(CruxError::QueryFormatError(error.to_string()));
+        }
+
         let a = args
             .iter()
             .map(|s| s.replace("{", "").replace("}", ""))
             .collect::<Vec<String>>();
         self.args = Some(Args { 0: a });
-        self
+        Ok(self)
     }
 
     /// `order_by` is the function responsible for defining the optional `:order-by` key in the query.
     /// Input is the elements to be ordered by, the first element is the first order, the second is the further orthers. Allowed keys are `:Asc`and `:desc`.
     /// Ex: `vec!["time :desc", "device-id :asc"]`.
     /// Becomes: `:order-by [[time :desc] [device-id :asc]]`.
-    pub fn order_by(mut self, order_by: Vec<&str>) -> Self {
+    /// 
+    /// Error cases:
+    /// * The second element of each order clause should be `:asc` or `:desc`, if different, like `:eq` in `"?p1 :asc", "?n :desc", "?s :eq"`, error `Order element should be ':asc' or ':desc'` is thrown.
+    /// * The first element of each order clause should be present in the find clause. If the order clause is `"?p1 :asc", "?n :desc", "?g :asc"` and the find clause is `"?p1", "?n"` the error `All elements to be ordered should be present in find clause, ?g not present` is thrown.
+    pub fn order_by(mut self, order_by: Vec<&str>) -> Result<Self, CruxError> {
+        let f = self.find.0.join(" ");
+        if !order_by.iter()
+            .map(|e| e.split(" ").collect::<Vec<&str>>())
+            .map(|e| e[1])
+            .all(|e| e.to_lowercase() == ":asc" || e.to_lowercase() == ":desc") {
+                return Err(CruxError::QueryFormatError("Order element should be ':asc' or ':desc'".to_string()))
+        }
+        if !order_by.iter()
+            .map(|e| e.split(" ").collect::<Vec<&str>>())
+            .map(|e| e[0])
+            .all(|e| f.contains(e)) {
+                let error = order_by.iter().map(|e| e.split(" ").collect::<Vec<&str>>()).map(|e| e[0]).find(|e| !f.contains(e)).unwrap();
+                return Err(CruxError::QueryFormatError(format!("All elements to be ordered should be present in find clause, {} not present", error)))
+        }
+
         let o = order_by
             .iter()
             .map(|s| s.replace("[", "").replace("]", ""))
             .collect::<Vec<String>>();
         self.order_by = Some(OrderBy { 0: o });
-        self
+        Ok(self)
     }
 
     /// `limit` is the function responsible for defining the optional `:limit` key in the query.
@@ -113,6 +162,23 @@ impl Query {
         } else {
             Ok(self)
         }
+    }
+
+    fn has_args_errors(&self, args: Vec<&str>) -> (bool, bool) {
+        use std::collections::BTreeSet;
+        let where_ =  self.where_.clone().unwrap().0.join(" ");
+
+        let el = args.iter()
+            .map(|e| e.replace("#inst", ""))
+            .map(|e| e.split(" ").map(String::from).collect::<Vec<String>>())
+            .map(|e| e.iter().filter(|i| !i.is_empty()).map(|i| i.to_owned()).collect::<Vec<String>>())
+            .map(|e| e.iter().enumerate().filter(|(i, _)| i % 2 == 0).map(|(_, s)| s.to_owned()).collect::<Vec<String>>())
+            .flatten()
+            .collect::<BTreeSet<String>>();
+        
+        let all_elements_in_where = el.iter().any(|e| !where_.contains(e));
+        let has_question = el.iter().any(|e| !e.starts_with("?"));
+        (all_elements_in_where, has_question)
     }
 }
 
@@ -201,9 +267,9 @@ mod test {
     #[test]
     fn query_with_find_and_where() {
         let expected =
-            "{:query\n {:find [p1]\n:where [[p1 :first-name n]\n[p1 :last-name \"Jorge\"]]\n}}";
-        let q = Query::find(vec!["p1"])
-            .where_clause(vec!["p1 :first-name n", "p1 :last-name \"Jorge\""])
+            "{:query\n {:find [?p1]\n:where [[?p1 :first-name n]\n[?p1 :last-name \"Jorge\"]]\n}}";
+        let q = Query::find(vec!["?p1"]).unwrap()
+            .where_clause(vec!["?p1 :first-name n", "?p1 :last-name \"Jorge\""]).unwrap()
             .build();
 
         assert_eq!(q.unwrap().serialize(), expected);
@@ -213,7 +279,7 @@ mod test {
     #[should_panic(expected = "Where clause is required")]
     fn expect_query_format_error() {
         let client = Crux::new("","").docker_client();
-        let query_where_is_none = Query::find(vec!["p1", "n"])
+        let query_where_is_none = Query::find(vec!["?p1", "?n"]).unwrap()
         .build().unwrap();
 
         let _ = client.query(query_where_is_none).unwrap();
@@ -222,10 +288,10 @@ mod test {
     #[test]
     fn query_with_order() {
         let expected =
-            "{:query\n {:find [p1]\n:where [[p1 :first-name n]\n[p1 :last-name \"Jorge\"]]\n:order-by [[p1 :Asc]]\n}}";
-        let q = Query::find(vec!["p1"])
-            .where_clause(vec!["p1 :first-name n", "p1 :last-name \"Jorge\""])
-            .order_by(vec!["p1 :Asc"])
+            "{:query\n {:find [?p1]\n:where [[?p1 :first-name n]\n[?p1 :last-name \"Jorge\"]]\n:order-by [[?p1 :asc]]\n}}";
+        let q = Query::find(vec!["?p1"]).unwrap()
+            .where_clause(vec!["?p1 :first-name n", "?p1 :last-name \"Jorge\""]).unwrap()
+            .order_by(vec!["?p1 :asc"]).unwrap()
             .build();
 
         assert_eq!(q.unwrap().serialize(), expected);
@@ -234,10 +300,10 @@ mod test {
     #[test]
     fn query_with_args() {
         let expected =
-            "{:query\n {:find [p1]\n:where [[p1 :first-name n]\n[p1 :last-name ?n]]\n:args [{?n \"Jorge\"}]\n}}";
-        let q = Query::find(vec!["p1"])
-            .where_clause(vec!["p1 :first-name n", "p1 :last-name ?n"])
-            .args(vec!["?n \"Jorge\""])
+            "{:query\n {:find [?p1]\n:where [[?p1 :first-name n]\n[?p1 :last-name ?n]]\n:args [{?n \"Jorge\"}]\n}}";
+        let q = Query::find(vec!["?p1"]).unwrap()
+            .where_clause(vec!["?p1 :first-name n", "?p1 :last-name ?n"]).unwrap()
+            .args(vec!["?n \"Jorge\""]).unwrap()
             .build();
 
         assert_eq!(q.unwrap().serialize(), expected);
@@ -246,9 +312,9 @@ mod test {
     #[test]
     fn query_with_limit_and_offset() {
         let expected =
-            "{:query\n {:find [p1]\n:where [[p1 :first-name n]\n[p1 :last-name n]]\n:limit 5\n:offset 10\n}}";
-        let q = Query::find(vec!["p1"])
-            .where_clause(vec!["p1 :first-name n", "p1 :last-name n"])
+            "{:query\n {:find [?p1]\n:where [[?p1 :first-name n]\n[?p1 :last-name n]]\n:limit 5\n:offset 10\n}}";
+        let q = Query::find(vec!["?p1"]).unwrap()
+            .where_clause(vec!["?p1 :first-name n", "?p1 :last-name n"]).unwrap()
             .limit(5)
             .offset(10)
             .build();
@@ -259,15 +325,59 @@ mod test {
     #[test]
     fn full_query() {
         let expected =
-            "{:query\n {:find [p1]\n:where [[p1 :first-name n]\n[p1 :last-name ?n]]\n:args [{?n \"Jorge\"}]\n:order-by [[p1 :Asc]]\n:limit 5\n:offset 10\n}}";
-        let q = Query::find(vec!["p1"])
-            .where_clause(vec!["p1 :first-name n", "p1 :last-name ?n"])
-            .args(vec!["?n \"Jorge\""])
-            .order_by(vec!["p1 :Asc"])
+            "{:query\n {:find [?p1]\n:where [[?p1 :first-name n]\n[?p1 :last-name ?n]]\n:args [{?n \"Jorge\"}]\n:order-by [[?p1 :Asc]]\n:limit 5\n:offset 10\n}}";
+        let q = Query::find(vec!["?p1"]).unwrap()
+            .where_clause(vec!["?p1 :first-name n", "?p1 :last-name ?n"]).unwrap()
+            .args(vec!["?n \"Jorge\""]).unwrap()
+            .order_by(vec!["?p1 :Asc"]).unwrap()
             .limit(5)
             .offset(10)
             .build();
 
         assert_eq!(q.unwrap().serialize(), expected);
+    }
+
+    #[test]
+    #[should_panic(expected = "Not all element of find, ?p1, ?n, ?s, are present in the where clause, ?n is missing")]
+    fn where_query_format_error() {
+        let _query = Query::find(vec!["?p1", "?n", "?s"]).unwrap()
+            .where_clause(vec!["?p1 :name ?g", "?p1 :is-sql ?s", "?p1 :is-sql true"]).unwrap()
+            .build();
+    }
+
+    #[test]
+    #[should_panic(expected = "Order element should be \\\':asc\\\' or \\\':desc\\\'")]
+    fn order_should_panic_for_unknow_order_element() {
+        let _query = Query::find(vec!["?p1", "?n", "?s"]).unwrap()
+            .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql ?s", "?p1 :is-sql true"]).unwrap()
+            .order_by(vec!["?p1 :asc", "?n :desc", "?s :eq"]).unwrap()
+            .build();
+    }
+
+    #[test]
+    #[should_panic(expected = "All elements to be ordered should be present in find clause, ?g not present")]
+    fn order_element_should_be_present_in_find_clause() {
+        let _query = Query::find(vec!["?p1", "?n", "?s"]).unwrap()
+            .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql ?s", "?p1 :is-sql true"]).unwrap()
+            .order_by(vec!["?p1 :asc", "?n :desc", "?g :asc"]).unwrap()
+            .build();
+    }
+
+    #[test]
+    #[should_panic(expected = "All elements should be present in where clause")]
+    fn all_args_present_in_where() {
+        let _query = Query::find(vec!["?p1", "?n"]).unwrap()
+            .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql ?s", "?p1 :is-sql true"]).unwrap()
+            .args(vec!["?s true ?x 1243"]).unwrap()
+            .build();
+    }
+
+    #[test]
+    #[should_panic(expected = "All elements should start with \\\'?\\\'")]
+    fn all_args_should_start_with_question() {
+        let _query = Query::find(vec!["?p1", "?n"]).unwrap()
+            .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql s", "?p1 :is-sql true"]).unwrap()
+            .args(vec!["s    true"]).unwrap()
+            .build();
     }
 }

@@ -9,7 +9,7 @@ A Rust Crux Client crate/lib. For now, this crate intends to support 2 ways to i
 > Other solutions may be added after the first release.
 
 * For information on Crux and how to use it, please follow the link to [opencrux](https://opencrux.com/docs#restapi). Note that the current crate version (`Docker only`) uses a few modified endpoints due to its Docker implementation.
-
+* [**Crux FAQ**](https://opencrux.com/docs#faqs)
 * For examples on usage, please refer to [examples directory](https://github.com/naomijub/transistor/tree/master/examples).
 
 ## Usage 
@@ -18,14 +18,7 @@ To add this crate to your project you should add one of the following line to yo
 >
 > ```
 > [dependencies]
-> transistor = "0.3.1"
-> ```
-
-To use `query` function:
->
-> ```
-> [dependencies]
-> transistor = "0.4.0-BETA"
+> transistor = "0.4.0"
 > ```
 
 ## Creating a Crux Client
@@ -250,21 +243,21 @@ let documents = client.documents(contesnt_hashes).unwrap();
 // }
 ```
 * `query` requests endpoint [`/query`](https://opencrux.com/docs#rest-query) via `POST`. Argument is a `query` of the type `Query`. Retrives a Set containing a vector of the values defined by the function `Query::find`.
-Available functions are `find`, `where_clause`, `args`, `order_by`, `limit`, `offset`.
+Available functions are `find`, `where_clause`, `args`, `order_by`, `limit`, `offset`, examples [`complex_query`](https://github.com/naomijub/transistor/blob/master/examples/complex_query.rs) and [`limit_offset_query`](https://github.com/naomijub/transistor/blob/master/examples/limit_offset_query.rs) have examples on how to use them.
 ```rust
 use transistor::client::Crux;
 use transistor::types::{query::Query};
 
 let client = Crux::new("localhost", "3000").docker_client();
 
-let query_is_sql = Query::find(vec!["p1", "n"])
-    .where_clause(vec!["p1 :name n", "p1 :is-sql true"])
+let query_is_sql = Query::find(vec!["?p1", "?n"])
+    .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql true"])
     .build();
 // Query:
 // {:query
-//     {:find [p1 n]
-//      :where [[p1 :name n]
-//              [p1 :is-sql true]]}}
+//     {:find [?p1 ?n]
+//      :where [[?p1 :name ?n]
+//              [?p1 :is-sql true]]}}
 
 let is_sql = client.query(query_is_sql.unwrap()).unwrap();
 // {[":mysql", "MySQL"], [":postgres", "Postgres"]} BTreeSet
@@ -295,8 +288,8 @@ use transistor::types::{query::Query};
 let _client = Crux::new("localhost", "3000").docker_client();
 
 // field `n` doesn't exist
-let _query_error_response = Query::find(vec!["p1", "n"])
-    .where_clause(vec!["p1 :name g", "p1 :is-sql true"])
+let _query_error_response = Query::find(vec!["?p1", "?n"])
+    .where_clause(vec!["?p1 :name ?g", "?p1 :is-sql true"])
     .build();
 
 let error = client.query(query_error_response?)?;
