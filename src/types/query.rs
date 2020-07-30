@@ -81,13 +81,28 @@ impl Query {
     /// Input are elements you want to replace in the `where_clause`, a good practice is to name them with `?` before.
     /// Ex: `vec!["?n \"Ivan\" ?l \"Ivanov\"", "?n \"Petr\" ?l \"Petrov\""]`.
     /// Becomes: `:args [{?n "Ivan" ?l "Ivanov"} {?n "Petr" ?l "Petrov"}]`.
-    pub fn args(mut self, args: Vec<&str>) -> Self {
+    /// 
+    /// Error cases:
+    /// * The first element of the argument key-value tuple should start with `?`. An input `vec!["n true"]` will return an error `All elements should start with '?'`.
+    /// * All arguments key should be present in the where clause. If the where clause `?p1 :name ?n", "?p1 :is-sql ?s", "?p1 :is-sql true"` and an args clause `vec!["?s true ?x 1243"]` will return an error `All elements should be present in where clause`.
+    pub fn args(mut self, args: Vec<&str>) -> Result<Self, CruxError> {
+        let error = match self.has_args_errors(args.clone()) {
+            (true, false) => "All elements should be present in where clause",
+            (false, true) => "All elements should start with '?'",
+            (true, true) => "All elements should be present in where clause and all elements should start with '?'",
+            (false, false) => "",
+        };
+
+        if !error.is_empty() {
+            return Err(CruxError::QueryFormatError(error.to_string()));
+        }
+
         let a = args
             .iter()
             .map(|s| s.replace("{", "").replace("}", ""))
             .collect::<Vec<String>>();
         self.args = Some(Args { 0: a });
-        self
+        Ok(self)
     }
 
     /// `order_by` is the function responsible for defining the optional `:order-by` key in the query.
@@ -147,6 +162,23 @@ impl Query {
         } else {
             Ok(self)
         }
+    }
+
+    fn has_args_errors(&self, args: Vec<&str>) -> (bool, bool) {
+        use std::collections::BTreeSet;
+        let where_ =  self.where_.clone().unwrap().0.join(" ");
+
+        let el = args.iter()
+            .map(|e| e.replace("#inst", ""))
+            .map(|e| e.split(" ").map(String::from).collect::<Vec<String>>())
+            .map(|e| e.iter().filter(|i| !i.is_empty()).map(|i| i.to_owned()).collect::<Vec<String>>())
+            .map(|e| e.iter().enumerate().filter(|(i, _)| i % 2 == 0).map(|(_, s)| s.to_owned()).collect::<Vec<String>>())
+            .flatten()
+            .collect::<BTreeSet<String>>();
+        
+        let all_elements_in_where = el.iter().any(|e| !where_.contains(e));
+        let has_question = el.iter().any(|e| !e.starts_with("?"));
+        (all_elements_in_where, has_question)
     }
 }
 
@@ -271,7 +303,7 @@ mod test {
             "{:query\n {:find [?p1]\n:where [[?p1 :first-name n]\n[?p1 :last-name ?n]]\n:args [{?n \"Jorge\"}]\n}}";
         let q = Query::find(vec!["?p1"]).unwrap()
             .where_clause(vec!["?p1 :first-name n", "?p1 :last-name ?n"]).unwrap()
-            .args(vec!["?n \"Jorge\""])
+            .args(vec!["?n \"Jorge\""]).unwrap()
             .build();
 
         assert_eq!(q.unwrap().serialize(), expected);
@@ -296,7 +328,7 @@ mod test {
             "{:query\n {:find [?p1]\n:where [[?p1 :first-name n]\n[?p1 :last-name ?n]]\n:args [{?n \"Jorge\"}]\n:order-by [[?p1 :Asc]]\n:limit 5\n:offset 10\n}}";
         let q = Query::find(vec!["?p1"]).unwrap()
             .where_clause(vec!["?p1 :first-name n", "?p1 :last-name ?n"]).unwrap()
-            .args(vec!["?n \"Jorge\""])
+            .args(vec!["?n \"Jorge\""]).unwrap()
             .order_by(vec!["?p1 :Asc"]).unwrap()
             .limit(5)
             .offset(10)
@@ -328,6 +360,24 @@ mod test {
         let _query = Query::find(vec!["?p1", "?n", "?s"]).unwrap()
             .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql ?s", "?p1 :is-sql true"]).unwrap()
             .order_by(vec!["?p1 :asc", "?n :desc", "?g :asc"]).unwrap()
+            .build();
+    }
+
+    #[test]
+    #[should_panic(expected = "All elements should be present in where clause")]
+    fn all_args_present_in_where() {
+        let _query = Query::find(vec!["?p1", "?n"]).unwrap()
+            .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql ?s", "?p1 :is-sql true"]).unwrap()
+            .args(vec!["?s true ?x 1243"]).unwrap()
+            .build();
+    }
+
+    #[test]
+    #[should_panic(expected = "All elements should start with \\\'?\\\'")]
+    fn all_args_should_start_with_question() {
+        let _query = Query::find(vec!["?p1", "?n"]).unwrap()
+            .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql s", "?p1 :is-sql true"]).unwrap()
+            .args(vec!["s    true"]).unwrap()
             .build();
     }
 }
