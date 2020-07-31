@@ -34,9 +34,9 @@ fn main() {
     //     tx___tx_time: "2020-07-21T23:33:44.339-00:00",
     // }
 
-    let contesnt_hashes = vec![tx_body1.db___content_hash, tx_body2.db___content_hash];
+    let content_hashes = vec![tx_body1.db___content_hash, tx_body2.db___content_hash];
 
-    let documents = client.documents(contesnt_hashes).unwrap();
+    let documents = client.documents(content_hashes).unwrap();
     println!("\n Documents Body = {:#?}", documents);
     // Documents Body = {
     //     "1828ebf4466f98ea3f5252a58734208cd0414376": Map(
