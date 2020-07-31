@@ -20,6 +20,7 @@ impl CruxId {
     /// `CruxId::new` receives a regular string and parses it to the `Edn::Key` format.
     /// `CruxId::new("Jorge da Silva") -> Edn::Key(":Jorge-da-Silva")`
     pub fn new(id: &str) -> Self {
-        Self { 0: id.to_string() }
+        let clean_id = id.replace(":", "");
+        Self { 0: clean_id.to_string() }
     }
 }
