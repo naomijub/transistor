@@ -28,8 +28,7 @@ impl Crux {
         self
     }
 
-    #[cfg(not(test))]
-    #[cfg(not(feature = "mock"))]
+    #[cfg(all(not(test), not(feature = "mock")))]
     fn uri(&self) -> String {
         format!("http://{}:{}", self.host, self.port)
     }
