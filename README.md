@@ -322,7 +322,7 @@ println!("Stacktrace \n{:?}", error);
 
 ### Testing the Crux Client
 
-For testing purpose there is a `feature` called `mock` that enables the `docker_mock` function that is a replacement for the `docker_client` function. To use it run your commands with the the flag `--features "mock"` as in `cargo test --test lib --no-fail-fast --features "mock"`. An example usage with this feature enabled:
+For testing purpose there is a `feature` called `mock` that enables the `docker_mock` function that is a replacement for the `docker_client` function. To use it run your commands with the the flag `--features "mock"` as in `cargo test --test lib --no-fail-fast --features "mock"`. The mocking feature uses the crate `mockito = "0.26"` as a Cargo dependency. An example usage with this feature enabled:
 
 ```rust
 use transistor::client::Crux;
