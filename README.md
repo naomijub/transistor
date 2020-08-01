@@ -320,6 +320,60 @@ println!("Stacktrace \n{:?}", error);
 // ")
 ```
 
+### Testing the Crux Client
+
+For testing purpose there is a `feature` called `mock` that enables the `docker_mock` function that is a replacement for the `docker_client` function. To use it run your commands with the the flag `--features "mock"` as in `cargo test --test lib --no-fail-fast --features "mock"`. An example usage with this feature enabled:
+
+```rust
+use transistor::client::Crux;
+use transistor::docker::Action;
+use transistor::edn_rs::{ser_struct, Serialize};
+use transistor::types::{CruxId};
+use mockito::mock;
+
+#[test]
+#[cfg(feature = "mock")]
+fn mock_client() {
+    let _m = mock("POST", "/tx-log")
+        .with_status(200)
+        .match_body("[[:crux.tx/put { :crux.db/id :jorge-3, :first-name \"Michael\", :last-name \"Jorge\", }], [:crux.tx/put { :crux.db/id :manuel-1, :first-name \"Diego\", :last-name \"Manuel\", }]]")
+        .with_header("content-type", "text/plain")
+        .with_body("{:crux.tx/tx-id 8, :crux.tx/tx-time #inst \"2020-07-16T21:53:14.628-00:00\"}")
+        .create();
+
+    let person1 = Person {
+        // ...
+    };
+
+    let person2 = Person {
+        /// ...
+    };
+
+    let actions = vec![Action::Put(person1.serialize()), Action::Put(person2.serialize())];
+    
+    let body = Crux::new("localhost", "3000")
+        .docker_mock()
+        .tx_log(actions)
+        .unwrap();
+
+    assert_eq!(
+        format!("{:?}", body),
+        String::from("TxLogResponse { tx___tx_id: 8, tx___tx_time: \"2020-07-16T21:53:14.628-00:00\", tx__event___tx_events: None }")
+    );
+}
+
+ser_struct! {
+    #[derive(Debug, Clone)]
+    #[allow(non_snake_case)]
+    pub struct Person {
+        crux__db___id: CruxId,
+        // ...
+    }
+}
+
+```
+
+
 ## Dependencies
 A strong dependency of this crate is the [edn-rs](https://crates.io/crates/edn-rs) crate, as many of the return types are in the [Edn format](https://github.com/edn-format/edn). The sync http client is `reqwest` with `blocking` feature enabled.
 
