@@ -18,7 +18,7 @@ To add this crate to your project you should add one of the following line to yo
 >
 > ```
 > [dependencies]
-> transistor = "0.4.1"
+> transistor = "0.4.2"
 > ```
 
 ## Creating a Crux Client
