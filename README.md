@@ -10,7 +10,7 @@ A Rust Crux Client crate/lib. For now, this crate intends to support 2 ways to i
 
 * For information on Crux and how to use it, please follow the link to [opencrux](https://opencrux.com/docs#restapi). Note that the current crate version (`Docker only`) uses a few modified endpoints due to its Docker implementation.
 * [**Crux FAQ**](https://opencrux.com/docs#faqs)
-* For examples on usage, please refer to [examples directory](https://github.com/naomijub/transistor/tree/master/examples) or to the [`ATM Crux` (under development)](https://github.com/naomijub/atm-crux) more complete and interactive example.
+* For examples on usage, please refer to [examples directory](https://github.com/naomijub/transistor/tree/master/examples) or to the [`ATM Crux` (under development)](https://github.com/naomijub/atm-crux) for more complete and interactive example.
 
 ## Usage 
 
