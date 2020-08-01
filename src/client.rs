@@ -29,6 +29,7 @@ impl Crux {
     }
 
     #[cfg(not(test))]
+    #[cfg(not(feature = "mock"))]
     fn uri(&self) -> String {
         format!("http://{}:{}", self.host, self.port)
     }
@@ -39,8 +40,26 @@ impl Crux {
         server_url()
     }
 
+    #[cfg(feature = "mock")]
+    fn uri(&self) -> String {
+        use mockito::server_url;
+        server_url()
+    }
+
     /// To query database on Docker via http it is necessary to use `DockerClient`
     pub fn docker_client(&mut self) -> DockerClient {
+        self.headers
+            .insert(CONTENT_TYPE, "application/edn".parse().unwrap());
+        DockerClient {
+            client: reqwest::blocking::Client::new(),
+            uri: self.uri().clone(),
+            headers: self.headers.clone(),
+        }
+    }
+
+    /// A mock of `DockerClient` using `mockito = "0.26"`.
+    #[cfg(feature = "mock")]
+    pub fn docker_mock(&mut self) -> DockerClient {
         self.headers
             .insert(CONTENT_TYPE, "application/edn".parse().unwrap());
         DockerClient {
