@@ -10,7 +10,7 @@ use std::convert::TryFrom;
 /// * `order_by` is responsible for defining the order in which the response will be represented, **optional**. Argument is a vector with strings containing the element and how to order (`:asc` or `:desc`) `vec!["time :desc", "device-id :asc"]`.
 /// * `limit` is responsible for defining the limit size of the response, **optional**. Argument is a usize.
 /// * `offset` is responsible for defining the offset of the response, **optional**. Argument is a usize.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Query {
     find: Find,
     where_: Option<Where>,
@@ -19,17 +19,17 @@ pub struct Query {
     limit: Option<Limit>,
     offset: Option<Offset>,
 }
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Find(Vec<String>);
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Where(Vec<String>);
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Args(Vec<String>);
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct OrderBy(Vec<String>);
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Limit(usize);
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Offset(usize);
 
 impl Query {

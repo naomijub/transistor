@@ -3,7 +3,7 @@ use transistor::docker::Action;
 use transistor::edn_rs::{ser_struct, Serialize};
 use transistor::types::{
     error::CruxError,
-    {query::Query, CruxId}
+    {query::Query, CruxId},
 };
 
 fn main() -> Result<(), CruxError> {

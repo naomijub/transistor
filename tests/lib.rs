@@ -1,8 +1,8 @@
+use mockito::mock;
 use transistor::client::Crux;
 use transistor::docker::Action;
 use transistor::edn_rs::{ser_struct, Serialize};
-use transistor::types::{CruxId};
-use mockito::mock;
+use transistor::types::CruxId;
 
 #[test]
 #[cfg(feature = "mock")]
@@ -26,8 +26,11 @@ fn mock_client() {
         last_name: "Manuel".to_string(),
     };
 
-    let actions = vec![Action::Put(person1.serialize()), Action::Put(person2.serialize())];
-    
+    let actions = vec![
+        Action::Put(person1.serialize()),
+        Action::Put(person2.serialize()),
+    ];
+
     let body = Crux::new("localhost", "3000")
         .docker_mock()
         .tx_log(actions)

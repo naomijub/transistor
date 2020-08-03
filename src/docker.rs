@@ -25,6 +25,7 @@ pub struct DockerClient {
 /// * `PUT` - Write a version of a document
 /// * `Delete` - Deletes the specific document at a given valid time
 /// * `Evict` - Evicts a document entirely, including all historical versions (receives only the ID to evict)
+#[derive(Debug, PartialEq)]
 pub enum Action {
     Put(String),
     Delete(String),
@@ -287,12 +288,15 @@ mod docker {
     #[should_panic(expected = "The following Edn cannot be parsed to TxLogs: Symbol(\\\"Holy\\\")")]
     fn tx_log_error() {
         let _m = mock("GET", "/tx-log")
-        .with_status(200)
-        .with_header("content-type", "application/edn")
-        .with_body("Holy errors!")
-        .create();
+            .with_status(200)
+            .with_header("content-type", "application/edn")
+            .with_body("Holy errors!")
+            .create();
 
-        let _error = Crux::new("localhost", "4000").docker_client().tx_logs().unwrap();
+        let _error = Crux::new("localhost", "4000")
+            .docker_client()
+            .tx_logs()
+            .unwrap();
     }
 
     #[test]
@@ -392,8 +396,10 @@ mod docker {
             .with_body(expected_body)
             .create();
 
-        let query = Query::find(vec!["?p1", "?n", "?s"]).unwrap()
-            .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql ?s", "?p1 :is-sql true"]).unwrap()
+        let query = Query::find(vec!["?p1", "?n", "?s"])
+            .unwrap()
+            .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql ?s", "?p1 :is-sql true"])
+            .unwrap()
             .build();
         let body = Crux::new("localhost", "3000")
             .docker_client()
