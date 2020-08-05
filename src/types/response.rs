@@ -78,7 +78,8 @@ pub struct TxLogsResponse {
 
 impl TxLogsResponse {
     pub fn deserialize(resp: String) -> Result<Self, CruxError> {
-        let edn = parse_edn(&resp)?;
+        let clean_edn = resp.replace("#crux/id","");
+        let edn = parse_edn(&clean_edn)?;
         Ok(edn.into())
     }
 }
@@ -131,7 +132,8 @@ pub struct EntityTxResponse {
 
 impl EntityTxResponse {
     pub fn deserialize(resp: String) -> Result<Self, CruxError> {
-        let edn = parse_edn(&resp)?;
+        let clean_edn = resp.replace("#crux/id","");
+        let edn = parse_edn(&clean_edn)?;
         Ok(edn.into())
     }
 
@@ -156,25 +158,6 @@ impl From<Edn> for EntityTxResponse {
             tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize),
             tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
         }
-    }
-}
-
-pub(crate) struct Documents;
-
-impl Documents {
-    pub(crate) fn deserialize(
-        resp: String,
-        hashes: Vec<String>,
-    ) -> Result<BTreeMap<String, Edn>, CruxError> {
-        let edn = parse_edn(&resp)?;
-
-        let mut hm = BTreeMap::new();
-        hashes.iter().for_each(|h| {
-            let edn_value = edn[h].clone();
-            hm.insert(String::from(h), edn_value);
-        });
-
-        Ok(hm)
     }
 }
 

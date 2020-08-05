@@ -21,8 +21,6 @@ script:
     - cargo run --example evict
     - cargo run --example entity
     - cargo run --example entity_tx
-    - cargo run --example documents
-    - cargo run --example document_by_id
     - cargo run --example simple_query
     - cargo run --example complex_query
     - cargo run --example limit_offset_query
