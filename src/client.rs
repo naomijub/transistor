@@ -1,6 +1,6 @@
 use reqwest::header::{HeaderMap, AUTHORIZATION, CONTENT_TYPE};
 
-use crate::docker::DockerClient;
+use crate::http::HttpClient;
 
 /// Struct to define parameters to connect to Crux
 /// `host` and `port` are required.
@@ -39,25 +39,25 @@ impl Crux {
         server_url()
     }
 
-    /// To query database on Docker via http it is necessary to use `DockerClient`
-    pub fn docker_client(&mut self) -> DockerClient {
+    /// To query database on Docker/standalone via http it is necessary to use `HttpClient`
+    pub fn http_client(&mut self) -> HttpClient {
         self.headers
             .insert(CONTENT_TYPE, "application/edn".parse().unwrap());
-        DockerClient {
+        HttpClient {
             client: reqwest::blocking::Client::new(),
             uri: self.uri().clone(),
             headers: self.headers.clone(),
         }
     }
 
-    /// A mock of `DockerClient` using `mockito = "0.26"`.
+    /// A mock of `HttpClient` using `mockito = "0.26"`.
     #[cfg(feature = "mock")]
-    pub fn docker_mock(&mut self) -> DockerClient {
+    pub fn http_mock(&mut self) -> HttpClient {
         use mockito::server_url;
 
         self.headers
             .insert(CONTENT_TYPE, "application/edn".parse().unwrap());
-        DockerClient {
+        HttpClient {
             client: reqwest::blocking::Client::new(),
             uri: server_url(),
             headers: self.headers.clone(),
@@ -100,15 +100,15 @@ mod test {
     }
 
     #[test]
-    fn docker_client() {
+    fn http_client() {
         let mut headers = HeaderMap::new();
         headers.insert(AUTHORIZATION, "auth".parse().unwrap());
         headers.insert(CONTENT_TYPE, "application/edn".parse().unwrap());
 
         let actual = Crux::new("127.0.0.1", "1234")
             .with_authorization("auth")
-            .docker_client();
-        let expected = DockerClient {
+            .http_client();
+        let expected = HttpClient {
             client: reqwest::blocking::Client::new(),
             uri: "http://127.0.0.1:1234".to_string(),
             headers: headers,

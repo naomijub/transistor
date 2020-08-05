@@ -2,7 +2,7 @@ use transistor::client::Crux;
 
 fn main() {
     let body = Crux::new("localhost", "3000")
-        .docker_client()
+        .http_client()
         .tx_logs()
         .unwrap();
 

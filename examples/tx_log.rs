@@ -1,6 +1,6 @@
 use transistor::client::Crux;
-use transistor::docker::Action;
 use transistor::edn_rs::{ser_struct, Serialize};
+use transistor::http::Action;
 use transistor::types::CruxId;
 
 fn main() {
@@ -24,7 +24,7 @@ fn main() {
     let action2 = Action::Put(person2.serialize());
 
     let body = Crux::new("localhost", "3000")
-        .docker_client()
+        .http_client()
         .tx_log(vec![action1, action2])
         .unwrap();
     // Request body for vec![action1, action2]

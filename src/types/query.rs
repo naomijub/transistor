@@ -310,7 +310,7 @@ mod test {
     #[test]
     #[should_panic(expected = "Where clause is required")]
     fn expect_query_format_error() {
-        let client = Crux::new("", "").docker_client();
+        let client = Crux::new("", "").http_client();
         let query_where_is_none = Query::find(vec!["?p1", "?n"]).unwrap().build().unwrap();
 
         let _ = client.query(query_where_is_none).unwrap();

@@ -1,6 +1,6 @@
 use transistor::client::Crux;
-use transistor::docker::Action;
 use transistor::edn_rs::{ser_struct, Serialize};
+use transistor::http::Action;
 use transistor::types::{
     error::CruxError,
     {query::Query, CruxId},
@@ -37,7 +37,7 @@ fn main() -> Result<(), CruxError> {
         is_sql: true,
     };
 
-    let client = Crux::new("localhost", "3000").docker_client();
+    let client = Crux::new("localhost", "3000").http_client();
     let action1 = Action::Put(crux.serialize());
     let action2 = Action::Put(psql.serialize());
     let action3 = Action::Put(mysql.serialize());

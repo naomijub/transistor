@@ -18,27 +18,27 @@ To add this crate to your project you should add one of the following line to yo
 >
 > ```
 > [dependencies]
-> transistor = "1.0.0-Beta"
+> transistor = "1.0.0-Beta.1"
 > ```
 
 ## Creating a Crux Client
 All operations with Transistor start in the module `client` with `Crux::new("localhost", "3000")`.  The struct `Crux` is responsabile for defining request `HeadersMap` and the request `URL`. The `URL` definition is required and it is done by the static function `new`, which receives as argument a `host` and a `port` and returns a `Crux` instance. To change `HeadersMap` info so that you can add `AUTHORIZATION` you can use the function `with_authorization` that receives as argument the authorization token and mutates the `Crux` instance.
 * `HeaderMap` already contains the header `Content-Type: application/edn`.
 
-Finally, to create a Crux Client the function `<type>_client` should be called, for example `docker_client`. This function returns a struct that contains all possible implementarions to query Crux Docker.
+Finally, to create a Crux Client the function `<type>_client` should be called, for example `http_client`. This function returns a struct that contains all possible implementarions to query Crux Docker and Standalone HTTP Server.
 ```rust
 use transistor::client::Crux;
 
-// DockerClient with AUTHORIZATION
-let auth_client = Crux::new("127.0.0.1","3000").with_authorization("my-auth-token").docker_client();
+// HttpClient with AUTHORIZATION
+let auth_client = Crux::new("127.0.0.1","3000").with_authorization("my-auth-token").http_client();
 
-// DockerClient without AUTHORIZATION
-let client = Crux::new("127.0.0.1","3000").docker_client();
+// HttpClient without AUTHORIZATION
+let client = Crux::new("127.0.0.1","3000").http_client();
 ```
 
-## Docker Client
-Once you have called `docker_client` you will have an instance of the `DockerClient` struct which has a bunch of functions to query Crux on Docker:
-* [`state`](https://docs.rs/transistor/1.0.0-Beta/transistor/docker/struct.DockerClient.html#method.state) queries endpoint [`/`](https://opencrux.com/docs#rest-home) with a `GET`. No args. Returns various details about the state of the database.
+## Http Client
+Once you have called `http_client` you will have an instance of the `HttpClient` struct which has a bunch of functions to query Crux on Docker and Standalone HTTP Server:
+* [`state`](https://docs.rs/transistor/1.0.0-Beta.1/transistor/http/struct.HttpClient.html#method.state) queries endpoint [`/`](https://opencrux.com/docs#rest-home) with a `GET`. No args. Returns various details about the state of the database.
 ```rust
 let body = client.state().unwrap();
 
@@ -52,9 +52,9 @@ let body = client.state().unwrap();
 // }
 ```
 
-* [`tx_log`](https://docs.rs/transistor/1.0.0-Beta/transistor/docker/struct.DockerClient.html#method.tx_log) requests endpoint [`/tx-log`](https://opencrux.com/docs#rest-tx-log-post) via `POST`. A Vector of `Action` is expected as argument. The "write" endpoint, to post transactions.
+* [`tx_log`](https://docs.rs/transistor/1.0.0-Beta.1/transistor/http/struct.HttpClient.html#method.tx_log) requests endpoint [`/tx-log`](https://opencrux.com/docs#rest-tx-log-post) via `POST`. A Vector of `Action` is expected as argument. The "write" endpoint, to post transactions.
 ```rust
-use transistor::docker::{Action};
+use transistor::http::{Action};
 use transistor::client::Crux;
 use transistor::types::{CruxId};
 
@@ -75,7 +75,7 @@ let body = client.tx_log(vec![action1, action2]).unwrap();
 // {:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}
 ```
 
-* [`tx_logs`](https://docs.rs/transistor/1.0.0-Beta/transistor/docker/struct.DockerClient.html#method.tx_logs) requests endpoint [`/tx-log`](https://opencrux.com/docs#rest-tx-log) via `GET`. No args. Returns a list of all transactions.
+* [`tx_logs`](https://docs.rs/transistor/1.0.0-Beta.1/transistor/http/struct.HttpClient.html#method.tx_logs) requests endpoint [`/tx-log`](https://opencrux.com/docs#rest-tx-log) via `GET`. No args. Returns a list of all transactions.
 ```rust
 use transistor::client::Crux;
 
@@ -114,14 +114,14 @@ let body = client.tx_logs().unwrap();
 // } 
 ```
 
-* [`entity`](https://docs.rs/transistor/1.0.0-Beta/transistor/docker/struct.DockerClient.html#method.entity) requests endpoint [`/entity`](https://opencrux.com/docs#rest-entity) via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument. Returns an entity for a given ID and optional valid-time/transaction-time co-ordinates.
+* [`entity`](https://docs.rs/transistor/1.0.0-Beta.1/transistor/http/struct.HttpClient.html#method.entity) requests endpoint [`/entity`](https://opencrux.com/docs#rest-entity) via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument. Returns an entity for a given ID and optional valid-time/transaction-time co-ordinates.
 ```rust
 let person = Person {
     crux__db___id: CruxId::new("hello-entity"), 
     ...
 };
 
-let client = Crux::new("localhost", "3000").docker_client();
+let client = Crux::new("localhost", "3000").http_client();
 
 let edn_body = client.entity(person.crux__db___id.serialize()).unwrap();
 // Map(
@@ -141,9 +141,9 @@ let edn_body = client.entity(person.crux__db___id.serialize()).unwrap();
 // )
 ```
 
-* [`entity_tx`](https://docs.rs/transistor/1.0.0-Beta/transistor/docker/struct.DockerClient.html#method.entity_tx) requests endpoint [`/entity-tx`](https://opencrux.com/docs#rest-entity-tx) via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument. Returns the transaction that most recently set a key.
+* [`entity_tx`](https://docs.rs/transistor/1.0.0-Beta.1/transistor/http/struct.HttpClient.html#method.entity_tx) requests endpoint [`/entity-tx`](https://opencrux.com/docs#rest-entity-tx) via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument. Returns the transaction that most recently set a key.
 ```rust
-use transistor::docker::{Action};
+use transistor::http::{Action};
 use transistor::client::Crux;
 use transistor::types::{CruxId};
 
@@ -152,7 +152,7 @@ let person = Person {
     ...
 };
 
-let client = Crux::new("localhost", "3000").docker_client();
+let client = Crux::new("localhost", "3000").http_client();
 
 let tx_body = client.entity_tx(person.crux__db___id.serialize()).unwrap();
 // EntityTxResponse {
@@ -164,17 +164,17 @@ let tx_body = client.entity_tx(person.crux__db___id.serialize()).unwrap();
 // }
 ```
 
-* [`entity_history`](https://docs.rs/transistor/1.0.0-Beta/transistor/docker/struct.DockerClient.html#method.entity_history) requests endpoint [`/entity-history`](https://opencrux.com/docs#rest-entity) via `GET`. Arguments are the `crux.db/id` as a `String`, an ordering argument defined by the enum `docker::Order` (`Asc` or `Desc`) and a boolean for the `with-docs?` flag. The response is a Vector containing `EntityHistoryElement`. If `with-docs?` is `true`, thank the field `db__doc`, `:crux.db/doc`, witll return an `Option<Edn>` containing the inserted struct.
+* [`entity_history`](https://docs.rs/transistor/1.0.0-Beta.1/transistor/http/struct.HttpClient.html#method.entity_history) requests endpoint [`/entity-history`](https://opencrux.com/docs#rest-entity) via `GET`. Arguments are the `crux.db/id` as a `String`, an ordering argument defined by the enum `http::Order` (`Asc` or `Desc`) and a boolean for the `with-docs?` flag. The response is a Vector containing `EntityHistoryElement`. If `with-docs?` is `true`, thank the field `db__doc`, `:crux.db/doc`, witll return an `Option<Edn>` containing the inserted struct.
 ```rust
 use transistor::client::Crux;
-use transistor::docker::Order;
+use transistor::http::Order;
 use transistor::types::CruxId;
 
 let person = Person {
     crux__db___id: CruxId::new("hello-history"),
     ...
 
-let client = Crux::new("localhost", "3000").docker_client();
+let client = Crux::new("localhost", "3000").http_client();
 
 let tx_body = client.entity_tx(person.crux__db___id.serialize()).unwrap();
 
@@ -207,13 +207,13 @@ let entity_history_without_docs = client.entity_history(tx_body.db___id, Order::
 ```
 
 
-* [`query`](https://docs.rs/transistor/1.0.0-Beta/transistor/docker/struct.DockerClient.html#method.query) requests endpoint [`/query`](https://opencrux.com/docs#rest-query) via `POST`. Argument is a `query` of the type `Query`. Retrives a Set containing a vector of the values defined by the function `Query::find`.
+* [`query`](https://docs.rs/transistor/1.0.0-Beta.1/transistor/http/struct.HttpClient.html#method.query) requests endpoint [`/query`](https://opencrux.com/docs#rest-query) via `POST`. Argument is a `query` of the type `Query`. Retrives a Set containing a vector of the values defined by the function `Query::find`.
 Available functions are `find`, `where_clause`, `args`, `order_by`, `limit`, `offset`, examples [`complex_query`](https://github.com/naomijub/transistor/blob/master/examples/complex_query.rs) and [`limit_offset_query`](https://github.com/naomijub/transistor/blob/master/examples/limit_offset_query.rs) have examples on how to use them.
 ```rust
 use transistor::client::Crux;
 use transistor::types::{query::Query};
 
-let client = Crux::new("localhost", "3000").docker_client();
+let client = Crux::new("localhost", "3000").http_client();
 
 let query_is_sql = Query::find(vec!["?p1", "?n"])
     .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql true"])
@@ -228,12 +228,12 @@ let is_sql = client.query(query_is_sql.unwrap()).unwrap();
 // {[":mysql", "MySQL"], [":postgres", "Postgres"]} BTreeSet
 ```
 
-[`Action`](https://docs.rs/transistor/1.0.0-Beta/transistor/docker/enum.Action.html) is an enum with a set of options to use in association with the function `tx_log`:
+[`Action`](https://docs.rs/transistor/1.0.0-Beta.1/transistor/http/enum.Action.html) is an enum with a set of options to use in association with the function `tx_log`:
 * [`PUT`](https://opencrux.com/docs#transactions-put) - Write a version of a document
 * [`Delete`](https://opencrux.com/docs#transactions-delete) - Deletes the specific document at a given valid time
 * [`Evict`](https://opencrux.com/docs#transactions-evict) - Evicts a document entirely, including all historical versions (receives only the ID to evict)
 
-[`Query`](https://docs.rs/transistor/1.0.0-Beta/transistor/types/query/struct.Query.html) is a struct responsible for creating the fields and serializing them into the correct `query` format. It has a function for each field and a `build` function to help check if it is correctyly formatted.
+[`Query`](https://docs.rs/transistor/1.0.0-Beta.1/transistor/types/query/struct.Query.html) is a struct responsible for creating the fields and serializing them into the correct `query` format. It has a function for each field and a `build` function to help check if it is correctyly formatted.
 * `find` is a static builder function to define the elements inside the `:find` clause.
 * `where_clause` is a builder function that defines the vector os elements inside the `:where []` array.
 * `order_by` is a builder function to define the elements inside the `:order-by` clause.
@@ -241,7 +241,7 @@ let is_sql = client.query(query_is_sql.unwrap()).unwrap();
 * `limit` is a builder function to define the elements inside the `:limit` clause.
 * `offset` is a builder function to define the elements inside the `:offset` clause.
 
-Errors are defined in the [`CruxError`](https://docs.rs/transistor/1.0.0-Beta/transistor/types/error/enum.CruxError.html) enum.
+Errors are defined in the [`CruxError`](https://docs.rs/transistor/1.0.0-Beta.1/transistor/types/error/enum.CruxError.html) enum.
 * `ParseEdnError` is originated by `edn_rs` crate. The provided EDN did not match schema.
 * `RequestError` is originated by `reqwest` crate. Failed to make HTTP request.
 * `QueryFormatError` is originated when the provided Query struct did not match schema.
@@ -250,7 +250,7 @@ Errors are defined in the [`CruxError`](https://docs.rs/transistor/1.0.0-Beta/tr
 use transistor::client::Crux;
 use transistor::types::{query::Query};
 
-let _client = Crux::new("localhost", "3000").docker_client();
+let _client = Crux::new("localhost", "3000").http_client();
 
 // field `n` doesn't exist
 let _query_error_response = Query::find(vec!["?p1", "?n"])
@@ -287,11 +287,11 @@ println!("Stacktrace \n{:?}", error);
 
 ### Testing the Crux Client
 
-For testing purpose there is a `feature` called `mock` that enables the `docker_mock` function that is a replacement for the `docker_client` function. To use it run your commands with the the flag `--features "mock"` as in `cargo test --test lib --no-fail-fast --features "mock"`. The mocking feature uses the crate `mockito = "0.26"` as a Cargo dependency. An example usage with this feature enabled:
+For testing purpose there is a `feature` called `mock` that enables the `http_mock` function that is a replacement for the `http_client` function. To use it run your commands with the the flag `--features "mock"` as in `cargo test --test lib --no-fail-fast --features "mock"`. The mocking feature uses the crate `mockito = "0.26"` as a Cargo dependency. An example usage with this feature enabled:
 
 ```rust
 use transistor::client::Crux;
-use transistor::docker::Action;
+use transistor::http::Action;
 use transistor::edn_rs::{ser_struct, Serialize};
 use transistor::types::{CruxId};
 use mockito::mock;
@@ -317,7 +317,7 @@ fn mock_client() {
     let actions = vec![Action::Put(person1.serialize()), Action::Put(person2.serialize())];
     
     let body = Crux::new("localhost", "3000")
-        .docker_mock()
+        .http_mock()
         .tx_log(actions)
         .unwrap();
 
