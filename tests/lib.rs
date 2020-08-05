@@ -6,7 +6,6 @@ use transistor::http::Action;
 use transistor::types::CruxId;
 
 #[test]
-#[cfg(not(feature = "time"))]
 fn mock_client() {
     let _m = mock("POST", "/tx-log")
         .with_status(200)
@@ -22,7 +21,7 @@ fn mock_client() {
 
     assert_eq!(
         format!("{:?}", body),
-        String::from("TxLogResponse { tx___tx_id: 8, tx___tx_time: \"2020-07-16T21:53:14.628-00:00\", tx__event___tx_events: None }")
+        String::from("TxLogResponse { tx___tx_id: 8, tx___tx_time: 2020-07-16T21:53:14.628Z, tx__event___tx_events: None }")
     );
 }
 

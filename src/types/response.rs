@@ -105,31 +105,13 @@ impl From<Edn> for TxLogsResponse {
     }
 }
 
-#[cfg(not(feature = "time"))]
 impl From<Edn> for TxLogResponse {
     fn from(edn: Edn) -> Self {
         Self {
             tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize),
+            #[cfg(not(feature = "time"))]
             tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
-            tx__event___tx_events: edn.get(":crux.tx.event/tx-events").map(|e| {
-                e.iter()
-                    .ok_or(CruxError::ParseEdnError(format!(
-                        "The following Edn cannot be parsed to TxLog: {:?}",
-                        edn
-                    )))
-                    .unwrap()
-                    .map(|el| el.to_vec().unwrap())
-                    .collect::<Vec<Vec<String>>>()
-            }),
-        }
-    }
-}
-
-#[cfg(feature = "time")]
-impl From<Edn> for TxLogResponse {
-    fn from(edn: Edn) -> Self {
-        Self {
-            tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize),
+            #[cfg(feature = "time")]
             tx___tx_time: edn[":crux.tx/tx-time"]
                 .to_string()
                 .parse::<DateTime<Utc>>()
