@@ -1,4 +1,6 @@
 use crate::types::error::CruxError;
+#[cfg(feature = "time")]
+use chrono::prelude::*;
 use edn_rs::{parse_edn, ser_struct, Edn, Serialize};
 use std::collections::BTreeSet;
 
@@ -49,7 +51,10 @@ impl StateResponse {
 /// Definition for the response of a `POST` at `tx-log` endpoint
 pub struct TxLogResponse {
     pub tx___tx_id: usize,
+    #[cfg(not(feature = "time"))]
     pub tx___tx_time: String,
+    #[cfg(feature = "time")]
+    pub tx___tx_time: DateTime<Utc>,
     pub tx__event___tx_events: Option<Vec<Vec<String>>>,
 }
 
@@ -100,11 +105,35 @@ impl From<Edn> for TxLogsResponse {
     }
 }
 
+#[cfg(not(feature = "time"))]
 impl From<Edn> for TxLogResponse {
     fn from(edn: Edn) -> Self {
         Self {
             tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize),
             tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
+            tx__event___tx_events: edn.get(":crux.tx.event/tx-events").map(|e| {
+                e.iter()
+                    .ok_or(CruxError::ParseEdnError(format!(
+                        "The following Edn cannot be parsed to TxLog: {:?}",
+                        edn
+                    )))
+                    .unwrap()
+                    .map(|el| el.to_vec().unwrap())
+                    .collect::<Vec<Vec<String>>>()
+            }),
+        }
+    }
+}
+
+#[cfg(feature = "time")]
+impl From<Edn> for TxLogResponse {
+    fn from(edn: Edn) -> Self {
+        Self {
+            tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize),
+            tx___tx_time: edn[":crux.tx/tx-time"]
+                .to_string()
+                .parse::<DateTime<Utc>>()
+                .unwrap(),
             tx__event___tx_events: edn.get(":crux.tx.event/tx-events").map(|e| {
                 e.iter()
                     .ok_or(CruxError::ParseEdnError(format!(

@@ -12,6 +12,7 @@ edition = "2018"
 
 [features]
 mock = ["mockito"]
+time = ["chrono"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -19,6 +20,7 @@ mock = ["mockito"]
 reqwest = { version = "0.10.6", features = ["blocking"] }
 edn-rs = "0.10.2"
 mockito = {version = "0.26", optional = true }
+chrono = {version = "0.4", optional = true }
 
 [dev-dependencies]
 mockito = "0.26"
