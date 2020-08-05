@@ -3,7 +3,7 @@ use transistor::docker::Action;
 use transistor::edn_rs::{ser_struct, Serialize};
 use transistor::types::{
     error::CruxError,
-    {query::Query, CruxId}
+    {query::Query, CruxId},
 };
 
 fn main() -> Result<(), CruxError> {
@@ -44,8 +44,7 @@ fn main() -> Result<(), CruxError> {
     let action4 = Action::Put(cassandra.serialize());
     let action5 = Action::Put(sqlserver.serialize());
 
-    let _ = client
-        .tx_log(vec![action1, action2, action3, action4, action5])?;
+    let _ = client.tx_log(vec![action1, action2, action3, action4, action5])?;
     // Request body for vec![action1, action2]
     // "[[:crux.tx/put { :crux.db/id :crux, :name \"Crux Datalog\", :is-sql false, }],
     //   [:crux.tx/put { :crux.db/id :mysql, :name \"MySQL\", :is-sql true, }],

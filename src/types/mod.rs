@@ -21,6 +21,8 @@ impl CruxId {
     /// `CruxId::new("Jorge da Silva") -> Edn::Key(":Jorge-da-Silva")`
     pub fn new(id: &str) -> Self {
         let clean_id = id.replace(":", "");
-        Self { 0: clean_id.to_string() }
+        Self {
+            0: clean_id.to_string(),
+        }
     }
 }

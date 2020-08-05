@@ -54,7 +54,7 @@ impl Crux {
     #[cfg(feature = "mock")]
     pub fn docker_mock(&mut self) -> DockerClient {
         use mockito::server_url;
-        
+
         self.headers
             .insert(CONTENT_TYPE, "application/edn".parse().unwrap());
         DockerClient {
