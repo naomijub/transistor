@@ -1,6 +1,6 @@
 [package]
 name = "transistor"
-version = "0.4.4"
+version = "0.4.5"
 authors = ["Julia Naomi <jnboeira@outlook.com>", "Otavio Pace <otaviopp8@gmail.com>"]
 description = "Crux Datalog Client"
 readme = "README.md"
@@ -17,7 +17,7 @@ mock = ["mockito"]
 
 [dependencies]
 reqwest = { version = "0.10.6", features = ["blocking"] }
-edn-rs = "0.10.1"
+edn-rs = "0.10.2"
 mockito = {version = "0.26", optional = true }
 
 [dev-dependencies]
