@@ -10,19 +10,17 @@ matrix:
   allow_failures:
     - rust: nightly
 before_install:
-  - docker run -d -p 3000:3000 juxt/crux-standalone:20.02-1.7.0-alpha
+  - docker run -d -p 3000:3000 juxt/crux-standalone:20.07-1.10.0
 script:
     - cargo build
     - cargo test --locked  --no-fail-fast --lib
     - cargo test --test lib --no-fail-fast --features "mock"
-    - cargo run --example state
     - cargo run --example tx_log
     - cargo run --example tx_logs
     - cargo run --example evict
     - cargo run --example entity
     - cargo run --example entity_tx
-    - cargo run --example documents
-    - cargo run --example document_by_id
+    - cargo run --example entity_history
     - cargo run --example simple_query
     - cargo run --example complex_query
     - cargo run --example limit_offset_query
