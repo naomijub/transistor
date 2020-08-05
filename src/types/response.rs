@@ -1,6 +1,6 @@
 use crate::types::error::CruxError;
 use edn_rs::{parse_edn, ser_struct, Edn, Serialize};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
 ser_struct! {
     #[derive(Debug, PartialEq, Clone)]
@@ -78,7 +78,7 @@ pub struct TxLogsResponse {
 
 impl TxLogsResponse {
     pub fn deserialize(resp: String) -> Result<Self, CruxError> {
-        let clean_edn = resp.replace("#crux/id","");
+        let clean_edn = resp.replace("#crux/id", "");
         let edn = parse_edn(&clean_edn)?;
         Ok(edn.into())
     }
@@ -132,7 +132,7 @@ pub struct EntityTxResponse {
 
 impl EntityTxResponse {
     pub fn deserialize(resp: String) -> Result<Self, CruxError> {
-        let clean_edn = resp.replace("#crux/id","");
+        let clean_edn = resp.replace("#crux/id", "");
         let edn = parse_edn(&clean_edn)?;
         Ok(edn.into())
     }
@@ -186,6 +186,81 @@ impl QueryResponse {
                 .unwrap()
                 .map(|e| e.to_vec().unwrap())
                 .collect::<BTreeSet<Vec<String>>>())
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+#[allow(non_snake_case)]
+pub struct EntityHistoryElement {
+    pub db___valid_time: String,
+    pub tx___tx_id: usize,
+    pub tx___tx_time: String,
+    pub db___content_hash: String,
+    pub db__doc: Option<Edn>,
+}
+
+#[cfg(test)]
+impl EntityHistoryElement {
+    pub fn default() -> Self {
+        Self {
+            db___content_hash: "1828ebf4466f98ea3f5252a58734208cd0414376".to_string(),
+            db___valid_time: "2020-07-19T04:12:13.788-00:00".to_string(),
+            tx___tx_id: 28usize,
+            tx___tx_time: "2020-07-19T04:12:13.788-00:00".to_string(),
+            db__doc: None,
+        }
+    }
+
+    pub fn default_docs() -> Self {
+        Self {
+            db___content_hash: "1828ebf4466f98ea3f5252a58734208cd0414376".to_string(),
+            db___valid_time: "2020-07-19T04:12:13.788-00:00".to_string(),
+            tx___tx_id: 28usize,
+            tx___tx_time: "2020-07-19T04:12:13.788-00:00".to_string(),
+            db__doc: Some(Edn::Key(":docs".to_string())),
+        }
+    }
+}
+
+impl From<Edn> for EntityHistoryElement {
+    fn from(edn: Edn) -> Self {
+        Self {
+            db___content_hash: edn[":crux.db/content-hash"].to_string(),
+            db___valid_time: edn[":crux.db/valid-time"].to_string(),
+            tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize),
+            tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
+            db__doc: edn.get(":crux.db/doc").map(|d| d.to_owned()),
+        }
+    }
+}
+
+/// Definition for the response of a `GET` at `/entity-history` endpoint. This returns a Vec of  `EntityHistoryElement`.
+#[derive(Debug, PartialEq, Clone)]
+pub struct EntityHistoryResponse {
+    pub history: Vec<EntityHistoryElement>,
+}
+
+impl EntityHistoryResponse {
+    pub fn deserialize(resp: String) -> Result<Self, CruxError> {
+        let clean_edn = resp.replace("#crux/id", "").replace("#inst", "");
+        let edn = parse_edn(&clean_edn)?;
+        Ok(edn.into())
+    }
+}
+
+impl From<Edn> for EntityHistoryResponse {
+    fn from(edn: Edn) -> Self {
+        Self {
+            history: edn
+                .iter()
+                .ok_or(CruxError::ParseEdnError(format!(
+                    "The following Edn cannot be parsed to entity-history: {:?}",
+                    edn
+                )))
+                .unwrap()
+                .map(|el| el.to_owned().into())
+                .collect::<Vec<EntityHistoryElement>>(),
         }
     }
 }

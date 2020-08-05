@@ -2,12 +2,13 @@ use crate::types::{
     error::CruxError,
     query::Query,
     response::{
-        EntityTxResponse, QueryResponse, StateResponse, TxLogResponse, TxLogsResponse,
+        EntityHistoryResponse, EntityTxResponse, QueryResponse, StateResponse, TxLogResponse,
+        TxLogsResponse,
     },
 };
 use edn_rs::{edn, Edn, Map, Serialize};
 use reqwest::{blocking::Client, header::HeaderMap};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
 /// `DockerClient` has the `reqwest::blocking::Client`,  the `uri` to query and the `HeaderMap` with
 /// all the possible headers. Default header is `Content-Type: "application/edn"`. Synchronous request.
@@ -135,7 +136,7 @@ impl DockerClient {
         s.push_str("{:eid ");
         s.push_str(&id);
         s.push_str("}");
-        
+
         let resp = self
             .client
             .post(&format!("{}/entity-tx", self.uri))
@@ -145,6 +146,29 @@ impl DockerClient {
             .text()?;
 
         EntityTxResponse::deserialize(resp)
+    }
+
+    pub fn entity_history(
+        &self,
+        hash: String,
+        order: Order,
+        with_docs: bool,
+    ) -> Result<EntityHistoryResponse, CruxError> {
+        let url = format!(
+            "{}/entity-history/{}?sort-order={}&with-docs={}",
+            self.uri,
+            hash,
+            order.serialize(),
+            with_docs
+        );
+        let resp = self
+            .client
+            .get(&url)
+            .headers(self.headers.clone())
+            .send()?
+            .text()?;
+
+        EntityHistoryResponse::deserialize(resp)
     }
 
     /// Function `query` requests endpoint `/query` via `POST` which retrives a Set containing a vector of the values defined by the function [`Query::find` - github example](https://github.com/naomijub/transistor/blob/master/examples/simple_query.rs#L53).
@@ -162,18 +186,36 @@ impl DockerClient {
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub enum Order {
+    Asc,
+    Desc,
+}
+
+impl Serialize for Order {
+    fn serialize(self) -> String {
+        match self {
+            Order::Asc => String::from("asc"),
+            Order::Desc => String::from("desc"),
+        }
+    }
+}
+
 #[cfg(test)]
 mod docker {
     use super::Action;
     use crate::client::Crux;
+    use crate::docker::Order;
     use crate::types::{
         query::Query,
-        response::{EntityTxResponse, StateResponse, TxLogResponse},
+        response::{
+            EntityHistoryElement, EntityHistoryResponse, EntityTxResponse, StateResponse,
+            TxLogResponse,
+        },
         CruxId,
     };
-    use edn_rs::{ser_struct, Edn, Map, Serialize};
+    use edn_rs::{ser_struct, Serialize};
     use mockito::mock;
-    use std::collections::BTreeMap;
 
     ser_struct! {
         #[derive(Debug, Clone)]
@@ -317,5 +359,55 @@ mod docker {
             response,
             "{[\":mysql\", \"MySQL\", \"true\"], [\":postgres\", \"Postgres\", \"true\"]}"
         );
+    }
+
+    #[test]
+    fn entity_history() {
+        let expected_body = "({:crux.tx/tx-time \"2020-07-19T04:12:13.788-00:00\", :crux.tx/tx-id 28, :crux.db/valid-time \"2020-07-19T04:12:13.788-00:00\", :crux.db/content-hash  \"1828ebf4466f98ea3f5252a58734208cd0414376\"})";
+        let _m = mock("GET", "/entity-history/ecc6475b7ef9acf689f98e479d539e869432cb5e?sort-order=asc&with-docs=false")
+            .with_status(200)
+            .with_header("content-type", "application/edn")
+            .with_body(expected_body)
+            .create();
+
+        let edn_body = Crux::new("localhost", "3000")
+            .docker_client()
+            .entity_history(
+                "ecc6475b7ef9acf689f98e479d539e869432cb5e".to_string(),
+                Order::Asc,
+                false,
+            )
+            .unwrap();
+
+        let expected = EntityHistoryResponse {
+            history: vec![EntityHistoryElement::default()],
+        };
+
+        assert_eq!(edn_body, expected);
+    }
+
+    #[test]
+    fn entity_history_docs() {
+        let expected_body = "({:crux.tx/tx-time \"2020-07-19T04:12:13.788-00:00\", :crux.tx/tx-id 28, :crux.db/valid-time \"2020-07-19T04:12:13.788-00:00\", :crux.db/content-hash  \"1828ebf4466f98ea3f5252a58734208cd0414376\", :crux.db/doc :docs})";
+        let _m = mock("GET", "/entity-history/ecc6475b7ef9acf689f98e479d539e869432cb5e?sort-order=asc&with-docs=true")
+            .with_status(200)
+            .with_header("content-type", "application/edn")
+            .with_body(expected_body)
+            .create();
+
+        let edn_body = Crux::new("localhost", "3000")
+            .docker_client()
+            .entity_history(
+                "ecc6475b7ef9acf689f98e479d539e869432cb5e".to_string(),
+                Order::Asc,
+                true,
+            )
+            .unwrap();
+
+        let expected = EntityHistoryResponse {
+            history: vec![EntityHistoryElement::default_docs()],
+        };
+
+        assert_eq!(edn_body, expected);
     }
 }

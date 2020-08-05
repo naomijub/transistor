@@ -18,9 +18,11 @@ pub mod types;
 /// * `tx_logs` requests endpoint `/tx-log` via `GET`. No args.
 /// * `entity` requests endpoint `/entity` via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument.
 /// * `entity_tx` requests endpoint `/entity-tx` via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument.
+/// * `entity_history` requests endpoint `/entity-history` via `GET`. Arguments are the `crux.db/id` as a `String`, an ordering argument defined by the enum `docker::Order` (`Asc` or `Desc`) and a boolean for the `with-docs?` flag (this returns values for the field `:crux.db/doc`).
 /// * `query` requests endpoint `/query` via `POST`. Argument is a `query` of the type `Query`. Retrives a Set containing a vector of the values defined by the function `Query::find`.
 ///
 /// Enum [`Action`](../docker/enum.Action.html) is available in this module.
+/// Enum `Order` is available in this module to be used with `entity_history`.
 ///
 /// Examples can be found in the [examples directory](https://github.com/naomijub/transistor/tree/master/examples).
 pub mod docker;
