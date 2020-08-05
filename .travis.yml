@@ -15,7 +15,6 @@ script:
     - cargo build
     - cargo test --locked  --no-fail-fast --lib
     - cargo test --test lib --no-fail-fast --features "mock"
-    - cargo run --example state
     - cargo run --example tx_log
     - cargo run --example tx_logs
     - cargo run --example evict
