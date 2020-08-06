@@ -21,7 +21,7 @@ fn mock_client() {
 
     assert_eq!(
         format!("{:?}", body),
-        String::from("TxLogResponse { tx___tx_id: 8, tx___tx_time:  \"2020-07-16T21:53:14.628-00:00\", tx__event___tx_events: None }")
+        String::from("TxLogResponse { tx___tx_id: 8, tx___tx_time: \"2020-07-16T21:53:14.628-00:00\", tx__event___tx_events: None }")
     );
 }
 
