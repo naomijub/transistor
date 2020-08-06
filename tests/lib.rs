@@ -4,7 +4,7 @@ mod integration {
     use mockito::mock;
     use transistor::client::Crux;
     use transistor::edn_rs::{ser_struct, Serialize};
-    use transistor::http::Action;
+    use transistor::http::{Action, Order};
     use transistor::types::CruxId;
 
     #[test]
@@ -47,6 +47,50 @@ mod integration {
                 .parse::<DateTime<Utc>>()
                 .unwrap()
         );
+    }
+
+    #[test]
+    fn entity_history() {
+        let expected_body = "({:crux.tx/tx-time \"2020-07-19T04:12:13.788-00:00\", :crux.tx/tx-id 28, :crux.db/valid-time \"2020-07-19T04:12:13.788-00:00\", :crux.db/content-hash  \"1828ebf4466f98ea3f5252a58734208cd0414376\"})";
+        let _m = mock("GET", "/entity-history/ecc6475b7ef9acf689f98e479d539e869432cb5e?sort-order=asc&with-docs=false")
+            .with_status(200)
+            .with_header("content-type", "application/edn")
+            .with_body(expected_body)
+            .create();
+
+        let body = Crux::new("localhost", "3000")
+            .http_mock()
+            .entity_history(
+                "ecc6475b7ef9acf689f98e479d539e869432cb5e".to_string(),
+                Order::Asc,
+                false,
+            )
+            .unwrap();
+
+        let actual = format!("{:?}", body);
+        let expected = "EntityHistoryResponse { history: [EntityHistoryElement { db___valid_time: 2020-07-19T04:12:13.788Z, tx___tx_id: 28, tx___tx_time: 2020-07-19T04:12:13.788Z, db___content_hash: \"1828ebf4466f98ea3f5252a58734208cd0414376\", db__doc: None }] }";
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn entity_tx() {
+        let expected_body = "{:crux.db/id \"d72ccae848ce3a371bd313865cedc3d20b1478ca\", :crux.db/content-hash \"1828ebf4466f98ea3f5252a58734208cd0414376\", :crux.db/valid-time #inst \"2020-07-19T04:12:13.788-00:00\", :crux.tx/tx-time #inst \"2020-07-19T04:12:13.788-00:00\", :crux.tx/tx-id 28}";
+        let _m = mock("POST", "/entity-tx")
+            .with_status(200)
+            .match_body("{:eid :ivan}")
+            .with_header("content-type", "application/edn")
+            .with_body(expected_body)
+            .create();
+
+        let body = Crux::new("localhost", "3000")
+            .http_mock()
+            .entity_tx(":ivan".to_string())
+            .unwrap();
+
+        let actual = format!("{:?}", body);
+        let expected = "EntityTxResponse { db___id: \"d72ccae848ce3a371bd313865cedc3d20b1478ca\", db___content_hash: \"1828ebf4466f98ea3f5252a58734208cd0414376\", db___valid_time: 2020-07-19T04:12:13.788Z, tx___tx_id: 28, tx___tx_time: 2020-07-19T04:12:13.788Z }";
+
+        assert_eq!(actual, expected);
     }
 
     fn actions() -> Vec<Action> {
