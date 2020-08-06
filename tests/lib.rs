@@ -25,6 +25,7 @@ fn mock_client() {
     );
 }
 
+#[cfg(feature = "time")]
 #[test]
 fn chrono() {
     let _m = mock("POST", "/tx-log")
