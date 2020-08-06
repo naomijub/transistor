@@ -5,9 +5,13 @@ pub use edn_rs;
 /// * `CruxId` is the field that receives a String and serielizes it to a EDN Keyword.
 ///
 /// Availables types for `response` are:
-/// * `StateResponse` response for Crux RESTapi at endpoint `/state`.
-/// * `TxLogResponse` response for Crux RESTapi at endpoint `/tx-log`. For `POSTs`, `tx__event___tx_events (:crux-tx.event/tx_events)` comes with `None`.
+/// * `StateResponse` response for Crux REST API at endpoint `/state`.
+/// * `TxLogResponse` response for Crux REST API at endpoint `/tx-log`. For `POSTs`, `tx__event___tx_events (:crux-tx.event/tx_events)` comes with `None`.
 /// * `TxLogsResponse` response is the wrapper for a `GET` at endpoint `/tx-logs`, it is a `Vector` of type `TxLogResponse`.
+/// * `EntityTxResponse` response for Crux REST API at `/entity-tx` endpoint.
+/// * `EntityHistoryResponse` response for Crux REST API at `/entity-history`.
+///
+/// It is possible to use `chrono`  for time related responses (`TxLogResponse`, `EntityTxResponse`, `EntityHistoryElement`). to use it you need to enable feature `"time".
 pub mod types;
 
 /// Http Client  module. It contains the [`HttpClient`](../http/struct.HttpClient.html#impl) for Docker and Standalone HTTP Server.
@@ -22,11 +26,10 @@ pub mod types;
 /// * `query` requests endpoint `/query` via `POST`. Argument is a `query` of the type `Query`. Retrives a Set containing a vector of the values defined by the function `Query::find`.
 ///
 /// Enum [`Action`](../http/enum.Action.html) is available in this module.
-/// Enum `Order` is available in this module to be used with `entity_history`.
+/// Enum [`Order`](../http/enum.Order.html)  is available in this module to be used with `entity_history`.
 ///
 /// Examples can be found in the [examples directory](https://github.com/naomijub/transistor/tree/master/examples).
 pub mod http;
-// pub mod kafka;
 
 /// This module contains the basic client, struct `Crux`, which configures `host:port` and `authorization`, and returns the needed `client`.
 pub mod client;
