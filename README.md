@@ -3,12 +3,12 @@
 A Rust Crux Client crate/lib. For now, this crate intends to support 2 ways to interact with Crux:
 
 - [x] Via `Docker` with a [`crux-standalone`](https://opencrux.com/docs#config-docker) version [docker-hub](https://hub.docker.com/r/juxt/crux-standalone). Current Docker image `juxt/crux-standalone:20.07-1.10.0`.
-- [ ] Via [`HTTP`](https://opencrux.com/docs#config-http) using the [`REST API`](https://opencrux.com/docs#restapi).
+- [x] Via [`HTTP`](https://opencrux.com/docs#config-http) using the [`REST API`](https://opencrux.com/docs#restapi).
 - [ ] Via kafka. (To be evaluated.)
 
 > Other solutions may be added after the first release.
 
-* For information on Crux and how to use it, please follow the link to [opencrux](https://opencrux.com/docs#restapi). Note that the current crate version (`Docker only`) uses a few modified endpoints due to its Docker implementation.
+* For information on Crux and how to use it, please follow the link to [opencrux](https://opencrux.com/docs#restapi). Note that the documentation for the REST API isn't completly up to date, so `document` endpoints don't exist since [changelog 20.06-1.9.0](https://github.com/juxt/crux/releases/tag/20.06-1.9.0).
 * [**Crux FAQ**](https://opencrux.com/docs#faqs)
 * For examples on usage, please refer to [examples directory](https://github.com/naomijub/transistor/tree/master/examples) or to the [`ATM Crux` (under development)](https://github.com/naomijub/atm-crux) for more complete and interactive example.
 
