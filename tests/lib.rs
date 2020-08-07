@@ -1,7 +1,7 @@
 use mockito::mock;
 use transistor::client::Crux;
-use transistor::docker::Action;
 use transistor::edn_rs::{ser_struct, Serialize};
+use transistor::http::Action;
 use transistor::types::CruxId;
 
 #[test]
@@ -32,7 +32,7 @@ fn mock_client() {
     ];
 
     let body = Crux::new("localhost", "3000")
-        .docker_mock()
+        .http_mock()
         .tx_log(actions)
         .unwrap();
 

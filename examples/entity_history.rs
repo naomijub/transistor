@@ -1,7 +1,7 @@
 use transistor::client::Crux;
-use transistor::docker::Action;
-use transistor::docker::Order;
 use transistor::edn_rs::{ser_struct, Serialize};
+use transistor::http::Action;
+use transistor::http::Order;
 use transistor::types::CruxId;
 
 fn main() {
@@ -13,7 +13,7 @@ fn main() {
 
     let put_person = Action::Put(person.clone().serialize());
 
-    let client = Crux::new("localhost", "3000").docker_client();
+    let client = Crux::new("localhost", "3000").http_client();
     let _ = client.tx_log(vec![put_person]).unwrap();
 
     let tx_body = client.entity_tx(person.crux__db___id.serialize()).unwrap();

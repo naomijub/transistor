@@ -10,9 +10,9 @@ use edn_rs::{edn, Edn, Map, Serialize};
 use reqwest::{blocking::Client, header::HeaderMap};
 use std::collections::BTreeSet;
 
-/// `DockerClient` has the `reqwest::blocking::Client`,  the `uri` to query and the `HeaderMap` with
+/// `HttpClient` has the `reqwest::blocking::Client`,  the `uri` to query and the `HeaderMap` with
 /// all the possible headers. Default header is `Content-Type: "application/edn"`. Synchronous request.
-pub struct DockerClient {
+pub struct HttpClient {
     pub(crate) client: Client,
     pub(crate) uri: String,
     pub(crate) headers: HeaderMap,
@@ -49,7 +49,7 @@ impl Serialize for Action {
     }
 }
 
-impl DockerClient {
+impl HttpClient {
     /// Function `state` queries endpoint `/` with a `GET`. Returned information consists of
     /// various details about the state of the database and it can be used as a health check.
     pub fn state(&self) -> Result<StateResponse, CruxError> {
@@ -202,10 +202,10 @@ impl Serialize for Order {
 }
 
 #[cfg(test)]
-mod docker {
+mod http {
     use super::Action;
     use crate::client::Crux;
-    use crate::docker::Order;
+    use crate::http::Order;
     use crate::types::{
         query::Query,
         response::{
@@ -235,7 +235,7 @@ mod docker {
         .with_body("{:crux.index/index-version 5, :crux.doc-log/consumer-state nil, :crux.tx-log/consumer-state nil, :crux.kv/kv-store \"crux.kv.rocksdb.RocksKv\", :crux.kv/estimate-num-keys 34, :crux.kv/size 88489}")
         .create();
 
-        let response = Crux::new("localhost", "4000").docker_client().state();
+        let response = Crux::new("localhost", "4000").http_client().state();
 
         assert_eq!(response.unwrap(), StateResponse::default())
     }
@@ -265,7 +265,7 @@ mod docker {
         let action2 = Action::Put(person2.serialize());
 
         let response = Crux::new("localhost", "4000")
-            .docker_client()
+            .http_client()
             .tx_log(vec![action1, action2]);
 
         assert_eq!(response.unwrap(), TxLogResponse::default())
@@ -279,7 +279,7 @@ mod docker {
         .with_body("({:crux.tx/tx-id 0, :crux.tx/tx-time #inst \"2020-07-09T23:38:06.465-00:00\", :crux.tx.event/tx-events [[:crux.tx/put \"a15f8b81a160b4eebe5c84e9e3b65c87b9b2f18e\" \"125d29eb3bed1bf51d64194601ad4ff93defe0e2\"]]}{:crux.tx/tx-id 1, :crux.tx/tx-time #inst \"2020-07-09T23:39:33.815-00:00\", :crux.tx.event/tx-events [[:crux.tx/put \"a15f8b81a160b4eebe5c84e9e3b65c87b9b2f18e\" \"1b42e0d5137e3833423f7bb958622bee29f91eee\"]]})")
         .create();
 
-        let response = Crux::new("localhost", "4000").docker_client().tx_logs();
+        let response = Crux::new("localhost", "4000").http_client().tx_logs();
 
         assert_eq!(response.unwrap().tx_events.len(), 2);
     }
@@ -294,7 +294,7 @@ mod docker {
             .create();
 
         let _error = Crux::new("localhost", "4000")
-            .docker_client()
+            .http_client()
             .tx_logs()
             .unwrap();
     }
@@ -310,7 +310,7 @@ mod docker {
             .create();
 
         let edn_body = Crux::new("localhost", "3000")
-            .docker_client()
+            .http_client()
             .entity(":ivan".to_string())
             .unwrap();
 
@@ -328,7 +328,7 @@ mod docker {
             .create();
 
         let body = Crux::new("localhost", "3000")
-            .docker_client()
+            .http_client()
             .entity_tx(":ivan".to_string())
             .unwrap();
 
@@ -350,7 +350,7 @@ mod docker {
             .unwrap()
             .build();
         let body = Crux::new("localhost", "3000")
-            .docker_client()
+            .http_client()
             .query(query.unwrap())
             .unwrap();
 
@@ -371,7 +371,7 @@ mod docker {
             .create();
 
         let edn_body = Crux::new("localhost", "3000")
-            .docker_client()
+            .http_client()
             .entity_history(
                 "ecc6475b7ef9acf689f98e479d539e869432cb5e".to_string(),
                 Order::Asc,
@@ -396,7 +396,7 @@ mod docker {
             .create();
 
         let edn_body = Crux::new("localhost", "3000")
-            .docker_client()
+            .http_client()
             .entity_history(
                 "ecc6475b7ef9acf689f98e479d539e869432cb5e".to_string(),
                 Order::Asc,
