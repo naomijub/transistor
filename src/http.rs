@@ -1,11 +1,11 @@
 use crate::types::{
     error::CruxError,
+    http::{Action, Order},
     query::Query,
     response::{
         EntityHistoryResponse, EntityTxResponse, QueryResponse, StateResponse, TxLogResponse,
         TxLogsResponse,
     },
-    http::{Action, Order},
 };
 use edn_rs::{edn, Edn, Map, Serialize};
 use reqwest::{blocking::Client, header::HeaderMap};
@@ -158,8 +158,8 @@ impl HttpClient {
 
 #[cfg(test)]
 mod http {
-    use crate::types::http::Action;
     use crate::client::Crux;
+    use crate::types::http::Action;
     use crate::types::http::Order;
     use crate::types::{
         query::Query,

@@ -1,4 +1,4 @@
-use edn_rs::{Serialize};
+use edn_rs::Serialize;
 
 /// Action to perform in Crux. Receives a serialized Edn.
 ///
