@@ -250,7 +250,7 @@ let is_sql = client.query(query_is_sql.unwrap()).unwrap();
 ```
 
 [`Action`](https://docs.rs/transistor/1.0.0-beta.3/transistor/http/enum.Action.html) is an enum with a set of options to use in association with the function `tx_log`:
-* [`PUT`](https://opencrux.com/docs#transactions-put) - Write a version of a document
+* [`Put`](https://opencrux.com/docs#transactions-put) - Write a version of a document
 * [`Delete`](https://opencrux.com/docs#transactions-delete) - Deletes the specific document at a given valid time
 * [`Evict`](https://opencrux.com/docs#transactions-evict) - Evicts a document entirely, including all historical versions (receives only the ID to evict)
 * [`Match`](https://opencrux.com/docs#transactions-match) - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue
