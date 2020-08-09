@@ -6,10 +6,10 @@ use edn_rs::Serialize;
 /// **First field of your struct should be `crux__db___id: CruxId`**
 ///
 /// Allowed actions:
-/// * `PUT` - Write a version of a document
-/// * `Delete` - Deletes the specific document at a given valid time
-/// * `Evict` - Evicts a document entirely, including all historical versions (receives only the ID to evict)
-/// * `Match` - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue. First argument is struct's `crux__db___id` and the second is the serialized document that you want to match
+/// * `PUT` - Write a version of a document can receive an `Option<DateTime<Utc>>` as second argument which corresponds to a `valid-time`.
+/// * `Delete` - Deletes the specific document at a given valid time, if `Option<DateTime<Utc>>` is `None` it deletes the last `valid-`time` else it deletes the passed `valid-time`.
+/// * `Evict` - Evicts a document entirely, including all historical versions (receives only the ID to evict).
+/// * `Match` - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue. First argument is struct's `crux__db___id`,  the second is the serialized document that you want to match and the third argument is an `Option<DateTime<Utc>>` which corresponds to a `valid-time` for the `Match`
 #[derive(Debug, PartialEq)]
 pub enum Action {
     Put(String, Option<DateTime<Utc>>),

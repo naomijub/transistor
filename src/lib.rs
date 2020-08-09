@@ -14,6 +14,7 @@ pub use edn_rs;
 /// Available auxiliary Enums for HTTP in module `types::http`
 /// Enum [`Action`](../types/http/enum.Action.html) is available in this module.
 /// Enum [`Order`](../types/http/enum.Order.html)  is available in this module to be used with `entity_history`.
+/// Enum [`TimeHistory`](../types/http/enum.TimeHistory.html)  is available in this module to be used with `entity_history_timed`.
 ///
 /// It is possible to use `chrono`  for time related responses (`TxLogResponse`, `EntityTxResponse`, `EntityHistoryElement`). to use it you need to enable feature `"time".
 pub mod types;
