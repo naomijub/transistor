@@ -24,3 +24,5 @@ script:
     - cargo run --example simple_query
     - cargo run --example complex_query
     - cargo run --example limit_offset_query
+    - cargo run --example match_no_continue_tx
+    - cargo run --example match_continue_tx

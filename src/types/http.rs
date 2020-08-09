@@ -8,11 +8,13 @@ use edn_rs::Serialize;
 /// * `PUT` - Write a version of a document
 /// * `Delete` - Deletes the specific document at a given valid time
 /// * `Evict` - Evicts a document entirely, including all historical versions (receives only the ID to evict)
+/// * `Match` - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue. First argument is struct's `crux__db___id` and the second is the serialized document that you want to match
 #[derive(Debug, PartialEq)]
 pub enum Action {
     Put(String),
     Delete(String),
     Evict(String),
+    Match(String, String),
 }
 
 impl Serialize for Action {
@@ -26,7 +28,8 @@ impl Serialize for Action {
                 } else {
                     "".to_string()
                 }
-            }
+            },
+            Action::Match(id, edn) => format!("[:crux.tx/match {} {}]", id, edn),
         }
     }
 }
