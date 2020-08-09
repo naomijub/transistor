@@ -253,6 +253,7 @@ let is_sql = client.query(query_is_sql.unwrap()).unwrap();
 * [`PUT`](https://opencrux.com/docs#transactions-put) - Write a version of a document
 * [`Delete`](https://opencrux.com/docs#transactions-delete) - Deletes the specific document at a given valid time
 * [`Evict`](https://opencrux.com/docs#transactions-evict) - Evicts a document entirely, including all historical versions (receives only the ID to evict)
+* [`Match`](https://opencrux.com/docs#transactions-match) - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue
 
 [`Query`](https://docs.rs/transistor/1.0.0-beta.2/transistor/types/query/struct.Query.html) is a struct responsible for creating the fields and serializing them into the correct `query` format. It has a function for each field and a `build` function to help check if it is correctyly formatted.
 * `find` is a static builder function to define the elements inside the `:find` clause.
