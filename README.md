@@ -12,6 +12,27 @@ A Rust Crux Client crate/lib. For now, this crate intends to support 2 ways to i
 * [**Crux FAQ**](https://opencrux.com/docs#faqs)
 * For examples on usage, please refer to [examples directory](https://github.com/naomijub/transistor/tree/master/examples) or to the [`ATM Crux`](https://github.com/naomijub/atm-crux) for more complete and interactive example.
 
+## Bitemporal Crux
+
+Crux is optimised for efficient and globally consistent point-in-time queries using a pair of transaction-time and valid-time timestamps.
+
+Ad-hoc systems for bitemporal recordkeeping typically rely on explicitly tracking either valid-from and valid-to timestamps or range types directly within relations. The bitemporal document model that Crux provides is very simple to reason about and it is universal across the entire database, therefore it does not require you to consider which historical information is worth storing in special "bitemporal tables" upfront.
+
+One or more documents may be inserted into Crux via a put transaction at a specific valid-time, defaulting to the transaction time (i.e. now), and each document remains valid until explicitly updated with a new version via put or deleted via delete.
+
+### Why?
+
+| Time 	| Purpose 	|
+|-	|-	|
+| transaction-time 	| Used for audit purposes, technical requirements such as event sourcing. 	|
+| valid-time 	| Used for querying data across time, historical analysis. 	|
+
+`transaction-time` represents the point at which data arrives into the database. This gives us an audit trail and we can see what the state of the database was at a particular point in time. You cannot write a new transaction with a transaction-time that is in the past.
+
+`valid-time` is an arbitrary time that can originate from an upstream system, or by default is set to transaction-time. Valid time is what users will typically use for query purposes.
+
+Reference [crux docs](https://opencrux.com/docs#bitemporality) and [value of bitemporality](https://juxt.pro/blog/posts/value-of-bitemporality.html)
+
 ## Usage 
 
 To add this crate to your project you should add one of the following line to your `dependencies` field in `Cargo.toml`:
@@ -54,7 +75,7 @@ let body = client.state().unwrap();
 
 * [`tx_log`](https://docs.rs/transistor/1.0.0-beta.2/transistor/http/struct.HttpClient.html#method.tx_log) requests endpoint [`/tx-log`](https://opencrux.com/docs#rest-tx-log-post) via `POST`. A Vector of `Action` is expected as argument. The "write" endpoint, to post transactions.
 ```rust
-use use transistor::types::http::Action;;
+use transistor::http::{Action};
 use transistor::client::Crux;
 use transistor::types::{CruxId};
 
@@ -143,7 +164,7 @@ let edn_body = client.entity(person.crux__db___id.serialize()).unwrap();
 
 * [`entity_tx`](https://docs.rs/transistor/1.0.0-beta.2/transistor/http/struct.HttpClient.html#method.entity_tx) requests endpoint [`/entity-tx`](https://opencrux.com/docs#rest-entity-tx) via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument. Returns the transaction that most recently set a key.
 ```rust
-use use transistor::types::http::Action;;
+use transistor::http::{Action};
 use transistor::client::Crux;
 use transistor::types::{CruxId};
 
@@ -164,10 +185,10 @@ let tx_body = client.entity_tx(person.crux__db___id.serialize()).unwrap();
 // }
 ```
 
-* [`entity_history`](https://docs.rs/transistor/1.0.0-beta.2/transistor/http/struct.HttpClient.html#method.entity_history) requests endpoint [`/entity-history`](https://opencrux.com/docs#rest-entity) via `GET`. Arguments are the `crux.db/id` as a `String`, an ordering argument defined by the enum `types::http::Order` (`Asc` or `Desc`) and a boolean for the `with-docs?` flag. The response is a Vector containing `EntityHistoryElement`. If `with-docs?` is `true`, thank the field `db__doc`, `:crux.db/doc`, witll return an `Option<Edn>` containing the inserted struct.
+* [`entity_history`](https://docs.rs/transistor/1.0.0-beta.2/transistor/http/struct.HttpClient.html#method.entity_history) requests endpoint [`/entity-history`](https://opencrux.com/docs#rest-entity) via `GET`. Arguments are the `crux.db/id` as a `String`, an ordering argument defined by the enum `http::Order` (`Asc` or `Desc`) and a boolean for the `with-docs?` flag. The response is a Vector containing `EntityHistoryElement`. If `with-docs?` is `true`, thank the field `db__doc`, `:crux.db/doc`, witll return an `Option<Edn>` containing the inserted struct.
 ```rust
 use transistor::client::Crux;
-use transistor::types::http::Order;
+use transistor::http::Order;
 use transistor::types::CruxId;
 
 let person = Person {
@@ -291,7 +312,7 @@ For testing purpose there is a `feature` called `mock` that enables the `http_mo
 
 ```rust
 use transistor::client::Crux;
-use transistor::types::http::Action;
+use transistor::http::Action;
 use transistor::edn_rs::{ser_struct, Serialize};
 use transistor::types::{CruxId};
 use mockito::mock;

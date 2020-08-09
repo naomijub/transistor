@@ -141,6 +141,34 @@ impl HttpClient {
         EntityHistoryResponse::deserialize(resp)
     }
 
+    #[cfg(feature = "time")]
+    pub fn entity_history_timed(
+        &self,
+        hash: String,
+        order: Order,
+        with_docs: bool,
+        time: Vec<crate::types::http::time::TimeHistory>,
+    ) -> Result<EntityHistoryResponse, CruxError> {
+        let url = format!(
+            "{}/entity-history/{}?sort-order={}&with-docs={}{}",
+            self.uri,
+            hash,
+            order.serialize(),
+            with_docs,
+            time.serialize().replace("[", "").replace("]", ""),
+        );
+
+        println!("{:?}", url);
+        let resp = self
+            .client
+            .get(&url)
+            .headers(self.headers.clone())
+            .send()?
+            .text()?;
+
+        EntityHistoryResponse::deserialize(resp)
+    }
+
     /// Function `query` requests endpoint `/query` via `POST` which retrives a Set containing a vector of the values defined by the function [`Query::find` - github example](https://github.com/naomijub/transistor/blob/master/examples/simple_query.rs#L53).
     /// Argument is a `query` of the type `Query`.
     pub fn query(&self, query: Query) -> Result<BTreeSet<Vec<String>>, CruxError> {

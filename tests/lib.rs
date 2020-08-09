@@ -93,6 +93,91 @@ mod integration {
         assert_eq!(actual, expected);
     }
 
+    #[test]
+    fn match_tx_date_times() {
+        use transistor::types::http::time::TimeHistory;
+
+        let date = "2014-11-28T21:00:09+09:00"
+            .parse::<DateTime<Utc>>()
+            .unwrap();
+        let m = mock("GET", "/entity-history/ecc6475b7ef9acf689f98e479d539e869432cb5e?sort-order=asc&with-docs=false&start-transaction-time=2014-11-28T12:00:09&end-transaction-time=2014-11-28T12:00:09")
+            .create();
+
+        let _ = Crux::new("localhost", "3000")
+            .http_mock()
+            .entity_history_timed(
+                "ecc6475b7ef9acf689f98e479d539e869432cb5e".to_string(),
+                Order::Asc,
+                false,
+                vec![TimeHistory::TransactionTime(Some(date), Some(date))],
+            );
+
+        m.assert();
+    }
+
+    #[test]
+    fn match_tx_end_date() {
+        use transistor::types::http::time::TimeHistory;
+
+        let date = "2014-11-28T21:00:09+09:00"
+            .parse::<DateTime<Utc>>()
+            .unwrap();
+        let m = mock("GET", "/entity-history/ecc6475b7ef9acf689f98e479d539e869432cb5e?sort-order=asc&with-docs=false&end-transaction-time=2014-11-28T12:00:09")
+            .create();
+
+        let _ = Crux::new("localhost", "3000")
+            .http_mock()
+            .entity_history_timed(
+                "ecc6475b7ef9acf689f98e479d539e869432cb5e".to_string(),
+                Order::Asc,
+                false,
+                vec![TimeHistory::TransactionTime(None, Some(date))],
+            );
+
+        m.assert();
+    }
+
+    #[test]
+    fn match_valid_start_date() {
+        use transistor::types::http::time::TimeHistory;
+
+        let date = "2014-11-28T21:00:09+09:00"
+            .parse::<DateTime<Utc>>()
+            .unwrap();
+        let m = mock("GET", "/entity-history/ecc6475b7ef9acf689f98e479d539e869432cb5e?sort-order=asc&with-docs=false&start-valid-time=2014-11-28T12:00:09")
+            .create();
+
+        let _ = Crux::new("localhost", "3000")
+            .http_mock()
+            .entity_history_timed(
+                "ecc6475b7ef9acf689f98e479d539e869432cb5e".to_string(),
+                Order::Asc,
+                false,
+                vec![TimeHistory::ValidTime(Some(date), None)],
+            );
+
+        m.assert();
+    }
+
+    #[test]
+    fn match_none_date() {
+        use transistor::types::http::time::TimeHistory;
+
+        let m = mock("GET", "/entity-history/ecc6475b7ef9acf689f98e479d539e869432cb5e?sort-order=asc&with-docs=false")
+            .create();
+
+        let _ = Crux::new("localhost", "3000")
+            .http_mock()
+            .entity_history_timed(
+                "ecc6475b7ef9acf689f98e479d539e869432cb5e".to_string(),
+                Order::Asc,
+                false,
+                vec![TimeHistory::ValidTime(None, None)],
+            );
+
+        m.assert();
+    }
+
     fn actions() -> Vec<Action> {
         let person1 = Person {
             crux__db___id: CruxId::new("jorge-3"),
@@ -121,12 +206,4 @@ mod integration {
             last_name: String
         }
     }
-
-    // #[test]
-    // fn to_rfc3339() {
-    //     use chrono::prelude::*;
-    //     let now = Utc::now();
-
-    //     assert_eq!(now.to_rfc3339(), "" );
-    // }
 }
