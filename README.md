@@ -40,7 +40,7 @@ To add this crate to your project you should add one of the following line to yo
 >
 > ```
 > [dependencies]
-> transistor = "1.0.0-beta.3"
+> transistor = "1.0.0"
 > ```
 
 ## Creating a Crux Client
@@ -60,7 +60,7 @@ let client = Crux::new("127.0.0.1","3000").http_client();
 
 ## Http Client
 Once you have called `http_client` you will have an instance of the `HttpClient` struct which has a bunch of functions to query Crux on Docker and Standalone HTTP Server:
-* [`state`](https://docs.rs/transistor/1.0.0-beta.3/transistor/http/struct.HttpClient.html#method.state) queries endpoint [`/`](https://opencrux.com/docs#rest-home) with a `GET`. No args. Returns various details about the state of the database.
+* [`state`](https://docs.rs/transistor/1.0.0/transistor/http/struct.HttpClient.html#method.state) queries endpoint [`/`](https://opencrux.com/docs#rest-home) with a `GET`. No args. Returns various details about the state of the database.
 ```rust
 let body = client.state().unwrap();
 
@@ -74,7 +74,7 @@ let body = client.state().unwrap();
 // }
 ```
 
-* [`tx_log`](https://docs.rs/transistor/1.0.0-beta.3/transistor/http/struct.HttpClient.html#method.tx_log) requests endpoint [`/tx-log`](https://opencrux.com/docs#rest-tx-log-post) via `POST`. A Vector of `Action` is expected as argument. The "write" endpoint, to post transactions.
+* [`tx_log`](https://docs.rs/transistor/1.0.0/transistor/http/struct.HttpClient.html#method.tx_log) requests endpoint [`/tx-log`](https://opencrux.com/docs#rest-tx-log-post) via `POST`. A Vector of `Action` is expected as argument. The "write" endpoint, to post transactions.
 ```rust
 use transistor::http::{Action};
 use transistor::client::Crux;
@@ -97,7 +97,7 @@ let body = client.tx_log(vec![action1, action2]).unwrap();
 // {:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}
 ```
 
-* [`tx_logs`](https://docs.rs/transistor/1.0.0-beta.3/transistor/http/struct.HttpClient.html#method.tx_logs) requests endpoint [`/tx-log`](https://opencrux.com/docs#rest-tx-log) via `GET`. No args. Returns a list of all transactions.
+* [`tx_logs`](https://docs.rs/transistor/1.0.0/transistor/http/struct.HttpClient.html#method.tx_logs) requests endpoint [`/tx-log`](https://opencrux.com/docs#rest-tx-log) via `GET`. No args. Returns a list of all transactions.
 ```rust
 use transistor::client::Crux;
 
@@ -136,7 +136,7 @@ let body = client.tx_logs().unwrap();
 // } 
 ```
 
-* [`entity`](https://docs.rs/transistor/1.0.0-beta.3/transistor/http/struct.HttpClient.html#method.entity) requests endpoint [`/entity`](https://opencrux.com/docs#rest-entity) via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument. Returns an entity for a given ID and optional valid-time/transaction-time co-ordinates.
+* [`entity`](https://docs.rs/transistor/1.0.0/transistor/http/struct.HttpClient.html#method.entity) requests endpoint [`/entity`](https://opencrux.com/docs#rest-entity) via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument. Returns an entity for a given ID and optional valid-time/transaction-time co-ordinates.
 ```rust
 let person = Person {
     crux__db___id: CruxId::new("hello-entity"), 
@@ -163,7 +163,9 @@ let edn_body = client.entity(person.crux__db___id.serialize()).unwrap();
 // )
 ```
 
-* [`entity_tx`](https://docs.rs/transistor/1.0.0-beta.3/transistor/http/struct.HttpClient.html#method.entity_tx) requests endpoint [`/entity-tx`](https://opencrux.com/docs#rest-entity-tx) via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument. Returns the transaction that most recently set a key.
+* [`entity_timed`](https://docs.rs/transistor/1.0.0/transistor/http/struct.HttpClient.html#method.entity_timed) is similar to `entity` as it requests the same endpoint, the difference is that it can send `transaction-time` and `valid-time` as query-params. This is done by the extra arguments `transaction_time: Option<DateTime<FixedOffset>>` and `valid_time: Option<DateTime<FixedOffset>>`.
+
+* [`entity_tx`](https://docs.rs/transistor/1.0.0/transistor/http/struct.HttpClient.html#method.entity_tx) requests endpoint [`/entity-tx`](https://opencrux.com/docs#rest-entity-tx) via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument. Returns the transaction that most recently set a key.
 ```rust
 use transistor::http::{Action};
 use transistor::client::Crux;
@@ -186,7 +188,9 @@ let tx_body = client.entity_tx(person.crux__db___id.serialize()).unwrap();
 // }
 ```
 
-* [`entity_history`](https://docs.rs/transistor/1.0.0-beta.3/transistor/http/struct.HttpClient.html#method.entity_history) requests endpoint [`/entity-history`](https://opencrux.com/docs#rest-entity) via `GET`. Arguments are the `crux.db/id` as a `String`, an ordering argument defined by the enum `http::Order` (`Asc` or `Desc`) and a boolean for the `with-docs?` flag. The response is a Vector containing `EntityHistoryElement`. If `with-docs?` is `true`, thank the field `db__doc`, `:crux.db/doc`, witll return an `Option<Edn>` containing the inserted struct.
+* [`entity_tx_timed`](https://docs.rs/transistor/1.0.0/transistor/http/struct.HttpClient.html#method.entity_tx_timed) is similar to `entity_tx` as it requests the same endpoint, the difference is that it can send `transaction-time` and `valid-time` as query-params. This is done by the extra arguments `transaction_time: Option<DateTime<FixedOffset>>` and `valid_time: Option<DateTime<FixedOffset>>`.
+
+* [`entity_history`](https://docs.rs/transistor/1.0.0/transistor/http/struct.HttpClient.html#method.entity_history) requests endpoint [`/entity-history`](https://opencrux.com/docs#rest-entity) via `GET`. Arguments are the `crux.db/id` as a `String`, an ordering argument defined by the enum `http::Order` (`Asc` or `Desc`) and a boolean for the `with-docs?` flag. The response is a Vector containing `EntityHistoryElement`. If `with-docs?` is `true`, thank the field `db__doc`, `:crux.db/doc`, witll return an `Option<Edn>` containing the inserted struct.
 ```rust
 use transistor::client::Crux;
 use transistor::http::Order;
@@ -228,8 +232,10 @@ let entity_history_without_docs = client.entity_history(tx_body.db___id, Order::
 //     ]}
 ```
 
+* [`entity_history_timed`](https://docs.rs/transistor/1.0.0/transistor/http/struct.HttpClient.html#method.entity_history_timed) is similar to `entity_histoty` as it requests the same endpoint, the difference is that it can send `start-transaction-time`, `end-transaction-time`, `start-valid-time` and `end-valid-time` as query-params. This is done by adding a `Vec<TimeHistory>` containing one `TimeHistory::TransactionTime` and/or one `TimeHistory::ValidTime`, both of them receive two `Option<DateTime<Utc>>`. The first `DateTime` is the `start-<type>-time` and the second is the `end-<type>-time`.
 
-* [`query`](https://docs.rs/transistor/1.0.0-beta.3/transistor/http/struct.HttpClient.html#method.query) requests endpoint [`/query`](https://opencrux.com/docs#rest-query) via `POST`. Argument is a `query` of the type `Query`. Retrives a Set containing a vector of the values defined by the function `Query::find`.
+
+* [`query`](https://docs.rs/transistor/1.0.0/transistor/http/struct.HttpClient.html#method.query) requests endpoint [`/query`](https://opencrux.com/docs#rest-query) via `POST`. Argument is a `query` of the type `Query`. Retrives a Set containing a vector of the values defined by the function `Query::find`.
 Available functions are `find`, `where_clause`, `args`, `order_by`, `limit`, `offset`, examples [`complex_query`](https://github.com/naomijub/transistor/blob/master/examples/complex_query.rs) and [`limit_offset_query`](https://github.com/naomijub/transistor/blob/master/examples/limit_offset_query.rs) have examples on how to use them.
 ```rust
 use transistor::client::Crux;
@@ -250,13 +256,13 @@ let is_sql = client.query(query_is_sql.unwrap()).unwrap();
 // {[":mysql", "MySQL"], [":postgres", "Postgres"]} BTreeSet
 ```
 
-[`Action`](https://docs.rs/transistor/1.0.0-beta.3/transistor/http/enum.Action.html) is an enum with a set of options to use in association with the function `tx_log`:
+[`Action`](https://docs.rs/transistor/1.0.0/transistor/http/enum.Action.html) is an enum with a set of options to use in association with the function `tx_log`:
 * [`Put`](https://opencrux.com/docs#transactions-put) - Write a version of a document
 * [`Delete`](https://opencrux.com/docs#transactions-delete) - Deletes the specific document at a given valid time
 * [`Evict`](https://opencrux.com/docs#transactions-evict) - Evicts a document entirely, including all historical versions (receives only the ID to evict)
 * [`Match`](https://opencrux.com/docs#transactions-match) - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue
 
-[`Query`](https://docs.rs/transistor/1.0.0-beta.3/transistor/types/query/struct.Query.html) is a struct responsible for creating the fields and serializing them into the correct `query` format. It has a function for each field and a `build` function to help check if it is correctyly formatted.
+[`Query`](https://docs.rs/transistor/1.0.0/transistor/types/query/struct.Query.html) is a struct responsible for creating the fields and serializing them into the correct `query` format. It has a function for each field and a `build` function to help check if it is correctyly formatted.
 * `find` is a static builder function to define the elements inside the `:find` clause.
 * `where_clause` is a builder function that defines the vector os elements inside the `:where []` array.
 * `order_by` is a builder function to define the elements inside the `:order-by` clause.
@@ -265,7 +271,7 @@ let is_sql = client.query(query_is_sql.unwrap()).unwrap();
 * `offset` is a builder function to define the elements inside the `:offset` clause.
 * `with_full_results` is a builder function to define the flag `full-results?` as true. This allows your `query` response to return the whole document instead of only the searched keys. The result of the Query `{:query {:find [?user ?a] :where [[?user :first-name ?a]] :full-results? true}}` will be a `BTreeSet<Vec<String>>` like `([{:crux.db/id :fafilda, :first-name "Jorge", :last-name "Klaus"} "Jorge"])`, so the document will need further EDN parsing to become the document's struct.
 
-Errors are defined in the [`CruxError`](https://docs.rs/transistor/1.0.0-beta.3/transistor/types/error/enum.CruxError.html) enum.
+Errors are defined in the [`CruxError`](https://docs.rs/transistor/1.0.0/transistor/types/error/enum.CruxError.html) enum.
 * `ParseEdnError` is originated by `edn_rs` crate. The provided EDN did not match schema.
 * `RequestError` is originated by `reqwest` crate. Failed to make HTTP request.
 * `QueryFormatError` is originated when the provided Query struct did not match schema.
@@ -366,7 +372,7 @@ ser_struct! {
 It is possible to use `chrono`  for time related responses (`TxLogResponse`, `EntityTxResponse`, `EntityHistoryElement`). to use it you need to enable feature `"time"`:
 
 ```toml
-transistor = { version = "1.0.0-beta.3", features = ["time"] }
+transistor = { version = "1.0.0", features = ["time"] }
 ```
 
 By doing this, all field named `time` will contain a `DateTime<Utc>` value.

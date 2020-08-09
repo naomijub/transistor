@@ -28,6 +28,7 @@ pub mod types;
 /// * `entity` requests endpoint `/entity` via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument.
 /// * `entity_tx` requests endpoint `/entity-tx` via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument.
 /// * `entity_history` requests endpoint `/entity-history` via `GET`. Arguments are the `crux.db/id` as a `String`, an ordering argument defined by the enum `types::http::Order` (`Asc` or `Desc`) and a boolean for the `with-docs?` flag (this returns values for the field `:crux.db/doc`).
+/// * `entity_history_timed` similar to `entity_history`, but receives one more argument that is a `Vec<TimeHistory>` to define `valid-time` and `transaction-time`
 /// * `query` requests endpoint `/query` via `POST`. Argument is a `query` of the type `Query`. Retrives a Set containing a vector of the values defined by the function `Query::find`.
 ///
 /// Examples can be found in the [examples directory](https://github.com/naomijub/transistor/tree/master/examples).
