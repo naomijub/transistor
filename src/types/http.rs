@@ -6,16 +6,16 @@ use edn_rs::Serialize;
 /// **First field of your struct should be `crux__db___id: CruxId`**
 ///
 /// Allowed actions:
-/// * `PUT` - Write a version of a document can receive an `Option<DateTime<Utc>>` as second argument which corresponds to a `valid-time`.
-/// * `Delete` - Deletes the specific document at a given valid time, if `Option<DateTime<Utc>>` is `None` it deletes the last `valid-`time` else it deletes the passed `valid-time`.
+/// * `PUT` - Write a version of a document can receive an `Option<DateTime<FixedOffset>>` as second argument which corresponds to a `valid-time`.
+/// * `Delete` - Deletes the specific document at a given valid time, if `Option<DateTime<FixedOffset>>` is `None` it deletes the last `valid-`time` else it deletes the passed `valid-time`.
 /// * `Evict` - Evicts a document entirely, including all historical versions (receives only the ID to evict).
-/// * `Match` - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue. First argument is struct's `crux__db___id`,  the second is the serialized document that you want to match and the third argument is an `Option<DateTime<Utc>>` which corresponds to a `valid-time` for the `Match`
+/// * `Match` - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue. First argument is struct's `crux__db___id`,  the second is the serialized document that you want to match and the third argument is an `Option<DateTime<FixedOffset>>` which corresponds to a `valid-time` for the `Match`
 #[derive(Debug, PartialEq)]
 pub enum Action {
-    Put(String, Option<DateTime<Utc>>),
-    Delete(String, Option<DateTime<Utc>>),
+    Put(String, Option<DateTime<FixedOffset>>),
+    Delete(String, Option<DateTime<FixedOffset>>),
     Evict(String),
-    Match(String, String, Option<DateTime<Utc>>),
+    Match(String, String, Option<DateTime<FixedOffset>>),
 }
 
 impl Serialize for Action {
@@ -25,13 +25,13 @@ impl Serialize for Action {
             Action::Put(edn, Some(date)) => format!(
                 "[:crux.tx/put {} #inst {}]",
                 edn,
-                date.format("%Y-%m-%dT%H:%M:%S").to_string()
+                date.format("%Y-%m-%dT%H:%M:%S%Z").to_string()
             ),
             Action::Delete(edn, None) => format!("[:crux.tx/delete {}]", edn),
             Action::Delete(edn, Some(date)) => format!(
                 "[:crux.tx/delete {} #inst {}]",
                 edn,
-                date.format("%Y-%m-%dT%H:%M:%S").to_string()
+                date.format("%Y-%m-%dT%H:%M:%S%Z").to_string()
             ),
             Action::Evict(id) => {
                 if id.starts_with(":") {
@@ -45,7 +45,7 @@ impl Serialize for Action {
                 "[:crux.tx/match {} {} #inst {}]",
                 id,
                 edn,
-                date.format("%Y-%m-%dT%H:%M:%S").to_string()
+                date.format("%Y-%m-%dT%H:%M:%S%Z").to_string()
             ),
         }
     }

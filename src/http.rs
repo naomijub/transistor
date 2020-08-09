@@ -7,6 +7,7 @@ use crate::types::{
         TxLogsResponse,
     },
 };
+use chrono::prelude::*;
 use edn_rs::{edn, Edn, Map, Serialize};
 use reqwest::{blocking::Client, header::HeaderMap};
 use std::collections::BTreeSet;
@@ -99,6 +100,42 @@ impl HttpClient {
         })
     }
 
+    /// Function `entity_timed` is like `entity` but with two optional fields `transaction_time` and `valid_time` that are of type `Option<DateTime<FixedOffset>>`.
+    pub fn entity_timed(
+        &self,
+        id: String,
+        transaction_time: Option<DateTime<FixedOffset>>,
+        valid_time: Option<DateTime<FixedOffset>>,
+    ) -> Result<Edn, CruxError> {
+        if !id.starts_with(":") {
+            return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
+        }
+
+        let mut s = String::new();
+        s.push_str("{:eid ");
+        s.push_str(&id);
+        s.push_str("}");
+
+        let url = build_timed_url(self.uri.clone(), "entity", transaction_time, valid_time);
+
+        let resp = self
+            .client
+            .post(&url)
+            .headers(self.headers.clone())
+            .body(s)
+            .send()?
+            .text()?;
+
+        let edn_resp = edn_rs::parse_edn(&resp);
+        Ok(match edn_resp {
+            Ok(e) => e,
+            Err(err) => {
+                println!(":CRUX-CLIENT POST /entity [ERROR]: {:?}", err);
+                edn!({:status ":internal-server-error", :code 500})
+            }
+        })
+    }
+
     /// Function `entity_tx` requests endpoint `/entity-tx` via `POST` which retrieves the docs and tx infos
     /// for the last document for that ID saved in CruxDB.
     pub fn entity_tx(&self, id: String) -> Result<EntityTxResponse, CruxError> {
@@ -110,6 +147,31 @@ impl HttpClient {
         let resp = self
             .client
             .post(&format!("{}/entity-tx", self.uri))
+            .headers(self.headers.clone())
+            .body(s)
+            .send()?
+            .text()?;
+
+        EntityTxResponse::deserialize(resp)
+    }
+
+    /// Function `entity_tx_timed` is like `entity_tx` but with two optional fields `transaction_time` and `valid_time` that are of type `Option<DateTime<FixedOffset>>`.
+    pub fn entity_tx_timed(
+        &self,
+        id: String,
+        transaction_time: Option<DateTime<FixedOffset>>,
+        valid_time: Option<DateTime<FixedOffset>>,
+    ) -> Result<EntityTxResponse, CruxError> {
+        let mut s = String::new();
+        s.push_str("{:eid ");
+        s.push_str(&id);
+        s.push_str("}");
+
+        let url = build_timed_url(self.uri.clone(), "entity-tx", transaction_time, valid_time);
+
+        let resp = self
+            .client
+            .post(&url)
             .headers(self.headers.clone())
             .body(s)
             .send()?
@@ -185,6 +247,36 @@ impl HttpClient {
             .text()?;
 
         QueryResponse::deserialize(resp)
+    }
+}
+
+fn build_timed_url(
+    url: String,
+    endpoint: &str,
+    transaction_time: Option<DateTime<FixedOffset>>,
+    valid_time: Option<DateTime<FixedOffset>>,
+) -> String {
+    match (transaction_time, valid_time) {
+        (None, None) => format!("{}/{}", url, endpoint),
+        (Some(tx), None) => format!(
+            "{}/{}?transaction-time={}",
+            url,
+            endpoint,
+            tx.format("%Y-%m-%dT%H:%M:%S%Z").to_string()
+        ),
+        (None, Some(valid)) => format!(
+            "{}/{}?valid-time={}",
+            url,
+            endpoint,
+            valid.format("%Y-%m-%dT%H:%M:%S%Z").to_string()
+        ),
+        (Some(tx), Some(valid)) => format!(
+            "{}/{}?transaction-time={}&valid-time={}",
+            url,
+            endpoint,
+            tx.format("%Y-%m-%dT%H:%M:%S%Z").to_string(),
+            valid.format("%Y-%m-%dT%H:%M:%S%Z").to_string()
+        ),
     }
 }
 
@@ -396,5 +488,76 @@ mod http {
         };
 
         assert_eq!(edn_body, expected);
+    }
+}
+
+#[cfg(test)]
+mod build_url {
+    use super::build_timed_url;
+    use chrono::prelude::*;
+
+    #[test]
+    fn both_times_are_none() {
+        let url = build_timed_url("localhost:3000".to_string(), "entity", None, None);
+
+        assert_eq!(url, "localhost:3000/entity");
+    }
+
+    #[test]
+    fn both_times_are_some() {
+        let url = build_timed_url(
+            "localhost:3000".to_string(),
+            "entity",
+            Some(
+                "2020-08-09T18:05:29.301-03:00"
+                    .parse::<DateTime<FixedOffset>>()
+                    .unwrap(),
+            ),
+            Some(
+                "2020-08-09T18:05:29.301-03:00"
+                    .parse::<DateTime<FixedOffset>>()
+                    .unwrap(),
+            ),
+        );
+
+        assert_eq!(url, "localhost:3000/entity?transaction-time=2020-08-09T18:05:29-03:00&valid-time=2020-08-09T18:05:29-03:00");
+    }
+
+    #[test]
+    fn only_tx_time_is_some() {
+        let url = build_timed_url(
+            "localhost:3000".to_string(),
+            "entity",
+            Some(
+                "2020-08-09T18:05:29.301-03:00"
+                    .parse::<DateTime<FixedOffset>>()
+                    .unwrap(),
+            ),
+            None,
+        );
+
+        assert_eq!(
+            url,
+            "localhost:3000/entity?transaction-time=2020-08-09T18:05:29-03:00"
+        );
+    }
+
+    #[test]
+    fn only_valid_time_is_some() {
+        let url = build_timed_url(
+            "localhost:3000".to_string(),
+            "entity",
+            None,
+            Some(
+                "2020-08-09T18:05:29.301-03:00"
+                    .parse::<DateTime<FixedOffset>>()
+                    .unwrap(),
+            ),
+        );
+
+        assert_eq!(
+            url,
+            "localhost:3000/entity?valid-time=2020-08-09T18:05:29-03:00"
+        );
     }
 }
