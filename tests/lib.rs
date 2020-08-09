@@ -4,6 +4,7 @@ mod integration {
     use mockito::mock;
     use transistor::client::Crux;
     use transistor::edn_rs::{ser_struct, Serialize};
+    use transistor::types::http::TimeHistory;
     use transistor::types::http::{Action, Order};
     use transistor::types::CruxId;
 
@@ -95,8 +96,6 @@ mod integration {
 
     #[test]
     fn match_tx_date_times() {
-        use transistor::types::http::time::TimeHistory;
-
         let date = "2014-11-28T21:00:09+09:00"
             .parse::<DateTime<Utc>>()
             .unwrap();
@@ -117,8 +116,6 @@ mod integration {
 
     #[test]
     fn match_tx_end_date() {
-        use transistor::types::http::time::TimeHistory;
-
         let date = "2014-11-28T21:00:09+09:00"
             .parse::<DateTime<Utc>>()
             .unwrap();
@@ -139,8 +136,6 @@ mod integration {
 
     #[test]
     fn match_valid_start_date() {
-        use transistor::types::http::time::TimeHistory;
-
         let date = "2014-11-28T21:00:09+09:00"
             .parse::<DateTime<Utc>>()
             .unwrap();
@@ -161,8 +156,6 @@ mod integration {
 
     #[test]
     fn match_none_date() {
-        use transistor::types::http::time::TimeHistory;
-
         let m = mock("GET", "/entity-history/ecc6475b7ef9acf689f98e479d539e869432cb5e?sort-order=asc&with-docs=false")
             .create();
 
