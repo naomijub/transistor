@@ -4,7 +4,8 @@ A Rust Crux Client crate/lib. For now, this crate intends to support 2 ways to i
 
 - [x] Via `Docker` with a [`crux-standalone`](https://opencrux.com/docs#config-docker) version [docker-hub](https://hub.docker.com/r/juxt/crux-standalone). Current Docker image `juxt/crux-standalone:20.07-1.10.0`.
 - [x] Via [`HTTP`](https://opencrux.com/docs#config-http) using the [`REST API`](https://opencrux.com/docs#restapi).
-- [ ] Via kafka. (To be evaluated.)
+- [ ] Clojure.api. (To be evaluated.)
+- [ ] FFI. (To be evaluated.)
 
 > Other solutions may be added after the first release.
 
