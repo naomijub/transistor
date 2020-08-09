@@ -5,6 +5,7 @@ use crate::types::{
         EntityHistoryResponse, EntityTxResponse, QueryResponse, StateResponse, TxLogResponse,
         TxLogsResponse,
     },
+    http::{Action, Order},
 };
 use edn_rs::{edn, Edn, Map, Serialize};
 use reqwest::{blocking::Client, header::HeaderMap};
@@ -16,37 +17,6 @@ pub struct HttpClient {
     pub(crate) client: Client,
     pub(crate) uri: String,
     pub(crate) headers: HeaderMap,
-}
-
-/// Action to perform in Crux. Receives a serialized Edn.
-///
-/// **First field of your struct should be `crux__db___id: CruxId`**
-///
-/// Allowed actions:
-/// * `PUT` - Write a version of a document
-/// * `Delete` - Deletes the specific document at a given valid time
-/// * `Evict` - Evicts a document entirely, including all historical versions (receives only the ID to evict)
-#[derive(Debug, PartialEq)]
-pub enum Action {
-    Put(String),
-    Delete(String),
-    Evict(String),
-}
-
-impl Serialize for Action {
-    fn serialize(self) -> String {
-        match self {
-            Action::Put(edn) => format!("[:crux.tx/put {}]", edn),
-            Action::Delete(edn) => format!("[:crux.tx/delete {}]", edn),
-            Action::Evict(id) => {
-                if id.starts_with(":") {
-                    format!("[:crux.tx/evict {}]", id)
-                } else {
-                    "".to_string()
-                }
-            }
-        }
-    }
 }
 
 impl HttpClient {
@@ -186,26 +156,11 @@ impl HttpClient {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub enum Order {
-    Asc,
-    Desc,
-}
-
-impl Serialize for Order {
-    fn serialize(self) -> String {
-        match self {
-            Order::Asc => String::from("asc"),
-            Order::Desc => String::from("desc"),
-        }
-    }
-}
-
 #[cfg(test)]
 mod http {
-    use super::Action;
+    use crate::types::http::Action;
     use crate::client::Crux;
-    use crate::http::Order;
+    use crate::types::http::Order;
     use crate::types::{
         query::Query,
         response::{

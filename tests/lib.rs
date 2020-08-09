@@ -4,7 +4,7 @@ mod integration {
     use mockito::mock;
     use transistor::client::Crux;
     use transistor::edn_rs::{ser_struct, Serialize};
-    use transistor::http::{Action, Order};
+    use transistor::types::http::{Action, Order};
     use transistor::types::CruxId;
 
     #[test]
@@ -121,4 +121,12 @@ mod integration {
             last_name: String
         }
     }
+
+    // #[test]
+    // fn to_rfc3339() {
+    //     use chrono::prelude::*;
+    //     let now = Utc::now();
+
+    //     assert_eq!(now.to_rfc3339(), "" );
+    // }
 }
