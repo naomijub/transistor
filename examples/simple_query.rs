@@ -32,9 +32,9 @@ fn main() -> Result<(), CruxError> {
     // "{ :crux.db/id :mysql, :name \"MySQL\", :is-sql true, }"
 
     let client = Crux::new("localhost", "3000").http_client();
-    let action1 = Action::Put(crux.serialize());
-    let action2 = Action::Put(psql.serialize());
-    let action3 = Action::Put(mysql.serialize());
+    let action1 = Action::Put(crux.serialize(), None);
+    let action2 = Action::Put(psql.serialize(), None);
+    let action3 = Action::Put(mysql.serialize(), None);
 
     let _ = client.tx_log(vec![action1, action2, action3])?;
     // Request body for vec![action1, action2]

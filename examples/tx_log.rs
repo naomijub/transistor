@@ -20,8 +20,8 @@ fn main() {
     println!("{:?}", person2.clone().serialize());
     //"{ :crux.db/id :manuel-1, :first-name \"Diego\", :last-name \"Manuel\", }"
 
-    let action1 = Action::Put(person1.serialize());
-    let action2 = Action::Put(person2.serialize());
+    let action1 = Action::Put(person1.serialize(), None);
+    let action2 = Action::Put(person2.serialize(), None);
 
     let body = Crux::new("localhost", "3000")
         .http_client()

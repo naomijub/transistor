@@ -12,17 +12,27 @@ use edn_rs::Serialize;
 /// * `Match` - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue. First argument is struct's `crux__db___id` and the second is the serialized document that you want to match
 #[derive(Debug, PartialEq)]
 pub enum Action {
-    Put(String),
-    Delete(String),
+    Put(String, Option<DateTime<Utc>>),
+    Delete(String, Option<DateTime<Utc>>),
     Evict(String),
-    Match(String, String),
+    Match(String, String, Option<DateTime<Utc>>),
 }
 
 impl Serialize for Action {
     fn serialize(self) -> String {
         match self {
-            Action::Put(edn) => format!("[:crux.tx/put {}]", edn),
-            Action::Delete(edn) => format!("[:crux.tx/delete {}]", edn),
+            Action::Put(edn, None) => format!("[:crux.tx/put {}]", edn),
+            Action::Put(edn, Some(date)) => format!(
+                "[:crux.tx/put {} #inst {}]",
+                edn,
+                date.format("%Y-%m-%dT%H:%M:%S").to_string()
+            ),
+            Action::Delete(edn, None) => format!("[:crux.tx/delete {}]", edn),
+            Action::Delete(edn, Some(date)) => format!(
+                "[:crux.tx/delete {} #inst {}]",
+                edn,
+                date.format("%Y-%m-%dT%H:%M:%S").to_string()
+            ),
             Action::Evict(id) => {
                 if id.starts_with(":") {
                     format!("[:crux.tx/evict {}]", id)
@@ -30,7 +40,13 @@ impl Serialize for Action {
                     "".to_string()
                 }
             }
-            Action::Match(id, edn) => format!("[:crux.tx/match {} {}]", id, edn),
+            Action::Match(id, edn, None) => format!("[:crux.tx/match {} {}]", id, edn),
+            Action::Match(id, edn, Some(date)) => format!(
+                "[:crux.tx/match {} {} #inst {}]",
+                id,
+                edn,
+                date.format("%Y-%m-%dT%H:%M:%S").to_string()
+            ),
         }
     }
 }

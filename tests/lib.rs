@@ -185,8 +185,8 @@ mod integration {
         };
 
         vec![
-            Action::Put(person1.serialize()),
-            Action::Put(person2.serialize()),
+            Action::Put(person1.serialize(), None),
+            Action::Put(person2.serialize(), None),
         ]
     }
 

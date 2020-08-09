@@ -248,8 +248,8 @@ mod http {
             last_name: "Manuel".to_string(),
         };
 
-        let action1 = Action::Put(person1.serialize());
-        let action2 = Action::Put(person2.serialize());
+        let action1 = Action::Put(person1.serialize(), None);
+        let action2 = Action::Put(person2.serialize(), None);
 
         let response = Crux::new("localhost", "4000")
             .http_client()

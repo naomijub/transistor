@@ -38,11 +38,11 @@ fn main() -> Result<(), CruxError> {
     };
 
     let client = Crux::new("localhost", "3000").http_client();
-    let action1 = Action::Put(crux.serialize());
-    let action2 = Action::Put(psql.serialize());
-    let action3 = Action::Put(mysql.serialize());
-    let action4 = Action::Put(cassandra.serialize());
-    let action5 = Action::Put(sqlserver.serialize());
+    let action1 = Action::Put(crux.serialize(), None);
+    let action2 = Action::Put(psql.serialize(), None);
+    let action3 = Action::Put(mysql.serialize(), None);
+    let action4 = Action::Put(cassandra.serialize(), None);
+    let action5 = Action::Put(sqlserver.serialize(), None);
 
     let _ = client.tx_log(vec![action1, action2, action3, action4, action5])?;
     // Request body for vec![action1, action2]
