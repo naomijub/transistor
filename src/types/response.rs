@@ -190,6 +190,7 @@ impl From<Edn> for EntityTxResponse {
     }
 }
 
+#[doc(hidden)]
 pub(crate) struct QueryResponse;
 
 impl QueryResponse {

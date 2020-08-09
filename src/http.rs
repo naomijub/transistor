@@ -118,6 +118,8 @@ impl HttpClient {
         EntityTxResponse::deserialize(resp)
     }
 
+    /// Function `entity_history` requests endpoint `/entity-history` via `GET` which returns a list with all entity's transaction history.
+    /// It is possible to order it with [`Order`](../types/http/enum.Order.html) , `types::http::Order::Asc` and `types::http::Order:Desc`, (second argument) and to include the document for each transaction with the boolean flag `with_docs` (third argument).
     pub fn entity_history(
         &self,
         hash: String,
@@ -141,13 +143,15 @@ impl HttpClient {
         EntityHistoryResponse::deserialize(resp)
     }
 
-    #[cfg(feature = "time")]
+    /// Function `entity_history_timed` is an txtension of the function `entity_history`.
+    /// This function receives as the last argument a vector containing [`TimeHistory`](../types/http/enum.TimeHistory.html)  elements.
+    /// `TimeHistory` can be `ValidTime` or `TransactionTime` and both have optional `DateTime<Utc>` params corresponding to the start-time and end-time to be queried.
     pub fn entity_history_timed(
         &self,
         hash: String,
         order: Order,
         with_docs: bool,
-        time: Vec<crate::types::http::time::TimeHistory>,
+        time: Vec<crate::types::http::TimeHistory>,
     ) -> Result<EntityHistoryResponse, CruxError> {
         let url = format!(
             "{}/entity-history/{}?sort-order={}&with-docs={}{}",
