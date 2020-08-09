@@ -1,6 +1,6 @@
 use transistor::client::Crux;
 use transistor::edn_rs::{ser_struct, Serialize};
-use transistor::http::Action;
+use transistor::types::http::Action;
 use transistor::types::{
     error::CruxError,
     {query::Query, CruxId},

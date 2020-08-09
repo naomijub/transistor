@@ -1,4 +1,5 @@
 pub mod error;
+pub mod http;
 pub mod query;
 pub mod response;
 

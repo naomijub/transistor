@@ -1,7 +1,6 @@
 use transistor::client::Crux;
 use transistor::edn_rs::{ser_struct, Serialize};
-use transistor::http::Action;
-use transistor::http::Order;
+use transistor::types::http::{Action, Order};
 use transistor::types::CruxId;
 
 fn main() {
