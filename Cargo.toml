@@ -12,7 +12,7 @@ edition = "2018"
 
 [features]
 mock = ["mockito"]
-time = []
+time_as_str = []
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

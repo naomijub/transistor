@@ -1,4 +1,4 @@
-#[cfg(all(feature = "time", feature = "mock"))]
+#[cfg(feature = "mock")]
 mod integration {
     use chrono::prelude::*;
     use mockito::mock;
@@ -24,7 +24,7 @@ mod integration {
 
         assert_eq!(
             format!("{:?}", body),
-            String::from("TxLogResponse { tx___tx_id: 8, tx___tx_time: 2020-07-16T21:53:14.628Z, tx__event___tx_events: None }")
+            String::from("TxLogResponse { tx___tx_id: 8, tx___tx_time: 2020-07-16T21:53:14.628+00:00, tx__event___tx_events: None }")
         );
     }
 
@@ -45,7 +45,7 @@ mod integration {
         assert_eq!(
             body.tx___tx_time,
             "2020-07-16T21:53:14.628-00:00"
-                .parse::<DateTime<Utc>>()
+                .parse::<DateTime<FixedOffset>>()
                 .unwrap()
         );
     }
@@ -69,7 +69,7 @@ mod integration {
             .unwrap();
 
         let actual = format!("{:?}", body);
-        let expected = "EntityHistoryResponse { history: [EntityHistoryElement { db___valid_time: 2020-07-19T04:12:13.788Z, tx___tx_id: 28, tx___tx_time: 2020-07-19T04:12:13.788Z, db___content_hash: \"1828ebf4466f98ea3f5252a58734208cd0414376\", db__doc: None }] }";
+        let expected = "EntityHistoryResponse { history: [EntityHistoryElement { db___valid_time: 2020-07-19T04:12:13.788+00:00, tx___tx_id: 28, tx___tx_time: 2020-07-19T04:12:13.788+00:00, db___content_hash: \"1828ebf4466f98ea3f5252a58734208cd0414376\", db__doc: None }] }";
         assert_eq!(actual, expected);
     }
 
@@ -89,7 +89,7 @@ mod integration {
             .unwrap();
 
         let actual = format!("{:?}", body);
-        let expected = "EntityTxResponse { db___id: \"d72ccae848ce3a371bd313865cedc3d20b1478ca\", db___content_hash: \"1828ebf4466f98ea3f5252a58734208cd0414376\", db___valid_time: 2020-07-19T04:12:13.788Z, tx___tx_id: 28, tx___tx_time: 2020-07-19T04:12:13.788Z }";
+        let expected = "EntityTxResponse { db___id: \"d72ccae848ce3a371bd313865cedc3d20b1478ca\", db___content_hash: \"1828ebf4466f98ea3f5252a58734208cd0414376\", db___valid_time: 2020-07-19T04:12:13.788+00:00, tx___tx_id: 28, tx___tx_time: 2020-07-19T04:12:13.788+00:00 }";
 
         assert_eq!(actual, expected);
     }

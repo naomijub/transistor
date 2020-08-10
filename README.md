@@ -107,7 +107,7 @@ let body = client.tx_logs().unwrap();
 //     tx_events: [
 //         TxLogResponse {
 //             tx___tx_id: 0,
-//             tx___tx_time: "2020-07-09T23:38:06.465-00:00",
+//             tx___tx_time: 2020-07-09T23:38:06.465-00:00,
 //             tx__event___tx_events: Some(
 //                 [
 //                     [
@@ -120,7 +120,7 @@ let body = client.tx_logs().unwrap();
 //         },
 //         TxLogResponse {
 //             tx___tx_id: 1,
-//             tx___tx_time: "2020-07-09T23:39:33.815-00:00",
+//             tx___tx_time: 2020-07-09T23:39:33.815-00:00,
 //             tx__event___tx_events: Some(
 //                 [
 //                     [
@@ -182,9 +182,9 @@ let tx_body = client.entity_tx(person.crux__db___id.serialize()).unwrap();
 // EntityTxResponse {
 //     db___id: "d72ccae848ce3a371bd313865cedc3d20b1478ca",
 //     db___content_hash: "1828ebf4466f98ea3f5252a58734208cd0414376",
-//     db___valid_time: "2020-07-20T20:38:27.515-00:00",
+//     db___valid_time: 2020-07-20T20:38:27.515-00:00,
 //     tx___tx_id: 31,
-//     tx___tx_time: "2020-07-20T20:38:27.515-00:00",
+//     tx___tx_time: 2020-07-20T20:38:27.515-00:00,
 // }
 ```
 
@@ -207,8 +207,8 @@ let tx_body = client.entity_tx(person.crux__db___id.serialize()).unwrap();
 let entity_history = client.entity_history(tx_body.db___id.clone(), Order::Asc, true);
 // EntityHistoryResponse { history: [
 //     EntityHistoryElement { 
-//         db___valid_time: "2020-08-05T03:00:06.476-00:00", 
-//         tx___tx_id: 37, tx___tx_time: "2020-08-05T03:00:06.476-00:00", 
+//         db___valid_time: 2020-08-05T03:00:06.476-00:00, 
+//         tx___tx_id: 37, tx___tx_time: 2020-08-05T03:00:06.476-00:00, 
 //         db___content_hash: "2da097a2dffbb9828cd4377f1461a59e8454674b", 
 //         db__doc: Some(Map(Map(
 //                 {":crux.db/id": Key(":hello-history"), 
@@ -222,9 +222,9 @@ let entity_history_without_docs = client.entity_history(tx_body.db___id, Order::
 // EntityHistoryResponse { 
 //     history: [
 //         EntityHistoryElement {
-//              db___valid_time: "2020-08-05T03:00:06.476-00:00", 
+//              db___valid_time: 2020-08-05T03:00:06.476-00:00, 
 //              tx___tx_id: 37, 
-//              tx___tx_time: "2020-08-05T03:00:06.476-00:00", 
+//              tx___tx_time: 2020-08-05T03:00:06.476-00:00, 
 //              db___content_hash: "2da097a2dffbb9828cd4377f1461a59e8454674b", 
 //              db__doc: None 
 //             }
@@ -353,7 +353,7 @@ fn mock_client() {
 
     assert_eq!(
         format!("{:?}", body),
-        String::from("TxLogResponse { tx___tx_id: 8, tx___tx_time: \"2020-07-16T21:53:14.628-00:00\", tx__event___tx_events: None }")
+        String::from("TxLogResponse { tx___tx_id: 8, tx___tx_time: 2020-07-16T21:53:14.628-00:00, tx__event___tx_events: None }")
     );
 }
 
@@ -368,17 +368,15 @@ ser_struct! {
 
 ```
 
-## Using `Chrono`
-It is possible to use `chrono`  for time related responses (`TxLogResponse`, `EntityTxResponse`, `EntityHistoryElement`). to use it you need to enable feature `"time"`:
+## Enababling feature `time_as_str`
+It is possible to use receive the responses (`TxLogResponse`, `EntityTxResponse`, `EntityHistoryElement`) time dates as Strings, to do so you have to enable feature `time_as_str`:
 
 ```toml
-transistor = { version = "1.0.0", features = ["time"] }
+transistor = { version = "1.0.0", features = ["time_as_str"] }
 ```
 
-By doing this, all field named `time` will contain a `DateTime<Utc>` value.
-
 ## Dependencies
-A strong dependency of this crate is the [edn-rs](https://crates.io/crates/edn-rs) crate, as many of the return types are in the [Edn format](https://github.com/edn-format/edn). The sync http client is `reqwest` with `blocking` feature enabled. `Chrono` for feature `time` so that time values are a `DateTime<Utc>` and `mockito` for feature `mock`.
+A strong dependency of this crate is the [edn-rs](https://crates.io/crates/edn-rs) crate, as many of the return types are in the [Edn format](https://github.com/edn-format/edn). The sync http client is `reqwest` with `blocking` feature enabled. `Chrono` for time values that can be `DateTime<Utc>`, for inserts, and `DateTime<FixedOffset>`, for reads, and `mockito` for feature `mock`.
 
 ## Licensing
 This project is licensed under LGPP-3.0 (GNU Lesser General Public License v3.0).

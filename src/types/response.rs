@@ -1,5 +1,4 @@
 use crate::types::error::CruxError;
-#[cfg(feature = "time")]
 use chrono::prelude::*;
 use edn_rs::{parse_edn, ser_struct, Edn, Serialize};
 use std::collections::BTreeSet;
@@ -51,10 +50,10 @@ impl StateResponse {
 /// Definition for the response of a `POST` at `tx-log` endpoint
 pub struct TxLogResponse {
     pub tx___tx_id: usize,
-    #[cfg(not(feature = "time"))]
+    #[cfg(feature = "time_as_str")]
     pub tx___tx_time: String,
-    #[cfg(feature = "time")]
-    pub tx___tx_time: DateTime<Utc>,
+    #[cfg(not(feature = "time_as_str"))]
+    pub tx___tx_time: DateTime<FixedOffset>,
     pub tx__event___tx_events: Option<Vec<Vec<String>>>,
 }
 
@@ -68,7 +67,9 @@ impl TxLogResponse {
     pub fn default() -> Self {
         Self {
             tx___tx_id: 8usize,
-            tx___tx_time: "2020-07-16T21:53:14.628-00:00".to_string(),
+            tx___tx_time: "2020-07-16T21:53:14.628-00:00"
+                .parse::<DateTime<FixedOffset>>()
+                .unwrap(),
             tx__event___tx_events: None,
         }
     }
@@ -109,12 +110,12 @@ impl From<Edn> for TxLogResponse {
     fn from(edn: Edn) -> Self {
         Self {
             tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize),
-            #[cfg(not(feature = "time"))]
+            #[cfg(feature = "time_as_str")]
             tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
-            #[cfg(feature = "time")]
+            #[cfg(not(feature = "time_as_str"))]
             tx___tx_time: edn[":crux.tx/tx-time"]
                 .to_string()
-                .parse::<DateTime<Utc>>()
+                .parse::<DateTime<FixedOffset>>()
                 .unwrap(),
             tx__event___tx_events: edn.get(":crux.tx.event/tx-events").map(|e| {
                 e.iter()
@@ -136,15 +137,15 @@ impl From<Edn> for TxLogResponse {
 pub struct EntityTxResponse {
     pub db___id: String,
     pub db___content_hash: String,
-    #[cfg(not(feature = "time"))]
+    #[cfg(feature = "time_as_str")]
     pub db___valid_time: String,
-    #[cfg(feature = "time")]
-    pub db___valid_time: DateTime<Utc>,
+    #[cfg(not(feature = "time_as_str"))]
+    pub db___valid_time: DateTime<FixedOffset>,
     pub tx___tx_id: usize,
-    #[cfg(not(feature = "time"))]
+    #[cfg(feature = "time_as_str")]
     pub tx___tx_time: String,
-    #[cfg(feature = "time")]
-    pub tx___tx_time: DateTime<Utc>,
+    #[cfg(not(feature = "time_as_str"))]
+    pub tx___tx_time: DateTime<FixedOffset>,
 }
 
 impl EntityTxResponse {
@@ -159,9 +160,13 @@ impl EntityTxResponse {
         Self {
             db___id: "d72ccae848ce3a371bd313865cedc3d20b1478ca".to_string(),
             db___content_hash: "1828ebf4466f98ea3f5252a58734208cd0414376".to_string(),
-            db___valid_time: "2020-07-19T04:12:13.788-00:00".to_string(),
+            db___valid_time: "2020-07-19T04:12:13.788-00:00"
+                .parse::<DateTime<FixedOffset>>()
+                .unwrap(),
             tx___tx_id: 28usize,
-            tx___tx_time: "2020-07-19T04:12:13.788-00:00".to_string(),
+            tx___tx_time: "2020-07-19T04:12:13.788-00:00"
+                .parse::<DateTime<FixedOffset>>()
+                .unwrap(),
         }
     }
 }
@@ -171,20 +176,20 @@ impl From<Edn> for EntityTxResponse {
         Self {
             db___id: edn[":crux.db/id"].to_string(),
             db___content_hash: edn[":crux.db/content-hash"].to_string(),
-            #[cfg(not(feature = "time"))]
+            #[cfg(feature = "time_as_str")]
             db___valid_time: edn[":crux.db/valid-time"].to_string(),
-            #[cfg(feature = "time")]
+            #[cfg(not(feature = "time_as_str"))]
             db___valid_time: edn[":crux.db/valid-time"]
                 .to_string()
-                .parse::<DateTime<Utc>>()
+                .parse::<DateTime<FixedOffset>>()
                 .unwrap(),
             tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize),
-            #[cfg(not(feature = "time"))]
+            #[cfg(feature = "time_as_str")]
             tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
-            #[cfg(feature = "time")]
+            #[cfg(not(feature = "time_as_str"))]
             tx___tx_time: edn[":crux.tx/tx-time"]
                 .to_string()
-                .parse::<DateTime<Utc>>()
+                .parse::<DateTime<FixedOffset>>()
                 .unwrap(),
         }
     }
@@ -223,15 +228,15 @@ impl QueryResponse {
 #[derive(Debug, PartialEq, Clone)]
 #[allow(non_snake_case)]
 pub struct EntityHistoryElement {
-    #[cfg(not(feature = "time"))]
+    #[cfg(feature = "time_as_str")]
     pub db___valid_time: String,
-    #[cfg(feature = "time")]
-    pub db___valid_time: DateTime<Utc>,
+    #[cfg(not(feature = "time_as_str"))]
+    pub db___valid_time: DateTime<FixedOffset>,
     pub tx___tx_id: usize,
-    #[cfg(not(feature = "time"))]
+    #[cfg(feature = "time_as_str")]
     pub tx___tx_time: String,
-    #[cfg(feature = "time")]
-    pub tx___tx_time: DateTime<Utc>,
+    #[cfg(not(feature = "time_as_str"))]
+    pub tx___tx_time: DateTime<FixedOffset>,
     pub db___content_hash: String,
     pub db__doc: Option<Edn>,
 }
@@ -241,9 +246,13 @@ impl EntityHistoryElement {
     pub fn default() -> Self {
         Self {
             db___content_hash: "1828ebf4466f98ea3f5252a58734208cd0414376".to_string(),
-            db___valid_time: "2020-07-19T04:12:13.788-00:00".to_string(),
+            db___valid_time: "2020-07-19T04:12:13.788-00:00"
+                .parse::<DateTime<FixedOffset>>()
+                .unwrap(),
             tx___tx_id: 28usize,
-            tx___tx_time: "2020-07-19T04:12:13.788-00:00".to_string(),
+            tx___tx_time: "2020-07-19T04:12:13.788-00:00"
+                .parse::<DateTime<FixedOffset>>()
+                .unwrap(),
             db__doc: None,
         }
     }
@@ -251,9 +260,13 @@ impl EntityHistoryElement {
     pub fn default_docs() -> Self {
         Self {
             db___content_hash: "1828ebf4466f98ea3f5252a58734208cd0414376".to_string(),
-            db___valid_time: "2020-07-19T04:12:13.788-00:00".to_string(),
+            db___valid_time: "2020-07-19T04:12:13.788-00:00"
+                .parse::<DateTime<FixedOffset>>()
+                .unwrap(),
             tx___tx_id: 28usize,
-            tx___tx_time: "2020-07-19T04:12:13.788-00:00".to_string(),
+            tx___tx_time: "2020-07-19T04:12:13.788-00:00"
+                .parse::<DateTime<FixedOffset>>()
+                .unwrap(),
             db__doc: Some(Edn::Key(":docs".to_string())),
         }
     }
@@ -263,20 +276,20 @@ impl From<Edn> for EntityHistoryElement {
     fn from(edn: Edn) -> Self {
         Self {
             db___content_hash: edn[":crux.db/content-hash"].to_string(),
-            #[cfg(not(feature = "time"))]
+            #[cfg(feature = "time_as_str")]
             db___valid_time: edn[":crux.db/valid-time"].to_string(),
-            #[cfg(feature = "time")]
+            #[cfg(not(feature = "time_as_str"))]
             db___valid_time: edn[":crux.db/valid-time"]
                 .to_string()
-                .parse::<DateTime<Utc>>()
+                .parse::<DateTime<FixedOffset>>()
                 .unwrap(),
             tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize),
-            #[cfg(not(feature = "time"))]
+            #[cfg(feature = "time_as_str")]
             tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
-            #[cfg(feature = "time")]
+            #[cfg(not(feature = "time_as_str"))]
             tx___tx_time: edn[":crux.tx/tx-time"]
                 .to_string()
-                .parse::<DateTime<Utc>>()
+                .parse::<DateTime<FixedOffset>>()
                 .unwrap(),
             db__doc: edn.get(":crux.db/doc").map(|d| d.to_owned()),
         }

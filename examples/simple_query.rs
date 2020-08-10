@@ -57,17 +57,19 @@ fn main() -> Result<(), CruxError> {
 
     let query_is_no_sql = Query::find(vec!["?p1", "?n", "?s"])?
         .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql ?s", "?p1 :is-sql false"])?
+        .with_full_results()
         .build();
     // Query:
     // {:query
-    //     {:find [?p1 ?n ?s]
+    //     {:find [?p1]
     //      :where [[?p1 :name ?n]
     //              [?p1 :is-sql ?s]
     //              [?p1 :is-sql false]]}}
 
     let is_no_sql = client.query(query_is_no_sql?)?;
     println!("{:?}", is_no_sql);
-    // {[":crux", "Crux Datalog", "false"]} BTreeSet
+    // {["{:crux.db/id: Key(\":cassandra\"), :is-sql: Bool(false), :name: Str(\"Cassandra\"), }", "Cassandra", "false"],
+    //  ["{:crux.db/id: Key(\":crux\"), :is-sql: Bool(false), :name: Str(\"Crux Datalog\"), }", "Crux Datalog", "false"]}
 
     Ok(())
 }
