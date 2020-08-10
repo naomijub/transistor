@@ -12,6 +12,8 @@ use edn_rs::{edn, Edn, Map, Serialize};
 use reqwest::{blocking::Client, header::HeaderMap};
 use std::collections::BTreeSet;
 
+static DATE_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S%Z";
+
 /// `HttpClient` has the `reqwest::blocking::Client`,  the `uri` to query and the `HeaderMap` with
 /// all the possible headers. Default header is `Content-Type: "application/edn"`. Synchronous request.
 pub struct HttpClient {
@@ -134,6 +136,10 @@ impl HttpClient {
                 edn!({:status ":internal-server-error", :code 500})
             }
         })
+        // edn_resp.map_err(|err| {
+        //     println!(":CRUX-CLIENT POST /entity [ERROR]: {:?}", err);
+        //     edn!({:status ":internal-server-error", :code 500})
+        // })
     }
 
     /// Function `entity_tx` requests endpoint `/entity-tx` via `POST` which retrieves the docs and tx infos
@@ -262,20 +268,20 @@ fn build_timed_url(
             "{}/{}?transaction-time={}",
             url,
             endpoint,
-            tx.format("%Y-%m-%dT%H:%M:%S%Z").to_string()
+            tx.format(DATE_FORMAT).to_string()
         ),
         (None, Some(valid)) => format!(
             "{}/{}?valid-time={}",
             url,
             endpoint,
-            valid.format("%Y-%m-%dT%H:%M:%S%Z").to_string()
+            valid.format(DATE_FORMAT).to_string()
         ),
         (Some(tx), Some(valid)) => format!(
             "{}/{}?transaction-time={}&valid-time={}",
             url,
             endpoint,
-            tx.format("%Y-%m-%dT%H:%M:%S%Z").to_string(),
-            valid.format("%Y-%m-%dT%H:%M:%S%Z").to_string()
+            tx.format(DATE_FORMAT).to_string(),
+            valid.format(DATE_FORMAT).to_string()
         ),
     }
 }

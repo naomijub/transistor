@@ -1,5 +1,7 @@
 use chrono::prelude::*;
 use edn_rs::Serialize;
+static ACTION_DATE_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S%Z";
+static DATETIME_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S";
 
 /// Action to perform in Crux. Receives a serialized Edn.
 ///
@@ -25,13 +27,13 @@ impl Serialize for Action {
             Action::Put(edn, Some(date)) => format!(
                 "[:crux.tx/put {} #inst {}]",
                 edn,
-                date.format("%Y-%m-%dT%H:%M:%S%Z").to_string()
+                date.format(ACTION_DATE_FORMAT).to_string()
             ),
             Action::Delete(edn, None) => format!("[:crux.tx/delete {}]", edn),
             Action::Delete(edn, Some(date)) => format!(
                 "[:crux.tx/delete {} #inst {}]",
                 edn,
-                date.format("%Y-%m-%dT%H:%M:%S%Z").to_string()
+                date.format(ACTION_DATE_FORMAT).to_string()
             ),
             Action::Evict(id) => {
                 if id.starts_with(":") {
@@ -45,7 +47,7 @@ impl Serialize for Action {
                 "[:crux.tx/match {} {} #inst {}]",
                 id,
                 edn,
-                date.format("%Y-%m-%dT%H:%M:%S%Z").to_string()
+                date.format(ACTION_DATE_FORMAT).to_string()
             ),
         }
     }
@@ -68,7 +70,7 @@ impl Serialize for Order {
 }
 
 /// enum `TimeHistory` is used as an argument in the function `entity_history_timed`. It is responsible for defining `valid-time` and `transaction-times` ranges for the query.
-/// The possible options are `ValidTime` and `TrsansactionTime`, both of them receive two `Option<DateTime<Utc>>`. The first parameter will transform into an start time and the second into and end-time, and they will be formated as `%Y-%m-%dT%H:%M:%S`.
+/// The possible options are `ValidTime` and `TransactionTime`, both of them receive two `Option<DateTime<Utc>>`. The first parameter will transform into an start time and the second into and end-time, and they will be formated as `%Y-%m-%dT%H:%M:%S`.
 /// The query params will become:
 /// * ValidTime(Some(start), Some(end)) => "&start-valid-time={}&end-valid-time={}"
 /// * ValidTime(None, Some(end)) => "&end-valid-time={}"
@@ -92,31 +94,31 @@ impl Serialize for TimeHistory {
         match self {
             ValidTime(Some(start), Some(end)) => format!(
                 "&start-valid-time={}&end-valid-time={}",
-                start.format("%Y-%m-%dT%H:%M:%S").to_string(),
-                end.format("%Y-%m-%dT%H:%M:%S").to_string()
+                start.format(DATETIME_FORMAT).to_string(),
+                end.format(DATETIME_FORMAT).to_string()
             ),
             ValidTime(None, Some(end)) => format!(
                 "&end-valid-time={}",
-                end.format("%Y-%m-%dT%H:%M:%S").to_string()
+                end.format(DATETIME_FORMAT).to_string()
             ),
             ValidTime(Some(start), None) => format!(
                 "&start-valid-time={}",
-                start.format("%Y-%m-%dT%H:%M:%S").to_string()
+                start.format(DATETIME_FORMAT).to_string()
             ),
             ValidTime(None, None) => format!(""),
 
             TransactionTime(Some(start), Some(end)) => format!(
                 "&start-transaction-time={}&end-transaction-time={}",
-                start.format("%Y-%m-%dT%H:%M:%S").to_string(),
-                end.format("%Y-%m-%dT%H:%M:%S").to_string()
+                start.format(DATETIME_FORMAT).to_string(),
+                end.format(DATETIME_FORMAT).to_string()
             ),
             TransactionTime(None, Some(end)) => format!(
                 "&end-transaction-time={}",
-                end.format("%Y-%m-%dT%H:%M:%S").to_string()
+                end.format(DATETIME_FORMAT).to_string()
             ),
             TransactionTime(Some(start), None) => format!(
                 "&start-transaction-time={}",
-                start.format("%Y-%m-%dT%H:%M:%S").to_string()
+                start.format(DATETIME_FORMAT).to_string()
             ),
             TransactionTime(None, None) => format!(""),
         }
