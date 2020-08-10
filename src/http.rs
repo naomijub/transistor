@@ -136,10 +136,6 @@ impl HttpClient {
                 edn!({:status ":internal-server-error", :code 500})
             }
         })
-        // edn_resp.map_err(|err| {
-        //     println!(":CRUX-CLIENT POST /entity [ERROR]: {:?}", err);
-        //     edn!({:status ":internal-server-error", :code 500})
-        // })
     }
 
     /// Function `entity_tx` requests endpoint `/entity-tx` via `POST` which retrieves the docs and tx infos
