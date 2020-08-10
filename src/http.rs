@@ -516,13 +516,13 @@ mod build_url {
                     .unwrap(),
             ),
             Some(
-                "2020-08-09T18:05:29.301-03:00"
+                "2020-11-09T18:05:29.301-03:00"
                     .parse::<DateTime<FixedOffset>>()
                     .unwrap(),
             ),
         );
 
-        assert_eq!(url, "localhost:3000/entity?transaction-time=2020-08-09T18:05:29-03:00&valid-time=2020-08-09T18:05:29-03:00");
+        assert_eq!(url, "localhost:3000/entity?transaction-time=2020-08-09T18:05:29-03:00&valid-time=2020-11-09T18:05:29-03:00");
     }
 
     #[test]
