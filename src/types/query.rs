@@ -18,6 +18,7 @@ pub struct Query {
     order_by: Option<OrderBy>,
     limit: Option<Limit>,
     offset: Option<Offset>,
+    full_results: bool,
 }
 #[derive(Clone, Debug)]
 struct Find(Vec<String>);
@@ -58,6 +59,7 @@ impl Query {
             order_by: None,
             limit: None,
             offset: None,
+            full_results: false,
         })
     }
 
@@ -167,6 +169,12 @@ impl Query {
         self
     }
 
+    /// `with_full_results` adds `:full-results? true` to the query map to easily retrieve the source documents relating to the entities in the result set.
+    pub fn with_full_results(mut self) -> Self {
+        self.full_results = true;
+        self
+    }
+
     /// `build` function helps you assert that required fields were implemented.
     pub fn build(self) -> Result<Self, CruxError> {
         if self.where_.is_none() {
@@ -195,6 +203,9 @@ impl Serialize for Query {
         }
         if self.offset.is_some() {
             q.push_str(&self.offset.unwrap().serialize());
+        }
+        if self.full_results == true {
+            q.push_str(" :full-results? true\n")
         }
         q.push_str("}}");
         q
@@ -440,5 +451,19 @@ mod test {
             .args(vec!["s    true"])
             .unwrap()
             .build();
+    }
+
+    #[test]
+    fn query_with_full_results() {
+        let expected =
+            "{:query\n {:find [?p1]\n:where [[?p1 :first-name n]\n[?p1 :last-name \"Jorge\"]]\n :full-results? true\n}}";
+        let q = Query::find(vec!["?p1"])
+            .unwrap()
+            .where_clause(vec!["?p1 :first-name n", "?p1 :last-name \"Jorge\""])
+            .unwrap()
+            .with_full_results()
+            .build();
+
+        assert_eq!(q.unwrap().serialize(), expected);
     }
 }

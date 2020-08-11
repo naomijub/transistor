@@ -13,7 +13,7 @@ fn main() {
     //"{ :crux.db/id :hello-entity, :first-name \"Hello\", :last-name \"World\", }"
 
     let client = Crux::new("localhost", "3000").http_client();
-    let put_person = Action::Put(person.clone().serialize());
+    let put_person = Action::Put(person.clone().serialize(), None);
 
     let body = client.tx_log(vec![put_person]).unwrap();
     // "[[:crux.tx/put { :crux.db/id :hello-entity, :first-name \"Hello\", :last-name \"World\", }]]"

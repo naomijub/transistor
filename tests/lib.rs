@@ -1,9 +1,10 @@
-#[cfg(all(feature = "time", feature = "mock"))]
+#[cfg(feature = "mock")]
 mod integration {
     use chrono::prelude::*;
     use mockito::mock;
     use transistor::client::Crux;
     use transistor::edn_rs::{ser_struct, Serialize};
+    use transistor::types::http::TimeHistory;
     use transistor::types::http::{Action, Order};
     use transistor::types::CruxId;
 
@@ -23,7 +24,7 @@ mod integration {
 
         assert_eq!(
             format!("{:?}", body),
-            String::from("TxLogResponse { tx___tx_id: 8, tx___tx_time: 2020-07-16T21:53:14.628Z, tx__event___tx_events: None }")
+            String::from("TxLogResponse { tx___tx_id: 8, tx___tx_time: 2020-07-16T21:53:14.628+00:00, tx__event___tx_events: None }")
         );
     }
 
@@ -44,7 +45,7 @@ mod integration {
         assert_eq!(
             body.tx___tx_time,
             "2020-07-16T21:53:14.628-00:00"
-                .parse::<DateTime<Utc>>()
+                .parse::<DateTime<FixedOffset>>()
                 .unwrap()
         );
     }
@@ -68,7 +69,7 @@ mod integration {
             .unwrap();
 
         let actual = format!("{:?}", body);
-        let expected = "EntityHistoryResponse { history: [EntityHistoryElement { db___valid_time: 2020-07-19T04:12:13.788Z, tx___tx_id: 28, tx___tx_time: 2020-07-19T04:12:13.788Z, db___content_hash: \"1828ebf4466f98ea3f5252a58734208cd0414376\", db__doc: None }] }";
+        let expected = "EntityHistoryResponse { history: [EntityHistoryElement { db___valid_time: 2020-07-19T04:12:13.788+00:00, tx___tx_id: 28, tx___tx_time: 2020-07-19T04:12:13.788+00:00, db___content_hash: \"1828ebf4466f98ea3f5252a58734208cd0414376\", db__doc: None }] }";
         assert_eq!(actual, expected);
     }
 
@@ -88,15 +89,13 @@ mod integration {
             .unwrap();
 
         let actual = format!("{:?}", body);
-        let expected = "EntityTxResponse { db___id: \"d72ccae848ce3a371bd313865cedc3d20b1478ca\", db___content_hash: \"1828ebf4466f98ea3f5252a58734208cd0414376\", db___valid_time: 2020-07-19T04:12:13.788Z, tx___tx_id: 28, tx___tx_time: 2020-07-19T04:12:13.788Z }";
+        let expected = "EntityTxResponse { db___id: \"d72ccae848ce3a371bd313865cedc3d20b1478ca\", db___content_hash: \"1828ebf4466f98ea3f5252a58734208cd0414376\", db___valid_time: 2020-07-19T04:12:13.788+00:00, tx___tx_id: 28, tx___tx_time: 2020-07-19T04:12:13.788+00:00 }";
 
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn match_tx_date_times() {
-        use transistor::types::http::time::TimeHistory;
-
         let date = "2014-11-28T21:00:09+09:00"
             .parse::<DateTime<Utc>>()
             .unwrap();
@@ -117,8 +116,6 @@ mod integration {
 
     #[test]
     fn match_tx_end_date() {
-        use transistor::types::http::time::TimeHistory;
-
         let date = "2014-11-28T21:00:09+09:00"
             .parse::<DateTime<Utc>>()
             .unwrap();
@@ -139,8 +136,6 @@ mod integration {
 
     #[test]
     fn match_valid_start_date() {
-        use transistor::types::http::time::TimeHistory;
-
         let date = "2014-11-28T21:00:09+09:00"
             .parse::<DateTime<Utc>>()
             .unwrap();
@@ -161,8 +156,6 @@ mod integration {
 
     #[test]
     fn match_none_date() {
-        use transistor::types::http::time::TimeHistory;
-
         let m = mock("GET", "/entity-history/ecc6475b7ef9acf689f98e479d539e869432cb5e?sort-order=asc&with-docs=false")
             .create();
 
@@ -192,8 +185,8 @@ mod integration {
         };
 
         vec![
-            Action::Put(person1.serialize()),
-            Action::Put(person2.serialize()),
+            Action::Put(person1.serialize(), None),
+            Action::Put(person2.serialize(), None),
         ]
     }
 

@@ -1,6 +1,6 @@
 [package]
 name = "transistor"
-version = "1.0.0-beta.3"
+version = "1.0.0"
 authors = ["Julia Naomi <jnboeira@outlook.com>", "Otavio Pace <otaviopp8@gmail.com>"]
 description = "Crux Datalog DB Client"
 readme = "README.md"
@@ -12,7 +12,7 @@ edition = "2018"
 
 [features]
 mock = ["mockito"]
-time = ["chrono"]
+time_as_str = []
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -20,9 +20,8 @@ time = ["chrono"]
 reqwest = { version = "0.10.6", features = ["blocking"] }
 edn-rs = "0.10.4"
 mockito = {version = "0.26", optional = true }
-chrono = {version = "0.4", optional = true }
+chrono = "0.4"
 
 [dev-dependencies]
 mockito = "0.26"
-chrono = "0.4"
 

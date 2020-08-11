@@ -7,9 +7,12 @@ use crate::types::{
         TxLogsResponse,
     },
 };
+use chrono::prelude::*;
 use edn_rs::{edn, Edn, Map, Serialize};
 use reqwest::{blocking::Client, header::HeaderMap};
 use std::collections::BTreeSet;
+
+static DATE_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S%Z";
 
 /// `HttpClient` has the `reqwest::blocking::Client`,  the `uri` to query and the `HeaderMap` with
 /// all the possible headers. Default header is `Content-Type: "application/edn"`. Synchronous request.
@@ -99,6 +102,42 @@ impl HttpClient {
         })
     }
 
+    /// Function `entity_timed` is like `entity` but with two optional fields `transaction_time` and `valid_time` that are of type `Option<DateTime<FixedOffset>>`.
+    pub fn entity_timed(
+        &self,
+        id: String,
+        transaction_time: Option<DateTime<FixedOffset>>,
+        valid_time: Option<DateTime<FixedOffset>>,
+    ) -> Result<Edn, CruxError> {
+        if !id.starts_with(":") {
+            return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
+        }
+
+        let mut s = String::new();
+        s.push_str("{:eid ");
+        s.push_str(&id);
+        s.push_str("}");
+
+        let url = build_timed_url(self.uri.clone(), "entity", transaction_time, valid_time);
+
+        let resp = self
+            .client
+            .post(&url)
+            .headers(self.headers.clone())
+            .body(s)
+            .send()?
+            .text()?;
+
+        let edn_resp = edn_rs::parse_edn(&resp);
+        Ok(match edn_resp {
+            Ok(e) => e,
+            Err(err) => {
+                println!(":CRUX-CLIENT POST /entity [ERROR]: {:?}", err);
+                edn!({:status ":internal-server-error", :code 500})
+            }
+        })
+    }
+
     /// Function `entity_tx` requests endpoint `/entity-tx` via `POST` which retrieves the docs and tx infos
     /// for the last document for that ID saved in CruxDB.
     pub fn entity_tx(&self, id: String) -> Result<EntityTxResponse, CruxError> {
@@ -118,6 +157,33 @@ impl HttpClient {
         EntityTxResponse::deserialize(resp)
     }
 
+    /// Function `entity_tx_timed` is like `entity_tx` but with two optional fields `transaction_time` and `valid_time` that are of type `Option<DateTime<FixedOffset>>`.
+    pub fn entity_tx_timed(
+        &self,
+        id: String,
+        transaction_time: Option<DateTime<FixedOffset>>,
+        valid_time: Option<DateTime<FixedOffset>>,
+    ) -> Result<EntityTxResponse, CruxError> {
+        let mut s = String::new();
+        s.push_str("{:eid ");
+        s.push_str(&id);
+        s.push_str("}");
+
+        let url = build_timed_url(self.uri.clone(), "entity-tx", transaction_time, valid_time);
+
+        let resp = self
+            .client
+            .post(&url)
+            .headers(self.headers.clone())
+            .body(s)
+            .send()?
+            .text()?;
+
+        EntityTxResponse::deserialize(resp)
+    }
+
+    /// Function `entity_history` requests endpoint `/entity-history` via `GET` which returns a list with all entity's transaction history.
+    /// It is possible to order it with [`Order`](../types/http/enum.Order.html) , `types::http::Order::Asc` and `types::http::Order:Desc`, (second argument) and to include the document for each transaction with the boolean flag `with_docs` (third argument).
     pub fn entity_history(
         &self,
         hash: String,
@@ -141,13 +207,15 @@ impl HttpClient {
         EntityHistoryResponse::deserialize(resp)
     }
 
-    #[cfg(feature = "time")]
+    /// Function `entity_history_timed` is an txtension of the function `entity_history`.
+    /// This function receives as the last argument a vector containing [`TimeHistory`](../types/http/enum.TimeHistory.html)  elements.
+    /// `TimeHistory` can be `ValidTime` or `TransactionTime` and both have optional `DateTime<Utc>` params corresponding to the start-time and end-time to be queried.
     pub fn entity_history_timed(
         &self,
         hash: String,
         order: Order,
         with_docs: bool,
-        time: Vec<crate::types::http::time::TimeHistory>,
+        time: Vec<crate::types::http::TimeHistory>,
     ) -> Result<EntityHistoryResponse, CruxError> {
         let url = format!(
             "{}/entity-history/{}?sort-order={}&with-docs={}{}",
@@ -181,6 +249,36 @@ impl HttpClient {
             .text()?;
 
         QueryResponse::deserialize(resp)
+    }
+}
+
+fn build_timed_url(
+    url: String,
+    endpoint: &str,
+    transaction_time: Option<DateTime<FixedOffset>>,
+    valid_time: Option<DateTime<FixedOffset>>,
+) -> String {
+    match (transaction_time, valid_time) {
+        (None, None) => format!("{}/{}", url, endpoint),
+        (Some(tx), None) => format!(
+            "{}/{}?transaction-time={}",
+            url,
+            endpoint,
+            tx.format(DATE_FORMAT).to_string()
+        ),
+        (None, Some(valid)) => format!(
+            "{}/{}?valid-time={}",
+            url,
+            endpoint,
+            valid.format(DATE_FORMAT).to_string()
+        ),
+        (Some(tx), Some(valid)) => format!(
+            "{}/{}?transaction-time={}&valid-time={}",
+            url,
+            endpoint,
+            tx.format(DATE_FORMAT).to_string(),
+            valid.format(DATE_FORMAT).to_string()
+        ),
     }
 }
 
@@ -244,8 +342,8 @@ mod http {
             last_name: "Manuel".to_string(),
         };
 
-        let action1 = Action::Put(person1.serialize());
-        let action2 = Action::Put(person2.serialize());
+        let action1 = Action::Put(person1.serialize(), None);
+        let action2 = Action::Put(person2.serialize(), None);
 
         let response = Crux::new("localhost", "4000")
             .http_client()
@@ -392,5 +490,76 @@ mod http {
         };
 
         assert_eq!(edn_body, expected);
+    }
+}
+
+#[cfg(test)]
+mod build_url {
+    use super::build_timed_url;
+    use chrono::prelude::*;
+
+    #[test]
+    fn both_times_are_none() {
+        let url = build_timed_url("localhost:3000".to_string(), "entity", None, None);
+
+        assert_eq!(url, "localhost:3000/entity");
+    }
+
+    #[test]
+    fn both_times_are_some() {
+        let url = build_timed_url(
+            "localhost:3000".to_string(),
+            "entity",
+            Some(
+                "2020-08-09T18:05:29.301-03:00"
+                    .parse::<DateTime<FixedOffset>>()
+                    .unwrap(),
+            ),
+            Some(
+                "2020-11-09T18:05:29.301-03:00"
+                    .parse::<DateTime<FixedOffset>>()
+                    .unwrap(),
+            ),
+        );
+
+        assert_eq!(url, "localhost:3000/entity?transaction-time=2020-08-09T18:05:29-03:00&valid-time=2020-11-09T18:05:29-03:00");
+    }
+
+    #[test]
+    fn only_tx_time_is_some() {
+        let url = build_timed_url(
+            "localhost:3000".to_string(),
+            "entity",
+            Some(
+                "2020-08-09T18:05:29.301-03:00"
+                    .parse::<DateTime<FixedOffset>>()
+                    .unwrap(),
+            ),
+            None,
+        );
+
+        assert_eq!(
+            url,
+            "localhost:3000/entity?transaction-time=2020-08-09T18:05:29-03:00"
+        );
+    }
+
+    #[test]
+    fn only_valid_time_is_some() {
+        let url = build_timed_url(
+            "localhost:3000".to_string(),
+            "entity",
+            None,
+            Some(
+                "2020-08-09T18:05:29.301-03:00"
+                    .parse::<DateTime<FixedOffset>>()
+                    .unwrap(),
+            ),
+        );
+
+        assert_eq!(
+            url,
+            "localhost:3000/entity?valid-time=2020-08-09T18:05:29-03:00"
+        );
     }
 }
