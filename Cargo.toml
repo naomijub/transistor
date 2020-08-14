@@ -18,7 +18,7 @@ time_as_str = []
 
 [dependencies]
 reqwest = { version = "0.10.6", features = ["blocking"] }
-edn-rs = "0.10.4"
+edn-rs = "0.10.5"
 mockito = {version = "0.26", optional = true }
 chrono = "0.4"
 
