@@ -40,11 +40,23 @@ impl Crux {
     }
 
     /// To query database on Docker/standalone via http it is necessary to use `HttpClient`
+    #[cfg(not(feature = "async"))]
     pub fn http_client(&mut self) -> HttpClient {
         self.headers
             .insert(CONTENT_TYPE, "application/edn".parse().unwrap());
         HttpClient {
             client: reqwest::blocking::Client::new(),
+            uri: self.uri().clone(),
+            headers: self.headers.clone(),
+        }
+    }
+
+    #[cfg(feature = "async")]
+    pub fn http_client(&mut self) -> HttpClient {
+        self.headers
+            .insert(CONTENT_TYPE, "application/edn".parse().unwrap());
+        HttpClient {
+            client: reqwest::Client::new(),
             uri: self.uri().clone(),
             headers: self.headers.clone(),
         }

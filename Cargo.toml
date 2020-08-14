@@ -13,6 +13,7 @@ edition = "2018"
 [features]
 mock = ["mockito"]
 time_as_str = []
+async = ["tokio", "futures"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -21,6 +22,9 @@ reqwest = { version = "0.10.6", features = ["blocking"] }
 edn-rs = "0.10.5"
 mockito = {version = "0.26", optional = true }
 chrono = "0.4"
+futures = {version = "0.3.5", optional = true }
+tokio = {version = "0.2.22", optional = true, features = ["macros"] }
+
 
 [dev-dependencies]
 mockito = "0.26"

@@ -2,48 +2,14 @@ use crate::types::error::CruxError;
 use chrono::prelude::*;
 use edn_rs::{parse_edn, ser_struct, Edn, Serialize};
 use std::collections::BTreeSet;
-
-ser_struct! {
-    #[derive(Debug, PartialEq, Clone)]
-    #[allow(non_snake_case)]
-    /// Definition for the response of a `GET` at `state` endpoint
-    pub struct StateResponse {
-        index___index_version: usize,
-        doc_log___consumer_state: Option<String>,
-        tx_log___consumer_state:  Option<String>,
-        kv___kv_store: String,
-        kv___estimate_num_keys: usize,
-        kv___size: usize
-    }
-}
-
-impl StateResponse {
-    pub fn deserialize(resp: String) -> Result<Self, CruxError> {
-        let edn = parse_edn(&resp)?;
-        Ok(Self {
-            index___index_version: edn[":crux.index/index-version"].to_uint().unwrap_or(0usize),
-            doc_log___consumer_state: nullable_str(edn[":crux.doc-log/consumer-state"].to_string()),
-            tx_log___consumer_state: nullable_str(edn[":crux.tx-log/consumer-state"].to_string()),
-            kv___kv_store: edn[":crux.kv/kv-store"].to_string().replace("\"", ""),
-            kv___estimate_num_keys: edn[":crux.kv/estimate-num-keys"]
-                .to_uint()
-                .unwrap_or(0usize),
-            kv___size: edn[":crux.kv/size"].to_uint().unwrap_or(0usize),
-        })
-    }
-
-    #[cfg(test)]
-    pub fn default() -> Self {
-        Self {
-            index___index_version: 5usize,
-            doc_log___consumer_state: None,
-            tx_log___consumer_state: None,
-            kv___kv_store: String::from("crux.kv.rocksdb.RocksKv"),
-            kv___estimate_num_keys: 34usize,
-            kv___size: 88489usize,
-        }
-    }
-}
+#[cfg(feature = "async")]
+use futures::prelude::*;
+#[cfg(feature = "async")]
+use futures::task::Poll;
+#[cfg(feature = "async")]
+use futures::task;
+#[cfg(feature = "async")]
+use core::pin::Pin;
 
 #[derive(Debug, PartialEq, Clone)]
 #[allow(non_snake_case)]
@@ -55,6 +21,24 @@ pub struct TxLogResponse {
     #[cfg(not(feature = "time_as_str"))]
     pub tx___tx_time: DateTime<FixedOffset>,
     pub tx__event___tx_events: Option<Vec<Vec<String>>>,
+}
+
+
+#[cfg(feature = "async")]
+impl futures::future::Future for TxLogResponse {
+    type Output = TxLogResponse;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Self::Output> {
+        if self.tx___tx_id > 0 {
+            let pinned = self.to_owned();
+            Poll::Ready(
+                pinned
+            )
+        } else {
+            println!("not ready yet --> {:?}", self);
+            Poll::Pending
+        }
+    }
 }
 
 impl TxLogResponse {

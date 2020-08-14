@@ -3,7 +3,7 @@ use crate::types::{
     http::{Action, Order},
     query::Query,
     response::{
-        EntityHistoryResponse, EntityTxResponse, QueryResponse, StateResponse, TxLogResponse,
+        EntityHistoryResponse, EntityTxResponse, QueryResponse, TxLogResponse,
         TxLogsResponse,
     },
 };
@@ -11,30 +11,23 @@ use chrono::prelude::*;
 use edn_rs::{edn, Edn, Map, Serialize};
 use reqwest::{blocking::Client, header::HeaderMap};
 use std::collections::BTreeSet;
+#[cfg(feature = "async")] use futures::prelude::*;
 
 static DATE_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S%Z";
 
 /// `HttpClient` has the `reqwest::blocking::Client`,  the `uri` to query and the `HeaderMap` with
 /// all the possible headers. Default header is `Content-Type: "application/edn"`. Synchronous request.
 pub struct HttpClient {
+    #[cfg(not(feature = "async"))]
     pub(crate) client: Client,
+    #[cfg(feature = "async")]
+    pub(crate) client: reqwest::Client,
     pub(crate) uri: String,
     pub(crate) headers: HeaderMap,
 }
 
+#[cfg(not(feature = "async"))]
 impl HttpClient {
-    /// Function `state` queries endpoint `/` with a `GET`. Returned information consists of
-    /// various details about the state of the database and it can be used as a health check.
-    pub fn state(&self) -> Result<StateResponse, CruxError> {
-        let resp = self
-            .client
-            .get(&self.uri)
-            .headers(self.headers.clone())
-            .send()?
-            .text()?;
-        StateResponse::deserialize(resp)
-    }
-
     /// Function `tx_log` requests endpoint `/tx-log` via `POST` which allow you to send actions `Action`
     /// to CruxDB.
     /// The "write" endpoint, to post transactions.
@@ -252,6 +245,30 @@ impl HttpClient {
     }
 }
 
+#[cfg(feature = "async")]
+impl HttpClient {
+    pub async fn tx_log(&self, actions: Vec<Action>) -> impl Future<Output = TxLogResponse> + Send {
+        let actions_str = actions
+            .into_iter()
+            .map(|edn| edn.serialize())
+            .collect::<Vec<String>>()
+            .join(", ");
+        let mut s = String::new();
+        s.push_str("[");
+        s.push_str(&actions_str);
+        s.push_str("]");
+
+        let resp = self
+            .client
+            .post(&format!("{}/tx-log", self.uri))
+            .headers(self.headers.clone())
+            .body(s)
+            .send().await.unwrap()
+            .text().await.unwrap();
+        TxLogResponse::deserialize(resp).unwrap()
+    }
+}
+
 fn build_timed_url(
     url: String,
     endpoint: &str,
@@ -290,7 +307,7 @@ mod http {
     use crate::types::{
         query::Query,
         response::{
-            EntityHistoryElement, EntityHistoryResponse, EntityTxResponse, StateResponse,
+            EntityHistoryElement, EntityHistoryResponse, EntityTxResponse,
             TxLogResponse,
         },
         CruxId,
@@ -306,19 +323,6 @@ mod http {
             first_name: String,
             last_name: String
         }
-    }
-
-    #[test]
-    fn state() {
-        let _m = mock("GET", "/")
-        .with_status(200)
-        .with_header("content-type", "text/plain")
-        .with_body("{:crux.index/index-version 5, :crux.doc-log/consumer-state nil, :crux.tx-log/consumer-state nil, :crux.kv/kv-store \"crux.kv.rocksdb.RocksKv\", :crux.kv/estimate-num-keys 34, :crux.kv/size 88489}")
-        .create();
-
-        let response = Crux::new("localhost", "4000").http_client().state();
-
-        assert_eq!(response.unwrap(), StateResponse::default())
     }
 
     #[test]
