@@ -3,15 +3,15 @@ use crate::types::{
     http::{Action, Order},
     query::Query,
     response::{
-        EntityHistoryResponse, EntityTxResponse, QueryResponse, TxLogResponse,
-        TxLogsResponse,
+        EntityHistoryResponse, EntityTxResponse, QueryResponse, TxLogResponse, TxLogsResponse,
     },
 };
 use chrono::prelude::*;
 use edn_rs::{edn, Edn, Map, Serialize};
+#[cfg(feature = "async")]
+use futures::prelude::*;
 use reqwest::{blocking::Client, header::HeaderMap};
 use std::collections::BTreeSet;
-#[cfg(feature = "async")] use futures::prelude::*;
 
 static DATE_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S%Z";
 
@@ -263,8 +263,12 @@ impl HttpClient {
             .post(&format!("{}/tx-log", self.uri))
             .headers(self.headers.clone())
             .body(s)
-            .send().await.unwrap()
-            .text().await.unwrap();
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
         TxLogResponse::deserialize(resp).unwrap()
     }
 }
@@ -306,10 +310,7 @@ mod http {
     use crate::types::http::Order;
     use crate::types::{
         query::Query,
-        response::{
-            EntityHistoryElement, EntityHistoryResponse, EntityTxResponse,
-            TxLogResponse,
-        },
+        response::{EntityHistoryElement, EntityHistoryResponse, EntityTxResponse, TxLogResponse},
         CruxId,
     };
     use edn_rs::{ser_struct, Serialize};

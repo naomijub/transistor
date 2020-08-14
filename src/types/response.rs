@@ -1,15 +1,15 @@
 use crate::types::error::CruxError;
 use chrono::prelude::*;
+#[cfg(feature = "async")]
+use core::pin::Pin;
 use edn_rs::{parse_edn, ser_struct, Edn, Serialize};
-use std::collections::BTreeSet;
 #[cfg(feature = "async")]
 use futures::prelude::*;
 #[cfg(feature = "async")]
-use futures::task::Poll;
-#[cfg(feature = "async")]
 use futures::task;
 #[cfg(feature = "async")]
-use core::pin::Pin;
+use futures::task::Poll;
+use std::collections::BTreeSet;
 
 #[derive(Debug, PartialEq, Clone)]
 #[allow(non_snake_case)]
@@ -23,7 +23,6 @@ pub struct TxLogResponse {
     pub tx__event___tx_events: Option<Vec<Vec<String>>>,
 }
 
-
 #[cfg(feature = "async")]
 impl futures::future::Future for TxLogResponse {
     type Output = TxLogResponse;
@@ -31,9 +30,7 @@ impl futures::future::Future for TxLogResponse {
     fn poll(self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Self::Output> {
         if self.tx___tx_id > 0 {
             let pinned = self.to_owned();
-            Poll::Ready(
-                pinned
-            )
+            Poll::Ready(pinned)
         } else {
             println!("not ready yet --> {:?}", self);
             Poll::Pending

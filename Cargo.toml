@@ -29,3 +29,6 @@ tokio = {version = "0.2.22", optional = true, features = ["macros"] }
 [dev-dependencies]
 mockito = "0.26"
 
+[[example]]
+name = "async_tx_log"
+required-features = ["async"]
