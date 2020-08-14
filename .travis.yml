@@ -12,6 +12,7 @@ matrix:
 before_install:
   - docker run -d -p 3000:3000 juxt/crux-standalone:20.07-1.10.0
 script:
+    - cargo build
     - cargo test --locked  --no-fail-fast --lib
     - cargo test --test lib --no-fail-fast --features "mock"
     - cargo run --example tx_log
