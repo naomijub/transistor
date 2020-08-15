@@ -32,3 +32,7 @@ mockito = "0.26"
 [[example]]
 name = "async_tx_log"
 required-features = ["async"]
+
+[[example]]
+name = "async_tx_logs"
+required-features = ["async"]

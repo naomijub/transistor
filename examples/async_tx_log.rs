@@ -27,6 +27,7 @@ async fn main() {
         .await;
 
     println!("body = {:?}", body.await);
+    //  Body = "{:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}"
 }
 
 ser_struct! {

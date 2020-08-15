@@ -63,6 +63,21 @@ pub struct TxLogsResponse {
     pub tx_events: Vec<TxLogResponse>,
 }
 
+#[cfg(feature = "async")]
+impl futures::future::Future for TxLogsResponse {
+    type Output = TxLogsResponse;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Self::Output> {
+        if self.tx_events.len() > 0 {
+            let pinned = self.to_owned();
+            Poll::Ready(pinned)
+        } else {
+            println!("not ready yet --> {:?}", self);
+            Poll::Pending
+        }
+    }
+}
+
 impl TxLogsResponse {
     pub fn deserialize(resp: String) -> Result<Self, CruxError> {
         let clean_edn = resp.replace("#crux/id", "");

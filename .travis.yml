@@ -27,3 +27,4 @@ script:
     - cargo run --example match_no_continue_tx
     - cargo run --example match_continue_tx
     - cargo run --example async_tx_log --features "async"
+    - cargo run --example async_tx_logs --features "async"

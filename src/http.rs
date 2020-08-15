@@ -8,9 +8,7 @@ use crate::types::{
 };
 use chrono::prelude::*;
 use edn_rs::{edn, Edn, Map, Serialize};
-#[cfg(feature = "async")]
-use futures::prelude::*;
-use reqwest::{blocking::Client, header::HeaderMap};
+use reqwest::{blocking, header::HeaderMap};
 use std::collections::BTreeSet;
 
 static DATE_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S%Z";
@@ -19,7 +17,7 @@ static DATE_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S%Z";
 /// all the possible headers. Default header is `Content-Type: "application/edn"`. Synchronous request.
 pub struct HttpClient {
     #[cfg(not(feature = "async"))]
-    pub(crate) client: Client,
+    pub(crate) client: blocking::Client,
     #[cfg(feature = "async")]
     pub(crate) client: reqwest::Client,
     pub(crate) uri: String,
@@ -246,6 +244,9 @@ impl HttpClient {
 }
 
 #[cfg(feature = "async")]
+use futures::prelude::*;
+
+#[cfg(feature = "async")]
 impl HttpClient {
     pub async fn tx_log(&self, actions: Vec<Action>) -> impl Future<Output = TxLogResponse> + Send {
         let actions_str = actions
@@ -270,6 +271,17 @@ impl HttpClient {
             .await
             .unwrap();
         TxLogResponse::deserialize(resp).unwrap()
+    }
+
+    pub async fn tx_logs(&self) -> impl Future<Output = TxLogsResponse> + Send {
+        let resp = self
+            .client
+            .get(&format!("{}/tx-log", self.uri))
+            .headers(self.headers.clone())
+            .send().await.unwrap()
+            .text().await.unwrap();
+
+        TxLogsResponse::deserialize(resp).unwrap()
     }
 }
 
