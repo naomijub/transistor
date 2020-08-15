@@ -22,11 +22,12 @@ pub mod types;
 /// Http Client  module. It contains the [`HttpClient`](../http/struct.HttpClient.html#impl) for Docker and Standalone HTTP Server.
 ///
 /// `HttpClient` Contains the following functions:
-/// * `state` queries endpoint `/` with a `GET`. No args.
 /// * `tx_log` requests endpoint `/tx-log` via `POST`. A Vector of `types::http::Action` is expected as argument.
 /// * `tx_logs` requests endpoint `/tx-log` via `GET`. No args.
 /// * `entity` requests endpoint `/entity` via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument.
+/// * `entity_timed` similar to `entity`, but receives as arguments `transaction_time: Option<DateTime<FixedOffset>>` and `valid_time: Option<DateTime<FixedOffset>>,`.
 /// * `entity_tx` requests endpoint `/entity-tx` via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument.
+/// * `entity_tx_timed` similar to `entity_tx`, but receives as arguments `transaction_time: Option<DateTime<FixedOffset>>` and `valid_time: Option<DateTime<FixedOffset>>,`.
 /// * `entity_history` requests endpoint `/entity-history` via `GET`. Arguments are the `crux.db/id` as a `String`, an ordering argument defined by the enum `types::http::Order` (`Asc` or `Desc`) and a boolean for the `with-docs?` flag (this returns values for the field `:crux.db/doc`).
 /// * `entity_history_timed` similar to `entity_history`, but receives one more argument that is a `Vec<TimeHistory>` to define `valid-time` and `transaction-time`
 /// * `query` requests endpoint `/query` via `POST`. Argument is a `query` of the type `Query`. Retrives a Set containing a vector of the values defined by the function `Query::find`.
