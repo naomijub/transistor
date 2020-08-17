@@ -407,6 +407,63 @@ impl HttpClient {
 
         EntityTxResponse::deserialize(resp).unwrap()
     }
+
+    pub async fn entity_history(
+        &self,
+        hash: String,
+        order: Order,
+        with_docs: bool,
+    ) -> impl Future<Output = EntityHistoryResponse> + Send {
+        let url = format!(
+            "{}/entity-history/{}?sort-order={}&with-docs={}",
+            self.uri,
+            hash,
+            order.serialize(),
+            with_docs
+        );
+        let resp = self
+            .client
+            .get(&url)
+            .headers(self.headers.clone())
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
+
+        EntityHistoryResponse::deserialize(resp).unwrap()
+    }
+
+    pub async fn entity_history_timed(
+        &self,
+        hash: String,
+        order: Order,
+        with_docs: bool,
+        time: Vec<crate::types::http::TimeHistory>,
+    ) -> impl Future<Output = EntityHistoryResponse> + Send {
+        let url = format!(
+            "{}/entity-history/{}?sort-order={}&with-docs={}{}",
+            self.uri,
+            hash,
+            order.serialize(),
+            with_docs,
+            time.serialize().replace("[", "").replace("]", ""),
+        );
+
+        let resp = self
+            .client
+            .get(&url)
+            .headers(self.headers.clone())
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
+
+        EntityHistoryResponse::deserialize(resp).unwrap()
+    }
 }
 
 fn build_timed_url(

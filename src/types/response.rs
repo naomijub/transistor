@@ -32,7 +32,6 @@ impl futures::future::Future for TxLogResponse {
             let pinned = self.to_owned();
             Poll::Ready(pinned)
         } else {
-            println!("not ready yet --> {:?}", self);
             Poll::Pending
         }
     }
@@ -72,7 +71,6 @@ impl futures::future::Future for TxLogsResponse {
             let pinned = self.to_owned();
             Poll::Ready(pinned)
         } else {
-            println!("not ready yet --> {:?}", self);
             Poll::Pending
         }
     }
@@ -153,7 +151,6 @@ impl futures::future::Future for EntityTxResponse {
             let pinned = self.to_owned();
             Poll::Ready(pinned)
         } else {
-            println!("not ready yet --> {:?}", self);
             Poll::Pending
         }
     }
@@ -311,6 +308,20 @@ impl From<Edn> for EntityHistoryElement {
 #[derive(Debug, PartialEq, Clone)]
 pub struct EntityHistoryResponse {
     pub history: Vec<EntityHistoryElement>,
+}
+
+#[cfg(feature = "async")]
+impl futures::future::Future for EntityHistoryResponse {
+    type Output = EntityHistoryResponse;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Self::Output> {
+        if self.history.len() > 0 {
+            let pinned = self.to_owned();
+            Poll::Ready(pinned)
+        } else {
+            Poll::Pending
+        }
+    }
 }
 
 impl EntityHistoryResponse {
