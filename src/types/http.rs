@@ -25,13 +25,13 @@ impl Serialize for Action {
         match self {
             Action::Put(edn, None) => format!("[:crux.tx/put {}]", edn),
             Action::Put(edn, Some(date)) => format!(
-                "[:crux.tx/put {} #inst {}]",
+                "[:crux.tx/put {} #inst \"{}\"]",
                 edn,
                 date.format(ACTION_DATE_FORMAT).to_string()
             ),
             Action::Delete(edn, None) => format!("[:crux.tx/delete {}]", edn),
             Action::Delete(edn, Some(date)) => format!(
-                "[:crux.tx/delete {} #inst {}]",
+                "[:crux.tx/delete {} #inst \"{}\"]",
                 edn,
                 date.format(ACTION_DATE_FORMAT).to_string()
             ),
@@ -44,7 +44,7 @@ impl Serialize for Action {
             }
             Action::Match(id, edn, None) => format!("[:crux.tx/match {} {}]", id, edn),
             Action::Match(id, edn, Some(date)) => format!(
-                "[:crux.tx/match {} {} #inst {}]",
+                "[:crux.tx/match {} {} #inst \"{}\"]",
                 id,
                 edn,
                 date.format(ACTION_DATE_FORMAT).to_string()

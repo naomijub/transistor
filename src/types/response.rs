@@ -2,7 +2,7 @@ use crate::types::error::CruxError;
 use chrono::prelude::*;
 #[cfg(feature = "async")]
 use core::pin::Pin;
-use edn_rs::{parse_edn, ser_struct, Edn, Serialize};
+use edn_rs::{from_str, Edn};
 #[cfg(feature = "async")]
 use futures::prelude::*;
 #[cfg(feature = "async")]
@@ -40,7 +40,7 @@ impl futures::future::Future for TxLogResponse {
 
 impl TxLogResponse {
     pub fn deserialize(resp: String) -> Result<Self, CruxError> {
-        let edn = parse_edn(&resp)?;
+        let edn = from_str(&resp)?;
         Ok(edn.into())
     }
 
@@ -81,7 +81,7 @@ impl futures::future::Future for TxLogsResponse {
 impl TxLogsResponse {
     pub fn deserialize(resp: String) -> Result<Self, CruxError> {
         let clean_edn = resp.replace("#crux/id", "");
-        let edn = parse_edn(&clean_edn)?;
+        let edn = from_str(&clean_edn)?;
         Ok(edn.into())
     }
 }
@@ -147,7 +147,7 @@ pub struct EntityTxResponse {
 impl EntityTxResponse {
     pub fn deserialize(resp: String) -> Result<Self, CruxError> {
         let clean_edn = resp.replace("#crux/id", "");
-        let edn = parse_edn(&clean_edn)?;
+        let edn = from_str(&clean_edn)?;
         Ok(edn.into())
     }
 
@@ -196,7 +196,7 @@ pub(crate) struct QueryResponse;
 
 impl QueryResponse {
     pub(crate) fn deserialize(resp: String) -> Result<BTreeSet<Vec<String>>, CruxError> {
-        let edn = parse_edn(&resp.clone()).unwrap();
+        let edn = from_str(&resp.clone()).unwrap();
         if edn.set_iter().is_some() {
             Ok(edn
                 .set_iter()
@@ -301,7 +301,7 @@ pub struct EntityHistoryResponse {
 impl EntityHistoryResponse {
     pub fn deserialize(resp: String) -> Result<Self, CruxError> {
         let clean_edn = resp.replace("#crux/id", "").replace("#inst", "");
-        let edn = parse_edn(&clean_edn)?;
+        let edn = from_str(&clean_edn)?;
         Ok(edn.into())
     }
 }
@@ -322,10 +322,10 @@ impl From<Edn> for EntityHistoryResponse {
     }
 }
 
-fn nullable_str(s: String) -> Option<String> {
-    if s.contains("nil") {
-        None
-    } else {
-        Some(s)
-    }
-}
+// fn nullable_str(s: String) -> Option<String> {
+//     if s.contains("nil") {
+//         None
+//     } else {
+//         Some(s)
+//     }
+// }

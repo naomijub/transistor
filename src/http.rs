@@ -47,6 +47,7 @@ impl HttpClient {
             .body(s)
             .send()?
             .text()?;
+
         TxLogResponse::deserialize(resp)
     }
 
@@ -83,7 +84,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        let edn_resp = edn_rs::parse_edn(&resp);
+        let edn_resp = edn_rs::from_str(&resp);
         Ok(match edn_resp {
             Ok(e) => e,
             Err(err) => {
@@ -119,7 +120,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        let edn_resp = edn_rs::parse_edn(&resp);
+        let edn_resp = edn_rs::from_str(&resp);
         Ok(match edn_resp {
             Ok(e) => e,
             Err(err) => {
@@ -217,7 +218,6 @@ impl HttpClient {
             time.serialize().replace("[", "").replace("]", ""),
         );
 
-        println!("{:?}", url);
         let resp = self
             .client
             .get(&url)
@@ -282,6 +282,70 @@ impl HttpClient {
             .text().await.unwrap();
 
         TxLogsResponse::deserialize(resp).unwrap()
+    }
+
+    pub async fn entity(&self, id: String) -> impl Future<Output = Edn> + Send {
+        if !id.starts_with(":") {
+            return edn!({:status ":bad-request", :message "ID required", :code 400});
+        }
+
+        let mut s = String::new();
+        s.push_str("{:eid ");
+        s.push_str(&id);
+        s.push_str("}");
+
+        let resp = self
+            .client
+            .post(&format!("{}/entity", self.uri))
+            .headers(self.headers.clone())
+            .body(s)
+            .send().await.unwrap()
+            .text().await.unwrap();
+
+        let edn_resp = edn_rs::from_str(&resp);
+        match edn_resp {
+            Ok(e) => e,
+            Err(err) => {
+                println!(":CRUX-CLIENT POST /entity [ERROR]: {:?}", err);
+                edn!({:status ":internal-server-error", :code 500})
+            }
+        }
+    }
+
+    pub async fn entity_timed(
+        &self,
+        id: String,
+        transaction_time: Option<DateTime<FixedOffset>>,
+        valid_time: Option<DateTime<FixedOffset>>,
+    ) -> impl Future<Output = Edn> + Send {
+        if !id.starts_with(":") {
+            return edn!({:status ":bad-request", :message "ID required", :code 400});
+        }
+
+        let mut s = String::new();
+        s.push_str("{:eid ");
+        s.push_str(&id);
+        s.push_str("}");
+
+        let url = build_timed_url(self.uri.clone(), "entity", transaction_time, valid_time);
+        println!("{}", url);
+        let resp = self
+            .client
+            .post(&url)
+            .headers(self.headers.clone())
+            .body(s)
+            .send().await.unwrap()
+            .text().await.unwrap();
+        
+
+        let edn_resp = edn_rs::from_str(&resp);
+        match edn_resp {
+            Ok(e) => e,
+            Err(err) => {
+                println!(":CRUX-CLIENT POST /entity [ERROR]: {:?}", err);
+                edn!({:status ":internal-server-error", :code 500})
+            }
+        }
     }
 }
 
