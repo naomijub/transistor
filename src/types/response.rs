@@ -233,6 +233,7 @@ impl QueryResponse {
 
 #[cfg(feature = "async")]
 #[derive(Clone, Debug, PartialEq)]
+/// When feature `async` is enabled this is the response type for endpoint `/query`.
 pub struct QueryAsyncResponse(BTreeSet<Vec<String>>);
 
 #[cfg(feature = "async")]
