@@ -208,15 +208,14 @@ pub(crate) struct QueryResponse;
 
 impl QueryResponse {
     pub(crate) fn deserialize(resp: String) -> Result<BTreeSet<Vec<String>>, CruxError> {
-        let edn = from_str(&resp.clone()).unwrap();
+        let edn = from_str(&resp.clone())?;
         if edn.set_iter().is_some() {
             Ok(edn
                 .set_iter()
                 .ok_or(CruxError::ParseEdnError(format!(
                     "The following Edn cannot be parsed to BTreeSet: {:?}",
                     edn
-                )))
-                .unwrap()
+                )))?
                 .map(|e| e.to_vec().unwrap())
                 .collect::<BTreeSet<Vec<String>>>())
         } else {
@@ -225,8 +224,7 @@ impl QueryResponse {
                 .ok_or(CruxError::ParseEdnError(format!(
                     "The following Edn cannot be parsed to BTreeSet: {:?}",
                     edn
-                )))
-                .unwrap()
+                )))?
                 .map(|e| e.to_vec().unwrap())
                 .collect::<BTreeSet<Vec<String>>>())
         }
