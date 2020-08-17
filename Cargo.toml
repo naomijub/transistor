@@ -40,3 +40,7 @@ required-features = ["async"]
 [[example]]
 name = "async_entity_timed"
 required-features = ["async"]
+
+[[example]]
+name = "async_entity_tx_timed"
+required-features = ["async"]

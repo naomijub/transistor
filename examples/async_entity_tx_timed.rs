@@ -8,14 +8,14 @@ use transistor::types::CruxId;
 #[tokio::main]
 async fn main() {
     let person1 = Person {
-        crux__db___id: CruxId::new("jorge-3"),
-        first_name: "Michael".to_string(),
+        crux__db___id: CruxId::new("calor-jorge-3"),
+        first_name: "Calors Michael".to_string(),
         last_name: "Jorge".to_string(),
     };
 
     let person2 = Person {
-        crux__db___id: CruxId::new("manuel-1"),
-        first_name: "Diego".to_string(),
+        crux__db___id: CruxId::new("silva-manuel-1"),
+        first_name: "Silva Diego".to_string(),
         last_name: "Manuel".to_string(),
     };
 
@@ -35,7 +35,7 @@ async fn main() {
     body.await;
 
     let edn_body = client
-        .entity_timed(person1.crux__db___id.serialize(), None, Some(timed))
+        .entity_tx_timed(person1.crux__db___id.serialize(), None, Some(timed))
         .await
         .await;
     println!("\n Edn Body = {:#?}", edn_body);
@@ -54,15 +54,6 @@ async fn main() {
     //         },
     //     ),
     // )
-
-    println!("\n Person Parsed Response = {:#?}", Person::from(edn_body));
-    // Person Parsed Response = Person {
-    //     crux__db___id: CruxId(
-    //         ":hello-entity",
-    //     ),
-    //     first_name: "Hello",
-    //     last_name: "World",
-    // }
 }
 
 ser_struct! {

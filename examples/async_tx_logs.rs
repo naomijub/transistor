@@ -1,12 +1,9 @@
-use transistor::client::Crux;
 use tokio::prelude::*;
-
+use transistor::client::Crux;
 
 #[tokio::main]
 async fn main() {
-    let body = Crux::new("localhost", "3000")
-        .http_client()
-        .tx_logs().await;
+    let body = Crux::new("localhost", "3000").http_client().tx_logs().await;
 
     println!("Body = {:#?}", body.await);
     // Body = TxLogsResponse {

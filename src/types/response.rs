@@ -144,6 +144,21 @@ pub struct EntityTxResponse {
     pub tx___tx_time: DateTime<FixedOffset>,
 }
 
+#[cfg(feature = "async")]
+impl futures::future::Future for EntityTxResponse {
+    type Output = EntityTxResponse;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Self::Output> {
+        if self.tx___tx_id > 0 {
+            let pinned = self.to_owned();
+            Poll::Ready(pinned)
+        } else {
+            println!("not ready yet --> {:?}", self);
+            Poll::Pending
+        }
+    }
+}
+
 impl EntityTxResponse {
     pub fn deserialize(resp: String) -> Result<Self, CruxError> {
         let clean_edn = resp.replace("#crux/id", "");

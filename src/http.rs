@@ -278,8 +278,12 @@ impl HttpClient {
             .client
             .get(&format!("{}/tx-log", self.uri))
             .headers(self.headers.clone())
-            .send().await.unwrap()
-            .text().await.unwrap();
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
 
         TxLogsResponse::deserialize(resp).unwrap()
     }
@@ -299,8 +303,12 @@ impl HttpClient {
             .post(&format!("{}/entity", self.uri))
             .headers(self.headers.clone())
             .body(s)
-            .send().await.unwrap()
-            .text().await.unwrap();
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
 
         let edn_resp = edn_rs::from_str(&resp);
         match edn_resp {
@@ -334,9 +342,12 @@ impl HttpClient {
             .post(&url)
             .headers(self.headers.clone())
             .body(s)
-            .send().await.unwrap()
-            .text().await.unwrap();
-        
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
 
         let edn_resp = edn_rs::from_str(&resp);
         match edn_resp {
@@ -346,6 +357,55 @@ impl HttpClient {
                 edn!({:status ":internal-server-error", :code 500})
             }
         }
+    }
+
+    pub async fn entity_tx(&self, id: String) -> impl Future<Output = EntityTxResponse> + Send {
+        let mut s = String::new();
+        s.push_str("{:eid ");
+        s.push_str(&id);
+        s.push_str("}");
+
+        let resp = self
+            .client
+            .post(&format!("{}/entity-tx", self.uri))
+            .headers(self.headers.clone())
+            .body(s)
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
+
+        EntityTxResponse::deserialize(resp).unwrap()
+    }
+
+    pub async fn entity_tx_timed(
+        &self,
+        id: String,
+        transaction_time: Option<DateTime<FixedOffset>>,
+        valid_time: Option<DateTime<FixedOffset>>,
+    ) -> impl Future<Output = EntityTxResponse> + Send {
+        let mut s = String::new();
+        s.push_str("{:eid ");
+        s.push_str(&id);
+        s.push_str("}");
+
+        let url = build_timed_url(self.uri.clone(), "entity-tx", transaction_time, valid_time);
+
+        let resp = self
+            .client
+            .post(&url)
+            .headers(self.headers.clone())
+            .body(s)
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
+
+        EntityTxResponse::deserialize(resp).unwrap()
     }
 }
 
