@@ -231,6 +231,56 @@ impl QueryResponse {
     }
 }
 
+#[cfg(feature = "async")]
+#[derive(Clone, Debug, PartialEq)]
+pub struct QueryAsyncResponse(BTreeSet<Vec<String>>);
+
+#[cfg(feature = "async")]
+impl QueryAsyncResponse {
+    pub(crate) fn deserialize(resp: String) -> QueryAsyncResponse {
+        let edn = from_str(&resp.clone()).unwrap();
+        if edn.set_iter().is_some() {
+            QueryAsyncResponse {
+                0: edn
+                    .set_iter()
+                    .ok_or(CruxError::ParseEdnError(format!(
+                        "The following Edn cannot be parsed to BTreeSet: {:?}",
+                        edn
+                    )))
+                    .unwrap()
+                    .map(|e| e.to_vec().unwrap())
+                    .collect::<BTreeSet<Vec<String>>>(),
+            }
+        } else {
+            QueryAsyncResponse {
+                0: edn
+                    .iter()
+                    .ok_or(CruxError::ParseEdnError(format!(
+                        "The following Edn cannot be parsed to BTreeSet: {:?}",
+                        edn
+                    )))
+                    .unwrap()
+                    .map(|e| e.to_vec().unwrap())
+                    .collect::<BTreeSet<Vec<String>>>(),
+            }
+        }
+    }
+}
+
+#[cfg(feature = "async")]
+impl futures::future::Future for QueryAsyncResponse {
+    type Output = QueryAsyncResponse;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Self::Output> {
+        if self.0.len() > 0 {
+            let pinned = self.to_owned();
+            Poll::Ready(pinned)
+        } else {
+            Poll::Pending
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 #[allow(non_snake_case)]
 pub struct EntityHistoryElement {

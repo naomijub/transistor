@@ -48,3 +48,7 @@ required-features = ["async"]
 [[example]]
 name = "async_entity_history_timed"
 required-features = ["async"]
+
+[[example]]
+name = "async_query"
+required-features = ["async"]

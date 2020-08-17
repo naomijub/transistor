@@ -1,3 +1,5 @@
+#[cfg(feature = "async")]
+use crate::types::response::QueryAsyncResponse;
 use crate::types::{
     error::CruxError,
     http::{Action, Order},
@@ -463,6 +465,22 @@ impl HttpClient {
             .unwrap();
 
         EntityHistoryResponse::deserialize(resp).unwrap()
+    }
+
+    pub async fn query(&self, query: Query) -> impl Future<Output = QueryAsyncResponse> + Send {
+        let resp = self
+            .client
+            .post(&format!("{}/query", self.uri))
+            .headers(self.headers.clone())
+            .body(query.serialize())
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
+
+        QueryAsyncResponse::deserialize(resp)
     }
 }
 
