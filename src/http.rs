@@ -280,6 +280,7 @@ fn build_timed_url(
             valid.format(DATE_FORMAT).to_string()
         ),
     }
+    .replace("+", "%2B")
 }
 
 #[cfg(test)]
@@ -551,7 +552,7 @@ mod build_url {
             "entity",
             None,
             Some(
-                "2020-08-09T18:05:29.301-03:00"
+                "2020-08-09T18:05:29.301+03:00"
                     .parse::<DateTime<FixedOffset>>()
                     .unwrap(),
             ),
@@ -559,7 +560,7 @@ mod build_url {
 
         assert_eq!(
             url,
-            "localhost:3000/entity?valid-time=2020-08-09T18:05:29-03:00"
+            "localhost:3000/entity?valid-time=2020-08-09T18:05:29%2B03:00"
         );
     }
 }
