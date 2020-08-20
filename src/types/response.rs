@@ -1,49 +1,15 @@
 use crate::types::error::CruxError;
 use chrono::prelude::*;
-use edn_rs::{parse_edn, ser_struct, Edn, Serialize};
+#[cfg(feature = "async")]
+use core::pin::Pin;
+use edn_rs::{from_str, Edn};
+#[cfg(feature = "async")]
+use futures::prelude::*;
+#[cfg(feature = "async")]
+use futures::task;
+#[cfg(feature = "async")]
+use futures::task::Poll;
 use std::collections::BTreeSet;
-
-ser_struct! {
-    #[derive(Debug, PartialEq, Clone)]
-    #[allow(non_snake_case)]
-    /// Definition for the response of a `GET` at `state` endpoint
-    pub struct StateResponse {
-        index___index_version: usize,
-        doc_log___consumer_state: Option<String>,
-        tx_log___consumer_state:  Option<String>,
-        kv___kv_store: String,
-        kv___estimate_num_keys: usize,
-        kv___size: usize
-    }
-}
-
-impl StateResponse {
-    pub fn deserialize(resp: String) -> Result<Self, CruxError> {
-        let edn = parse_edn(&resp)?;
-        Ok(Self {
-            index___index_version: edn[":crux.index/index-version"].to_uint().unwrap_or(0usize),
-            doc_log___consumer_state: nullable_str(edn[":crux.doc-log/consumer-state"].to_string()),
-            tx_log___consumer_state: nullable_str(edn[":crux.tx-log/consumer-state"].to_string()),
-            kv___kv_store: edn[":crux.kv/kv-store"].to_string().replace("\"", ""),
-            kv___estimate_num_keys: edn[":crux.kv/estimate-num-keys"]
-                .to_uint()
-                .unwrap_or(0usize),
-            kv___size: edn[":crux.kv/size"].to_uint().unwrap_or(0usize),
-        })
-    }
-
-    #[cfg(test)]
-    pub fn default() -> Self {
-        Self {
-            index___index_version: 5usize,
-            doc_log___consumer_state: None,
-            tx_log___consumer_state: None,
-            kv___kv_store: String::from("crux.kv.rocksdb.RocksKv"),
-            kv___estimate_num_keys: 34usize,
-            kv___size: 88489usize,
-        }
-    }
-}
 
 #[derive(Debug, PartialEq, Clone)]
 #[allow(non_snake_case)]
@@ -57,9 +23,23 @@ pub struct TxLogResponse {
     pub tx__event___tx_events: Option<Vec<Vec<String>>>,
 }
 
+#[cfg(feature = "async")]
+impl futures::future::Future for TxLogResponse {
+    type Output = TxLogResponse;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Self::Output> {
+        if self.tx___tx_id > 0 {
+            let pinned = self.to_owned();
+            Poll::Ready(pinned)
+        } else {
+            Poll::Pending
+        }
+    }
+}
+
 impl TxLogResponse {
     pub fn deserialize(resp: String) -> Result<Self, CruxError> {
-        let edn = parse_edn(&resp)?;
+        let edn = from_str(&resp)?;
         Ok(edn.into())
     }
 
@@ -82,10 +62,24 @@ pub struct TxLogsResponse {
     pub tx_events: Vec<TxLogResponse>,
 }
 
+#[cfg(feature = "async")]
+impl futures::future::Future for TxLogsResponse {
+    type Output = TxLogsResponse;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Self::Output> {
+        if self.tx_events.len() > 0 {
+            let pinned = self.to_owned();
+            Poll::Ready(pinned)
+        } else {
+            Poll::Pending
+        }
+    }
+}
+
 impl TxLogsResponse {
     pub fn deserialize(resp: String) -> Result<Self, CruxError> {
         let clean_edn = resp.replace("#crux/id", "");
-        let edn = parse_edn(&clean_edn)?;
+        let edn = from_str(&clean_edn)?;
         Ok(edn.into())
     }
 }
@@ -148,10 +142,24 @@ pub struct EntityTxResponse {
     pub tx___tx_time: DateTime<FixedOffset>,
 }
 
+#[cfg(feature = "async")]
+impl futures::future::Future for EntityTxResponse {
+    type Output = EntityTxResponse;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Self::Output> {
+        if self.tx___tx_id > 0 {
+            let pinned = self.to_owned();
+            Poll::Ready(pinned)
+        } else {
+            Poll::Pending
+        }
+    }
+}
+
 impl EntityTxResponse {
     pub fn deserialize(resp: String) -> Result<Self, CruxError> {
         let clean_edn = resp.replace("#crux/id", "");
-        let edn = parse_edn(&clean_edn)?;
+        let edn = from_str(&clean_edn)?;
         Ok(edn.into())
     }
 
@@ -200,15 +208,14 @@ pub(crate) struct QueryResponse;
 
 impl QueryResponse {
     pub(crate) fn deserialize(resp: String) -> Result<BTreeSet<Vec<String>>, CruxError> {
-        let edn = parse_edn(&resp.clone()).unwrap();
+        let edn = from_str(&resp.clone())?;
         if edn.set_iter().is_some() {
             Ok(edn
                 .set_iter()
                 .ok_or(CruxError::ParseEdnError(format!(
                     "The following Edn cannot be parsed to BTreeSet: {:?}",
                     edn
-                )))
-                .unwrap()
+                )))?
                 .map(|e| e.to_vec().unwrap())
                 .collect::<BTreeSet<Vec<String>>>())
         } else {
@@ -217,10 +224,60 @@ impl QueryResponse {
                 .ok_or(CruxError::ParseEdnError(format!(
                     "The following Edn cannot be parsed to BTreeSet: {:?}",
                     edn
-                )))
-                .unwrap()
+                )))?
                 .map(|e| e.to_vec().unwrap())
                 .collect::<BTreeSet<Vec<String>>>())
+        }
+    }
+}
+
+#[cfg(feature = "async")]
+#[derive(Clone, Debug, PartialEq)]
+/// When feature `async` is enabled this is the response type for endpoint `/query`.
+pub struct QueryAsyncResponse(BTreeSet<Vec<String>>);
+
+#[cfg(feature = "async")]
+impl QueryAsyncResponse {
+    pub(crate) fn deserialize(resp: String) -> QueryAsyncResponse {
+        let edn = from_str(&resp.clone()).unwrap();
+        if edn.set_iter().is_some() {
+            QueryAsyncResponse {
+                0: edn
+                    .set_iter()
+                    .ok_or(CruxError::ParseEdnError(format!(
+                        "The following Edn cannot be parsed to BTreeSet: {:?}",
+                        edn
+                    )))
+                    .unwrap()
+                    .map(|e| e.to_vec().unwrap())
+                    .collect::<BTreeSet<Vec<String>>>(),
+            }
+        } else {
+            QueryAsyncResponse {
+                0: edn
+                    .iter()
+                    .ok_or(CruxError::ParseEdnError(format!(
+                        "The following Edn cannot be parsed to BTreeSet: {:?}",
+                        edn
+                    )))
+                    .unwrap()
+                    .map(|e| e.to_vec().unwrap())
+                    .collect::<BTreeSet<Vec<String>>>(),
+            }
+        }
+    }
+}
+
+#[cfg(feature = "async")]
+impl futures::future::Future for QueryAsyncResponse {
+    type Output = QueryAsyncResponse;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Self::Output> {
+        if self.0.len() > 0 {
+            let pinned = self.to_owned();
+            Poll::Ready(pinned)
+        } else {
+            Poll::Pending
         }
     }
 }
@@ -302,10 +359,24 @@ pub struct EntityHistoryResponse {
     pub history: Vec<EntityHistoryElement>,
 }
 
+#[cfg(feature = "async")]
+impl futures::future::Future for EntityHistoryResponse {
+    type Output = EntityHistoryResponse;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Self::Output> {
+        if self.history.len() > 0 {
+            let pinned = self.to_owned();
+            Poll::Ready(pinned)
+        } else {
+            Poll::Pending
+        }
+    }
+}
+
 impl EntityHistoryResponse {
     pub fn deserialize(resp: String) -> Result<Self, CruxError> {
         let clean_edn = resp.replace("#crux/id", "").replace("#inst", "");
-        let edn = parse_edn(&clean_edn)?;
+        let edn = from_str(&clean_edn)?;
         Ok(edn.into())
     }
 }
@@ -323,13 +394,5 @@ impl From<Edn> for EntityHistoryResponse {
                 .map(|el| el.to_owned().into())
                 .collect::<Vec<EntityHistoryElement>>(),
         }
-    }
-}
-
-fn nullable_str(s: String) -> Option<String> {
-    if s.contains("nil") {
-        None
-    } else {
-        Some(s)
     }
 }

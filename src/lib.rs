@@ -10,11 +10,12 @@ pub use edn_rs;
 /// * `TxLogsResponse` response is the wrapper for a `GET` at endpoint `/tx-logs`, it is a `Vector` of type `TxLogResponse`.
 /// * `EntityTxResponse` response for Crux REST API at `/entity-tx` endpoint.
 /// * `EntityHistoryResponse` response for Crux REST API at `/entity-history`.
+/// * `QueryAsyncResponse` is a Future response for a query on Crux REST Api at `/query`, feature `async` is required.
 ///
-/// Available auxiliary Enums for HTTP in module `types::http`
-/// Enum [`Action`](../types/http/enum.Action.html) is available in this module.
-/// Enum [`Order`](../types/http/enum.Order.html)  is available in this module to be used with `entity_history`.
-/// Enum [`TimeHistory`](../types/http/enum.TimeHistory.html)  is available in this module to be used with `entity_history_timed`.
+/// Available auxiliary Enums for HTTP in module `types::http`:
+/// * Enum [`Action`](../types/http/enum.Action.html) is available in this module.
+/// * Enum [`Order`](../types/http/enum.Order.html)  is available in this module to be used with `entity_history`.
+/// * Enum [`TimeHistory`](../types/http/enum.TimeHistory.html)  is available in this module to be used with `entity_history_timed`.
 ///
 /// It is possible to use `chrono`  for time related responses (`TxLogResponse`, `EntityTxResponse`, `EntityHistoryElement`). to use it you need to enable feature `"time".
 pub mod types;
@@ -22,14 +23,16 @@ pub mod types;
 /// Http Client  module. It contains the [`HttpClient`](../http/struct.HttpClient.html#impl) for Docker and Standalone HTTP Server.
 ///
 /// `HttpClient` Contains the following functions:
-/// * `state` queries endpoint `/` with a `GET`. No args.
 /// * `tx_log` requests endpoint `/tx-log` via `POST`. A Vector of `types::http::Action` is expected as argument.
 /// * `tx_logs` requests endpoint `/tx-log` via `GET`. No args.
 /// * `entity` requests endpoint `/entity` via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument.
+/// * `entity_timed` similar to `entity`, but receives as arguments `transaction_time: Option<DateTime<FixedOffset>>` and `valid_time: Option<DateTime<FixedOffset>>,`.
 /// * `entity_tx` requests endpoint `/entity-tx` via `POST`. A serialized `CruxId`, serialized `Edn::Key` or a String containing a [`keyword`](https://github.com/edn-format/edn#keywords) must be passed as argument.
+/// * `entity_tx_timed` similar to `entity_tx`, but receives as arguments `transaction_time: Option<DateTime<FixedOffset>>` and `valid_time: Option<DateTime<FixedOffset>>,`.
 /// * `entity_history` requests endpoint `/entity-history` via `GET`. Arguments are the `crux.db/id` as a `String`, an ordering argument defined by the enum `types::http::Order` (`Asc` or `Desc`) and a boolean for the `with-docs?` flag (this returns values for the field `:crux.db/doc`).
 /// * `entity_history_timed` similar to `entity_history`, but receives one more argument that is a `Vec<TimeHistory>` to define `valid-time` and `transaction-time`
 /// * `query` requests endpoint `/query` via `POST`. Argument is a `query` of the type `Query`. Retrives a Set containing a vector of the values defined by the function `Query::find`.
+/// * All endpoints support async calls when `--feature "async"` is enabled, check [`async_<...>` examples](https://github.com/naomijub/transistor/tree/master/examples) for usage. [Tokio runtime](https://docs.rs/tokio/0.2.22/tokio/) is required.
 ///
 /// Examples can be found in the [examples directory](https://github.com/naomijub/transistor/tree/master/examples).
 pub mod http;
