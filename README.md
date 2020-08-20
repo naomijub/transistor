@@ -370,6 +370,9 @@ ser_struct! {
 ```
 
 ### Async support
+
+**Async feature is still in BETA** as it depends heavily on `unwraps`.
+
 It is possible to use `async/await` http client, for that it is necessary to enable feature `async` in transistor, `transistor = { version = "1.1.0", features = ["async"] }`. With this feature enabled the `HttpClient` will use `reqwest::Client` instead of `reqwest::blocking::Client`. The default async runtime for `reqwest::Client` is `tokio`, so it is good to have `tokio` with feature `macros`, as well as `futures`, in your `Cargo.toml`:
 
 ```toml
