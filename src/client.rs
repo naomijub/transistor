@@ -20,7 +20,7 @@ impl Crux {
         Self {
             host: host.to_string(),
             port: port.to_string(),
-            headers: headers,
+            headers,
         }
     }
 
