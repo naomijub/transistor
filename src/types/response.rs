@@ -396,11 +396,3 @@ impl From<Edn> for EntityHistoryResponse {
         }
     }
 }
-
-// fn nullable_str(s: String) -> Option<String> {
-//     if s.contains("nil") {
-//         None
-//     } else {
-//         Some(s)
-//     }
-// }
