@@ -14,10 +14,13 @@ pub struct Crux {
 impl Crux {
     /// Define Crux instance with `host:port`
     pub fn new(host: &str, port: &str) -> Self {
+        let mut headers = HeaderMap::new();
+        headers.insert(CONTENT_TYPE, "application/edn".parse().unwrap());
+
         Self {
             host: host.to_string(),
             port: port.to_string(),
-            headers: HeaderMap::new(),
+            headers: headers,
         }
     }
 
@@ -42,8 +45,6 @@ impl Crux {
     /// To query database on Docker/standalone via http it is necessary to use `HttpClient`
     #[cfg(not(feature = "async"))]
     pub fn http_client(&mut self) -> HttpClient {
-        self.headers
-            .insert(CONTENT_TYPE, "application/edn".parse().unwrap());
         HttpClient {
             client: reqwest::blocking::Client::new(),
             uri: self.uri().clone(),
@@ -53,8 +54,6 @@ impl Crux {
 
     #[cfg(feature = "async")]
     pub fn http_client(&mut self) -> HttpClient {
-        self.headers
-            .insert(CONTENT_TYPE, "application/edn".parse().unwrap());
         HttpClient {
             client: reqwest::Client::new(),
             uri: self.uri().clone(),
@@ -84,10 +83,13 @@ mod test {
     #[test]
     fn new() {
         let actual = Crux::new("host", "port");
+        let mut headers = HeaderMap::new();
+        headers.insert(CONTENT_TYPE, "application/edn".parse().unwrap());
+
         let expected = Crux {
             host: String::from("host"),
             port: String::from("port"),
-            headers: HeaderMap::new(),
+            headers: headers,
         };
 
         assert_eq!(actual.host, expected.host);
@@ -100,6 +102,7 @@ mod test {
         let crux = Crux::new("host", "port").with_authorization("auth");
         let mut headers = HeaderMap::new();
         headers.insert(AUTHORIZATION, "auth".parse().unwrap());
+        headers.insert(CONTENT_TYPE, "application/edn".parse().unwrap());
 
         assert_eq!(crux.headers, headers);
     }
