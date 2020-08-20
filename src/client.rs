@@ -89,7 +89,7 @@ mod test {
         let expected = Crux {
             host: String::from("host"),
             port: String::from("port"),
-            headers: headers,
+            headers,
         };
 
         assert_eq!(actual.host, expected.host);
