@@ -1,11 +1,7 @@
-use tokio::prelude::*;
 use transistor::client::Crux;
 use transistor::edn_rs::{ser_struct, Serialize};
 use transistor::types::http::Action;
-use transistor::types::{
-    error::CruxError,
-    {query::Query, CruxId},
-};
+use transistor::types::{query::Query, CruxId};
 
 #[tokio::main]
 async fn main() {
@@ -32,7 +28,7 @@ async fn main() {
     let action2 = Action::Put(psql.serialize(), None);
     let action3 = Action::Put(mysql.serialize(), None);
 
-    let _ = client.tx_log(vec![action1, action2, action3]).await.await;
+    let _ = client.tx_log(vec![action1, action2, action3]).await;
 
     let query_is_sql = Query::find(vec!["?p1", "?n"])
         .unwrap()
@@ -41,7 +37,7 @@ async fn main() {
         .build();
 
     let is_sql = client.query(query_is_sql.unwrap()).await;
-    println!("{:?}", is_sql.await);
+    println!("{:?}", is_sql);
     // QueryAsyncResponse({[":mysql", "MySQL"], [":postgres", "Postgres"]}) BTreeSet
 
     let query_is_no_sql = Query::find(vec!["?p1", "?n", "?s"])
@@ -52,7 +48,7 @@ async fn main() {
         .build();
 
     let is_no_sql = client.query(query_is_no_sql.unwrap()).await;
-    println!("{:?}", is_no_sql.await);
+    println!("{:?}", is_no_sql);
     // {["{:crux.db/id: Key(\":cassandra\"), :is-sql: Bool(false), :name: Str(\"Cassandra\"), }", "Cassandra", "false"],
     //  ["{:crux.db/id: Key(\":crux\"), :is-sql: Bool(false), :name: Str(\"Crux Datalog\"), }", "Crux Datalog", "false"]}
 }

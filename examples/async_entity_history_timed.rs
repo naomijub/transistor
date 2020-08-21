@@ -1,5 +1,4 @@
 use chrono::prelude::*;
-use tokio::prelude::*;
 use transistor::client::Crux;
 use transistor::edn_rs::{ser_struct, Serialize};
 use transistor::types::http::{Action, Order, TimeHistory};
@@ -35,27 +34,23 @@ async fn main() {
     let action1 = Action::Put(person1.clone().serialize(), Some(timed));
     let action2 = Action::Put(person2.serialize(), Some(timed));
 
-    let body = Crux::new("localhost", "3000")
+    let _ = Crux::new("localhost", "3000")
         .http_client()
         .tx_log(vec![action1, action2])
         .await;
 
-    body.await;
-
-    let tx_body = client
-        .entity_tx(person1.crux__db___id.serialize())
-        .await
-        .await;
+    let tx_body = client.entity_tx(person1.crux__db___id.serialize()).await;
 
     let entity_history = client
         .entity_history_timed(
-            tx_body.db___id.clone(),
+            tx_body.unwrap().db___id.clone(),
             Order::Asc,
             true,
             vec![time_history],
         )
         .await;
-    println!("{:#?}", entity_history.await);
+
+    println!("{:#?}", entity_history);
     // EntityHistoryResponse {
     //     history: [
     //         EntityHistoryElement {

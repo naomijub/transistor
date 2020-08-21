@@ -1,16 +1,17 @@
 #[cfg(feature = "async")]
 use crate::types::response::QueryAsyncResponse;
+#[cfg(not(feature = "async"))]
+use crate::types::response::QueryResponse;
 use crate::types::{
     error::CruxError,
     http::{Action, Order},
     query::Query,
-    response::{
-        EntityHistoryResponse, EntityTxResponse, QueryResponse, TxLogResponse, TxLogsResponse,
-    },
+    response::{EntityHistoryResponse, EntityTxResponse, TxLogResponse, TxLogsResponse},
 };
 use chrono::prelude::*;
 use edn_rs::{edn, Edn, Map, Serialize};
 use reqwest::{blocking, header::HeaderMap};
+#[cfg(not(feature = "async"))]
 use std::collections::BTreeSet;
 
 static DATE_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S%Z";
@@ -87,13 +88,7 @@ impl HttpClient {
             .text()?;
 
         let edn_resp = edn_rs::from_str(&resp);
-        Ok(match edn_resp {
-            Ok(e) => e,
-            Err(err) => {
-                println!(":CRUX-CLIENT POST /entity [ERROR]: {:?}", err);
-                edn!({:status ":internal-server-error", :code 500})
-            }
-        })
+        edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
     }
 
     /// Function `entity_timed` is like `entity` but with two optional fields `transaction_time` and `valid_time` that are of type `Option<DateTime<FixedOffset>>`.
@@ -123,13 +118,7 @@ impl HttpClient {
             .text()?;
 
         let edn_resp = edn_rs::from_str(&resp);
-        Ok(match edn_resp {
-            Ok(e) => e,
-            Err(err) => {
-                println!(":CRUX-CLIENT POST /entity [ERROR]: {:?}", err);
-                edn!({:status ":internal-server-error", :code 500})
-            }
-        })
+        edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
     }
 
     /// Function `entity_tx` requests endpoint `/entity-tx` via `POST` which retrieves the docs and tx infos
@@ -246,11 +235,8 @@ impl HttpClient {
 }
 
 #[cfg(feature = "async")]
-use futures::prelude::*;
-
-#[cfg(feature = "async")]
 impl HttpClient {
-    pub async fn tx_log(&self, actions: Vec<Action>) -> impl Future<Output = TxLogResponse> + Send {
+    pub async fn tx_log(&self, actions: Vec<Action>) -> Result<TxLogResponse, CruxError> {
         let actions_str = actions
             .into_iter()
             .map(|edn| edn.serialize())
@@ -267,32 +253,28 @@ impl HttpClient {
             .headers(self.headers.clone())
             .body(s)
             .send()
-            .await
-            .unwrap()
+            .await?
             .text()
-            .await
-            .unwrap();
-        TxLogResponse::deserialize(resp).unwrap()
+            .await?;
+        TxLogResponse::deserialize(resp)
     }
 
-    pub async fn tx_logs(&self) -> impl Future<Output = TxLogsResponse> + Send {
+    pub async fn tx_logs(&self) -> Result<TxLogsResponse, CruxError> {
         let resp = self
             .client
             .get(&format!("{}/tx-log", self.uri))
             .headers(self.headers.clone())
             .send()
-            .await
-            .unwrap()
+            .await?
             .text()
-            .await
-            .unwrap();
+            .await?;
 
-        TxLogsResponse::deserialize(resp).unwrap()
+        TxLogsResponse::deserialize(resp)
     }
 
-    pub async fn entity(&self, id: String) -> impl Future<Output = Edn> + Send {
+    pub async fn entity(&self, id: String) -> Result<Edn, CruxError> {
         if !id.starts_with(":") {
-            return edn!({:status ":bad-request", :message "ID required", :code 400});
+            return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
         }
 
         let mut s = String::new();
@@ -306,20 +288,12 @@ impl HttpClient {
             .headers(self.headers.clone())
             .body(s)
             .send()
-            .await
-            .unwrap()
+            .await?
             .text()
-            .await
-            .unwrap();
+            .await?;
 
         let edn_resp = edn_rs::from_str(&resp);
-        match edn_resp {
-            Ok(e) => e,
-            Err(err) => {
-                println!(":CRUX-CLIENT POST /entity [ERROR]: {:?}", err);
-                edn!({:status ":internal-server-error", :code 500})
-            }
-        }
+        edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
     }
 
     pub async fn entity_timed(
@@ -327,9 +301,9 @@ impl HttpClient {
         id: String,
         transaction_time: Option<DateTime<FixedOffset>>,
         valid_time: Option<DateTime<FixedOffset>>,
-    ) -> impl Future<Output = Edn> + Send {
+    ) -> Result<Edn, CruxError> {
         if !id.starts_with(":") {
-            return edn!({:status ":bad-request", :message "ID required", :code 400});
+            return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
         }
 
         let mut s = String::new();
@@ -345,23 +319,15 @@ impl HttpClient {
             .headers(self.headers.clone())
             .body(s)
             .send()
-            .await
-            .unwrap()
+            .await?
             .text()
-            .await
-            .unwrap();
+            .await?;
 
         let edn_resp = edn_rs::from_str(&resp);
-        match edn_resp {
-            Ok(e) => e,
-            Err(err) => {
-                println!(":CRUX-CLIENT POST /entity [ERROR]: {:?}", err);
-                edn!({:status ":internal-server-error", :code 500})
-            }
-        }
+        edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
     }
 
-    pub async fn entity_tx(&self, id: String) -> impl Future<Output = EntityTxResponse> + Send {
+    pub async fn entity_tx(&self, id: String) -> Result<EntityTxResponse, CruxError> {
         let mut s = String::new();
         s.push_str("{:eid ");
         s.push_str(&id);
@@ -373,13 +339,11 @@ impl HttpClient {
             .headers(self.headers.clone())
             .body(s)
             .send()
-            .await
-            .unwrap()
+            .await?
             .text()
-            .await
-            .unwrap();
+            .await?;
 
-        EntityTxResponse::deserialize(resp).unwrap()
+        EntityTxResponse::deserialize(resp)
     }
 
     pub async fn entity_tx_timed(
@@ -387,7 +351,7 @@ impl HttpClient {
         id: String,
         transaction_time: Option<DateTime<FixedOffset>>,
         valid_time: Option<DateTime<FixedOffset>>,
-    ) -> impl Future<Output = EntityTxResponse> + Send {
+    ) -> Result<EntityTxResponse, CruxError> {
         let mut s = String::new();
         s.push_str("{:eid ");
         s.push_str(&id);
@@ -401,13 +365,11 @@ impl HttpClient {
             .headers(self.headers.clone())
             .body(s)
             .send()
-            .await
-            .unwrap()
+            .await?
             .text()
-            .await
-            .unwrap();
+            .await?;
 
-        EntityTxResponse::deserialize(resp).unwrap()
+        EntityTxResponse::deserialize(resp)
     }
 
     pub async fn entity_history(
@@ -415,7 +377,7 @@ impl HttpClient {
         hash: String,
         order: Order,
         with_docs: bool,
-    ) -> impl Future<Output = EntityHistoryResponse> + Send {
+    ) -> Result<EntityHistoryResponse, CruxError> {
         let url = format!(
             "{}/entity-history/{}?sort-order={}&with-docs={}",
             self.uri,
@@ -428,13 +390,11 @@ impl HttpClient {
             .get(&url)
             .headers(self.headers.clone())
             .send()
-            .await
-            .unwrap()
+            .await?
             .text()
-            .await
-            .unwrap();
+            .await?;
 
-        EntityHistoryResponse::deserialize(resp).unwrap()
+        EntityHistoryResponse::deserialize(resp)
     }
 
     pub async fn entity_history_timed(
@@ -443,7 +403,7 @@ impl HttpClient {
         order: Order,
         with_docs: bool,
         time: Vec<crate::types::http::TimeHistory>,
-    ) -> impl Future<Output = EntityHistoryResponse> + Send {
+    ) -> Result<EntityHistoryResponse, CruxError> {
         let url = format!(
             "{}/entity-history/{}?sort-order={}&with-docs={}{}",
             self.uri,
@@ -458,29 +418,25 @@ impl HttpClient {
             .get(&url)
             .headers(self.headers.clone())
             .send()
-            .await
-            .unwrap()
+            .await?
             .text()
-            .await
-            .unwrap();
+            .await?;
 
-        EntityHistoryResponse::deserialize(resp).unwrap()
+        EntityHistoryResponse::deserialize(resp)
     }
 
-    pub async fn query(&self, query: Query) -> impl Future<Output = QueryAsyncResponse> + Send {
+    pub async fn query(&self, query: Query) -> Result<QueryAsyncResponse, CruxError> {
         let resp = self
             .client
             .post(&format!("{}/query", self.uri))
             .headers(self.headers.clone())
             .body(query.serialize())
             .send()
-            .await
-            .unwrap()
+            .await?
             .text()
-            .await
-            .unwrap();
+            .await?;
 
-        QueryAsyncResponse::deserialize(resp)
+        Ok(QueryAsyncResponse::deserialize(resp))
     }
 }
 
