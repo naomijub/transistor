@@ -1,5 +1,4 @@
 use chrono::prelude::*;
-use tokio::prelude::*;
 use transistor::client::Crux;
 use transistor::edn_rs::{ser_struct, Serialize};
 use transistor::types::http::Action;
@@ -27,17 +26,15 @@ async fn main() {
     let action1 = Action::Put(person1.clone().serialize(), Some(timed));
     let action2 = Action::Put(person2.serialize(), Some(timed));
 
-    let body = Crux::new("localhost", "3000")
+    let _ = Crux::new("localhost", "3000")
         .http_client()
         .tx_log(vec![action1, action2])
         .await;
 
-    body.await;
-
     let edn_body = client
         .entity_timed(person1.crux__db___id.serialize(), None, Some(timed))
-        .await
         .await;
+
     println!("\n Edn Body = {:#?}", edn_body);
     // Edn Body = Map(
     //     Map(
@@ -55,7 +52,10 @@ async fn main() {
     //     ),
     // )
 
-    println!("\n Person Parsed Response = {:#?}", Person::from(edn_body));
+    println!(
+        "\n Person Parsed Response = {:#?}",
+        Person::from(edn_body.unwrap())
+    );
     // Person Parsed Response = Person {
     //     crux__db___id: CruxId(
     //         ":hello-entity",

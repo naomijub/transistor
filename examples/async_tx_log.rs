@@ -1,4 +1,3 @@
-use tokio::prelude::*;
 use transistor::client::Crux;
 use transistor::edn_rs::{ser_struct, Serialize};
 use transistor::types::http::Action;
@@ -26,7 +25,7 @@ async fn main() {
         .tx_log(vec![action1, action2])
         .await;
 
-    println!("body = {:?}", body.await);
+    println!("body = {:?}", body);
     //  Body = "{:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}"
 }
 

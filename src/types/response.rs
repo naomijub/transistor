@@ -1,14 +1,6 @@
 use crate::types::error::CruxError;
 use chrono::prelude::*;
-#[cfg(feature = "async")]
-use core::pin::Pin;
 use edn_rs::{from_str, Edn};
-#[cfg(feature = "async")]
-use futures::prelude::*;
-#[cfg(feature = "async")]
-use futures::task;
-#[cfg(feature = "async")]
-use futures::task::Poll;
 use std::collections::BTreeSet;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -21,20 +13,6 @@ pub struct TxLogResponse {
     #[cfg(not(feature = "time_as_str"))]
     pub tx___tx_time: DateTime<FixedOffset>,
     pub tx__event___tx_events: Option<Vec<Vec<String>>>,
-}
-
-#[cfg(feature = "async")]
-impl futures::future::Future for TxLogResponse {
-    type Output = TxLogResponse;
-
-    fn poll(self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Self::Output> {
-        if self.tx___tx_id > 0 {
-            let pinned = self.to_owned();
-            Poll::Ready(pinned)
-        } else {
-            Poll::Pending
-        }
-    }
 }
 
 impl TxLogResponse {
@@ -60,20 +38,6 @@ impl TxLogResponse {
 /// Definition for the response of a `GET` at `tx-log` endpoint
 pub struct TxLogsResponse {
     pub tx_events: Vec<TxLogResponse>,
-}
-
-#[cfg(feature = "async")]
-impl futures::future::Future for TxLogsResponse {
-    type Output = TxLogsResponse;
-
-    fn poll(self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Self::Output> {
-        if self.tx_events.len() > 0 {
-            let pinned = self.to_owned();
-            Poll::Ready(pinned)
-        } else {
-            Poll::Pending
-        }
-    }
 }
 
 impl TxLogsResponse {
@@ -142,20 +106,6 @@ pub struct EntityTxResponse {
     pub tx___tx_time: DateTime<FixedOffset>,
 }
 
-#[cfg(feature = "async")]
-impl futures::future::Future for EntityTxResponse {
-    type Output = EntityTxResponse;
-
-    fn poll(self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Self::Output> {
-        if self.tx___tx_id > 0 {
-            let pinned = self.to_owned();
-            Poll::Ready(pinned)
-        } else {
-            Poll::Pending
-        }
-    }
-}
-
 impl EntityTxResponse {
     pub fn deserialize(resp: String) -> Result<Self, CruxError> {
         let clean_edn = resp.replace("#crux/id", "");
@@ -204,8 +154,10 @@ impl From<Edn> for EntityTxResponse {
 }
 
 #[doc(hidden)]
+#[cfg(not(feature = "async"))]
 pub(crate) struct QueryResponse;
 
+#[cfg(not(feature = "async"))]
 impl QueryResponse {
     pub(crate) fn deserialize(resp: String) -> Result<BTreeSet<Vec<String>>, CruxError> {
         let edn = from_str(&resp.clone())?;
@@ -264,20 +216,6 @@ impl QueryAsyncResponse {
                     .map(|e| e.to_vec().unwrap())
                     .collect::<BTreeSet<Vec<String>>>(),
             }
-        }
-    }
-}
-
-#[cfg(feature = "async")]
-impl futures::future::Future for QueryAsyncResponse {
-    type Output = QueryAsyncResponse;
-
-    fn poll(self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Self::Output> {
-        if self.0.len() > 0 {
-            let pinned = self.to_owned();
-            Poll::Ready(pinned)
-        } else {
-            Poll::Pending
         }
     }
 }
@@ -357,20 +295,6 @@ impl From<Edn> for EntityHistoryElement {
 #[derive(Debug, PartialEq, Clone)]
 pub struct EntityHistoryResponse {
     pub history: Vec<EntityHistoryElement>,
-}
-
-#[cfg(feature = "async")]
-impl futures::future::Future for EntityHistoryResponse {
-    type Output = EntityHistoryResponse;
-
-    fn poll(self: Pin<&mut Self>, cx: &mut task::Context) -> Poll<Self::Output> {
-        if self.history.len() > 0 {
-            let pinned = self.to_owned();
-            Poll::Ready(pinned)
-        } else {
-            Poll::Pending
-        }
-    }
 }
 
 impl EntityHistoryResponse {
