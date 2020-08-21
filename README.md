@@ -417,7 +417,7 @@ async fn main() {
     let action2 = Action::Put(psql.serialize(), None);
     let action3 = Action::Put(mysql.serialize(), None);
 
-    let _ = client.tx_log(vec![action1, action2, action3]).await.await;
+    let _ = client.tx_log(vec![action1, action2, action3]).await;
 
     let query_is_sql = Query::find(vec!["?p1", "?n"])
         .unwrap()
