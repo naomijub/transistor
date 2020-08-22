@@ -9,10 +9,10 @@ use crate::types::{
     response::{EntityHistoryResponse, EntityTxResponse, TxLogResponse, TxLogsResponse},
 };
 use chrono::prelude::*;
-use edn_rs::{edn, Edn, Map, Serialize};
+use edn_rs::{edn, Deserialize, Edn, Map, Serialize};
 use reqwest::{blocking, header::HeaderMap};
-#[cfg(not(feature = "async"))]
 use std::collections::BTreeSet;
+use std::str::FromStr;
 
 static DATE_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S%Z";
 
@@ -51,7 +51,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        TxLogResponse::deserialize(resp)
+        Ok(Deserialize::deserialize(&Edn::from_str(&resp)?)?)
     }
 
     /// Function `tx_logs` requests endpoint `/tx-log` via `GET` and returns a list of all transactions
@@ -62,7 +62,7 @@ impl HttpClient {
             .headers(self.headers.clone())
             .send()?
             .text()?;
-        TxLogsResponse::deserialize(resp)
+        TxLogsResponse::from_str(&resp)
     }
 
     /// Function `entity` requests endpoint `/entity` via `POST` which retrieves the last document
@@ -87,7 +87,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        let edn_resp = edn_rs::from_str(&resp);
+        let edn_resp = Edn::from_str(&resp);
         edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
     }
 
@@ -117,7 +117,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        let edn_resp = edn_rs::from_str(&resp);
+        let edn_resp = Edn::from_str(&resp);
         edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
     }
 
@@ -137,7 +137,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        EntityTxResponse::deserialize(resp)
+        EntityTxResponse::from_str(&resp)
     }
 
     /// Function `entity_tx_timed` is like `entity_tx` but with two optional fields `transaction_time` and `valid_time` that are of type `Option<DateTime<FixedOffset>>`.
@@ -162,7 +162,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        EntityTxResponse::deserialize(resp)
+        EntityTxResponse::from_str(&resp)
     }
 
     /// Function `entity_history` requests endpoint `/entity-history` via `GET` which returns a list with all entity's transaction history.
@@ -187,7 +187,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        EntityHistoryResponse::deserialize(resp)
+        EntityHistoryResponse::from_str(&resp)
     }
 
     /// Function `entity_history_timed` is an txtension of the function `entity_history`.
@@ -216,7 +216,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        EntityHistoryResponse::deserialize(resp)
+        EntityHistoryResponse::from_str(&resp)
     }
 
     /// Function `query` requests endpoint `/query` via `POST` which retrives a Set containing a vector of the values defined by the function [`Query::find` - github example](https://github.com/naomijub/transistor/blob/master/examples/simple_query.rs#L53).
@@ -230,7 +230,10 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        QueryResponse::deserialize(resp)
+        let edn = Edn::from_str(&resp)?;
+        let query_response: QueryResponse = Deserialize::deserialize(&edn)?;
+
+        Ok(query_response.0)
     }
 }
 
@@ -256,7 +259,8 @@ impl HttpClient {
             .await?
             .text()
             .await?;
-        TxLogResponse::deserialize(resp)
+
+        Ok(Deserialize::deserialize(&Edn::from_str(&resp)?)?)
     }
 
     pub async fn tx_logs(&self) -> Result<TxLogsResponse, CruxError> {
@@ -269,7 +273,7 @@ impl HttpClient {
             .text()
             .await?;
 
-        TxLogsResponse::deserialize(resp)
+        TxLogsResponse::from_str(&resp)
     }
 
     pub async fn entity(&self, id: String) -> Result<Edn, CruxError> {
@@ -292,7 +296,7 @@ impl HttpClient {
             .text()
             .await?;
 
-        let edn_resp = edn_rs::from_str(&resp);
+        let edn_resp = Edn::from_str(&resp);
         edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
     }
 
@@ -323,7 +327,7 @@ impl HttpClient {
             .text()
             .await?;
 
-        let edn_resp = edn_rs::from_str(&resp);
+        let edn_resp = Edn::from_str(&resp);
         edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
     }
 
@@ -343,7 +347,7 @@ impl HttpClient {
             .text()
             .await?;
 
-        EntityTxResponse::deserialize(resp)
+        EntityTxResponse::from_str(&resp)
     }
 
     pub async fn entity_tx_timed(
@@ -369,7 +373,7 @@ impl HttpClient {
             .text()
             .await?;
 
-        EntityTxResponse::deserialize(resp)
+        EntityTxResponse::from_str(&resp)
     }
 
     pub async fn entity_history(
@@ -394,7 +398,7 @@ impl HttpClient {
             .text()
             .await?;
 
-        EntityHistoryResponse::deserialize(resp)
+        EntityHistoryResponse::from_str(&resp)
     }
 
     pub async fn entity_history_timed(
@@ -422,10 +426,10 @@ impl HttpClient {
             .text()
             .await?;
 
-        EntityHistoryResponse::deserialize(resp)
+        EntityHistoryResponse::from_str(&resp)
     }
 
-    pub async fn query(&self, query: Query) -> Result<QueryAsyncResponse, CruxError> {
+    pub async fn query(&self, query: Query) -> Result<BTreeSet<Vec<String>>, CruxError> {
         let resp = self
             .client
             .post(&format!("{}/query", self.uri))
@@ -436,7 +440,10 @@ impl HttpClient {
             .text()
             .await?;
 
-        Ok(QueryAsyncResponse::deserialize(resp))
+        let edn = Edn::from_str(&resp)?;
+        let query_response: QueryAsyncResponse = Deserialize::deserialize(&edn)?;
+
+        Ok(query_response.0)
     }
 }
 
@@ -539,7 +546,9 @@ mod http {
     }
 
     #[test]
-    #[should_panic(expected = "The following Edn cannot be parsed to TxLogs: Symbol(\\\"Holy\\\")")]
+    #[should_panic(
+        expected = "The following Edn cannot be deserialized to TxLogs: Symbol(\\\"Holy\\\")"
+    )]
     fn tx_log_error() {
         let _m = mock("GET", "/tx-log")
             .with_status(200)
