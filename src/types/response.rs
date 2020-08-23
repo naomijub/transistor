@@ -19,9 +19,9 @@ pub struct TxLogResponse {
 impl Deserialize for TxLogResponse {
     fn deserialize(edn: &Edn) -> Result<Self, EdnError> {
         Ok(Self {
-            tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize),
+            tx___tx_id: Deserialize::deserialize(&edn[":crux.tx/tx-id"]).unwrap_or(0usize),
             #[cfg(feature = "time_as_str")]
-            tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
+            tx___tx_time: Deserialize::deserialize(&edn[":crux.tx/tx-time"])?,
             #[cfg(not(feature = "time_as_str"))]
             tx___tx_time: edn[":crux.tx/tx-time"]
                 .to_string()
@@ -138,18 +138,18 @@ impl EntityTxResponse {
 impl Deserialize for EntityTxResponse {
     fn deserialize(edn: &Edn) -> Result<Self, EdnError> {
         Ok(Self {
-            db___id: edn[":crux.db/id"].to_string(),
-            db___content_hash: edn[":crux.db/content-hash"].to_string(),
+            db___id: Deserialize::deserialize(&edn[":crux.db/id"])?,
+            db___content_hash: Deserialize::deserialize(&edn[":crux.db/content-hash"])?,
             #[cfg(feature = "time_as_str")]
-            db___valid_time: edn[":crux.db/valid-time"].to_string(),
+            db___valid_time: Deserialize::deserialize(&edn[":crux.db/valid-time"]),
             #[cfg(not(feature = "time_as_str"))]
             db___valid_time: edn[":crux.db/valid-time"]
                 .to_string()
                 .parse::<DateTime<FixedOffset>>()
                 .unwrap(),
-            tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize),
+            tx___tx_id: Deserialize::deserialize(&edn[":crux.tx/tx-id"]).unwrap_or(0usize),
             #[cfg(feature = "time_as_str")]
-            tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
+            tx___tx_time: Deserialize::deserialize(&edn[":crux.tx/tx-time"]),
             #[cfg(not(feature = "time_as_str"))]
             tx___tx_time: edn[":crux.tx/tx-time"]
                 .to_string()
@@ -263,17 +263,17 @@ pub struct EntityHistoryElement {
 impl Deserialize for EntityHistoryElement {
     fn deserialize(edn: &Edn) -> Result<Self, EdnError> {
         Ok(Self {
-            db___content_hash: edn[":crux.db/content-hash"].to_string(),
+            db___content_hash: Deserialize::deserialize(&edn[":crux.db/content-hash"])?,
             #[cfg(feature = "time_as_str")]
-            db___valid_time: edn[":crux.db/valid-time"].to_string(),
+            db___valid_time: Deserialize::deserialize(&edn[":crux.db/valid-time"])?,
             #[cfg(not(feature = "time_as_str"))]
             db___valid_time: edn[":crux.db/valid-time"]
                 .to_string()
                 .parse::<DateTime<FixedOffset>>()
                 .unwrap(),
-            tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize),
+            tx___tx_id: Deserialize::deserialize(&edn[":crux.tx/tx-id"]).unwrap_or(0usize),
             #[cfg(feature = "time_as_str")]
-            tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
+            tx___tx_time: Deserialize::deserialize(&edn[":crux.tx/tx-time"])?,
             #[cfg(not(feature = "time_as_str"))]
             tx___tx_time: edn[":crux.tx/tx-time"]
                 .to_string()
