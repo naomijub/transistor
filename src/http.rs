@@ -10,7 +10,9 @@ use crate::types::{
 };
 use chrono::prelude::*;
 use edn_rs::{edn, Deserialize, Edn, Map, Serialize};
-use reqwest::{blocking, header::HeaderMap};
+#[cfg(not(feature = "async"))]
+use reqwest::blocking;
+use reqwest::header::HeaderMap;
 use std::collections::BTreeSet;
 use std::str::FromStr;
 
