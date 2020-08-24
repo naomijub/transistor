@@ -9,7 +9,7 @@ use crate::types::{
     response::{EntityHistoryResponse, EntityTxResponse, TxLogResponse, TxLogsResponse},
 };
 use chrono::prelude::*;
-use edn_rs::{edn, Deserialize, Edn, Map, Serialize};
+use edn_rs::{edn, Edn, Map, Serialize};
 #[cfg(not(feature = "async"))]
 use reqwest::blocking;
 use reqwest::header::HeaderMap;
@@ -53,7 +53,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        Ok(Deserialize::deserialize(&Edn::from_str(&resp)?)?)
+        Ok(edn_rs::from_str(&resp)?)
     }
 
     /// Function `tx_logs` requests endpoint `/tx-log` via `GET` and returns a list of all transactions
@@ -232,8 +232,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        let edn = Edn::from_str(&resp)?;
-        let query_response: QueryResponse = Deserialize::deserialize(&edn)?;
+        let query_response: QueryResponse = edn_rs::from_str(&resp)?;
 
         Ok(query_response.0)
     }
@@ -262,7 +261,7 @@ impl HttpClient {
             .text()
             .await?;
 
-        Ok(Deserialize::deserialize(&Edn::from_str(&resp)?)?)
+        Ok(edn_rs::from_str(&resp)?)
     }
 
     pub async fn tx_logs(&self) -> Result<TxLogsResponse, CruxError> {
@@ -442,8 +441,7 @@ impl HttpClient {
             .text()
             .await?;
 
-        let edn = Edn::from_str(&resp)?;
-        let query_response: QueryAsyncResponse = Deserialize::deserialize(&edn)?;
+        let query_response: QueryAsyncResponse = edn_rs::from_str(&resp)?;
 
         Ok(query_response.0)
     }
