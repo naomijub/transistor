@@ -72,7 +72,8 @@ impl FromStr for TxLogsResponse {
     type Err = CruxError;
     fn from_str(resp: &str) -> Result<Self, CruxError> {
         let clean_edn = resp.replace("#crux/id", "");
-        Ok(edn_rs::from_str(&clean_edn)?)
+        edn_rs::from_str(&clean_edn)
+            .map_err(|e| e.into())
     }
 }
 
@@ -112,7 +113,8 @@ impl FromStr for EntityTxResponse {
     type Err = CruxError;
     fn from_str(resp: &str) -> Result<Self, CruxError> {
         let clean_edn = resp.replace("#crux/id", "");
-        Ok(edn_rs::from_str(&clean_edn)?)
+        edn_rs::from_str(&clean_edn)
+            .map_err(|e| e.into())
     }
 }
 
@@ -323,7 +325,8 @@ impl FromStr for EntityHistoryResponse {
     type Err = CruxError;
     fn from_str(resp: &str) -> Result<Self, CruxError> {
         let clean_edn = resp.replace("#crux/id", "").replace("#inst", "");
-        Ok(edn_rs::from_str(&clean_edn)?)
+        edn_rs::from_str(&clean_edn)
+            .map_err(|e| e.into())
     }
 }
 
