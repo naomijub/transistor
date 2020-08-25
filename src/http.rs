@@ -53,8 +53,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        edn_rs::from_str(&resp)
-            .map_err(|e| e.into())
+        edn_rs::from_str(&resp).map_err(|e| e.into())
     }
 
     /// Function `tx_logs` requests endpoint `/tx-log` via `GET` and returns a list of all transactions
@@ -262,8 +261,7 @@ impl HttpClient {
             .text()
             .await?;
 
-        edn_rs::from_str(&resp)
-            .map_err(|e| e.into())
+        edn_rs::from_str(&resp).map_err(|e| e.into())
     }
 
     pub async fn tx_logs(&self) -> Result<TxLogsResponse, CruxError> {

@@ -3,7 +3,7 @@ pub mod http;
 pub mod query;
 pub mod response;
 
-use edn_rs::{Serialize, Deserialize, Edn, EdnError};
+use edn_rs::{Deserialize, Edn, EdnError, Serialize};
 
 /// Id to use as reference in Crux, similar to `ids` with `Uuid`. This id is supposed to be a KEYWORD, `Edn::Key`.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
@@ -21,7 +21,10 @@ impl Deserialize for CruxId {
     fn deserialize(edn: &Edn) -> Result<Self, EdnError> {
         match edn {
             Edn::Str(s) => Ok(Self::new(s)),
-            _ => Err(EdnError::Deserialize(format!("couldn't convert {} into CruxId", edn))),
+            _ => Err(EdnError::Deserialize(format!(
+                "couldn't convert {} into CruxId",
+                edn
+            ))),
         }
     }
 }
