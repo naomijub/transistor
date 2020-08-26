@@ -26,7 +26,7 @@ impl Deserialize for TxLogResponse {
             tx___tx_time: edn[":crux.tx/tx-time"]
                 .to_string()
                 .parse::<DateTime<FixedOffset>>()
-                .unwrap(),
+                .map_err(|_| EdnError::Deserialize("Unable to deserialize `:crux.tx/tx-time`, verify if the transaction time you're sending is correct".to_string()))?,
             tx__event___tx_events: Deserialize::deserialize(&edn[":crux.tx.event/tx-events"])?,
         })
     }
