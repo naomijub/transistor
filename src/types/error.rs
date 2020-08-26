@@ -6,6 +6,8 @@ use reqwest::Error;
 pub enum CruxError {
     /// Error originated by `edn_rs` crate. The provided EDN did not match schema.
     ParseEdnError(String),
+    /// Error originated by `edn_rs` crate. There was an error on deserializing an Edn to a struct.
+    DeserializeError(String),
     /// Error originated by `reqwest` crate. Failed to make HTTP request.
     RequestError(Error),
     /// Query response error, most likely a Clojure stacktrace from Crux response.
@@ -18,6 +20,7 @@ impl std::error::Error for CruxError {
     fn description(&self) -> &str {
         match self {
             CruxError::ParseEdnError(s) => &s,
+            CruxError::DeserializeError(s) => &s,
             CruxError::RequestError(_) => "HTTP request to Crux failed",
             CruxError::QueryError(s) => &s,
             CruxError::QueryFormatError(s) => &s,
@@ -33,6 +36,7 @@ impl std::fmt::Display for CruxError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             CruxError::ParseEdnError(s) => write!(f, "{}", &s),
+            CruxError::DeserializeError(s) => write!(f, "{}", &s),
             CruxError::RequestError(e) => write!(f, "{:?}", &e),
             CruxError::QueryError(s) => write!(f, "{}", &s),
             CruxError::QueryFormatError(s) => write!(f, "{}", &s),
@@ -43,7 +47,8 @@ impl std::fmt::Display for CruxError {
 impl From<EdnError> for CruxError {
     fn from(err: EdnError) -> Self {
         match err {
-            EdnError::ParseEdnError(s) => CruxError::ParseEdnError(s),
+            EdnError::ParseEdn(s) => CruxError::ParseEdnError(s),
+            EdnError::Deserialize(s) => CruxError::DeserializeError(s),
         }
     }
 }

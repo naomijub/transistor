@@ -1,7 +1,8 @@
 use crate::types::error::CruxError;
 use chrono::prelude::*;
-use edn_rs::{from_str, Edn};
+use edn_rs::{Deserialize, Edn, EdnError};
 use std::collections::BTreeSet;
+use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Clone)]
 #[allow(non_snake_case)]
@@ -15,12 +16,39 @@ pub struct TxLogResponse {
     pub tx__event___tx_events: Option<Vec<Vec<String>>>,
 }
 
-impl TxLogResponse {
-    pub fn deserialize(resp: String) -> Result<Self, CruxError> {
-        let edn = from_str(&resp)?;
-        Ok(edn.into())
+impl Deserialize for TxLogResponse {
+    fn deserialize(edn: &Edn) -> Result<Self, EdnError> {
+        Ok(Self {
+            tx___tx_id: Deserialize::deserialize(&edn[":crux.tx/tx-id"]).unwrap_or(0usize),
+            #[cfg(feature = "time_as_str")]
+            tx___tx_time: Deserialize::deserialize(&edn[":crux.tx/tx-time"])?,
+            #[cfg(not(feature = "time_as_str"))]
+            tx___tx_time: edn[":crux.tx/tx-time"]
+                .to_string()
+                .parse::<DateTime<FixedOffset>>()
+                .unwrap(),
+            tx__event___tx_events: match edn.get(":crux.tx.event/tx-events") {
+                Some(e) => Some(
+                    e.iter()
+                        .ok_or(EdnError::Deserialize(format!(
+                            "The following Edn cannot be deserialized to TxLog: {:?}",
+                            edn
+                        )))?
+                        .map(|el| {
+                            el.to_vec().ok_or(EdnError::Deserialize(format!(
+                                "The following Edn cannot be deserialized to Vec: {:?}",
+                                edn
+                            )))
+                        })
+                        .collect::<Result<Vec<Vec<String>>, EdnError>>()?,
+                ),
+                None => None,
+            },
+        })
     }
+}
 
+impl TxLogResponse {
     #[cfg(test)]
     pub fn default() -> Self {
         Self {
@@ -40,52 +68,26 @@ pub struct TxLogsResponse {
     pub tx_events: Vec<TxLogResponse>,
 }
 
-impl TxLogsResponse {
-    pub fn deserialize(resp: String) -> Result<Self, CruxError> {
+impl FromStr for TxLogsResponse {
+    type Err = CruxError;
+    fn from_str(resp: &str) -> Result<Self, CruxError> {
         let clean_edn = resp.replace("#crux/id", "");
-        let edn = from_str(&clean_edn)?;
-        Ok(edn.into())
+        edn_rs::from_str(&clean_edn).map_err(|e| e.into())
     }
 }
 
-impl From<Edn> for TxLogsResponse {
-    fn from(edn: Edn) -> Self {
-        Self {
+impl Deserialize for TxLogsResponse {
+    fn deserialize(edn: &Edn) -> Result<Self, EdnError> {
+        Ok(Self {
             tx_events: edn
                 .iter()
-                .ok_or(CruxError::ParseEdnError(format!(
-                    "The following Edn cannot be parsed to TxLogs: {:?}",
+                .ok_or(EdnError::Deserialize(format!(
+                    "The following Edn cannot be deserialized to TxLogs: {:?}",
                     edn
-                )))
-                .unwrap()
-                .map(|e| e.to_owned().into())
-                .collect::<Vec<TxLogResponse>>(),
-        }
-    }
-}
-
-impl From<Edn> for TxLogResponse {
-    fn from(edn: Edn) -> Self {
-        Self {
-            tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize),
-            #[cfg(feature = "time_as_str")]
-            tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
-            #[cfg(not(feature = "time_as_str"))]
-            tx___tx_time: edn[":crux.tx/tx-time"]
-                .to_string()
-                .parse::<DateTime<FixedOffset>>()
-                .unwrap(),
-            tx__event___tx_events: edn.get(":crux.tx.event/tx-events").map(|e| {
-                e.iter()
-                    .ok_or(CruxError::ParseEdnError(format!(
-                        "The following Edn cannot be parsed to TxLog: {:?}",
-                        edn
-                    )))
-                    .unwrap()
-                    .map(|el| el.to_vec().unwrap())
-                    .collect::<Vec<Vec<String>>>()
-            }),
-        }
+                )))?
+                .map(Deserialize::deserialize)
+                .collect::<Result<Vec<TxLogResponse>, EdnError>>()?,
+        })
     }
 }
 
@@ -106,13 +108,15 @@ pub struct EntityTxResponse {
     pub tx___tx_time: DateTime<FixedOffset>,
 }
 
-impl EntityTxResponse {
-    pub fn deserialize(resp: String) -> Result<Self, CruxError> {
+impl FromStr for EntityTxResponse {
+    type Err = CruxError;
+    fn from_str(resp: &str) -> Result<Self, CruxError> {
         let clean_edn = resp.replace("#crux/id", "");
-        let edn = from_str(&clean_edn)?;
-        Ok(edn.into())
+        edn_rs::from_str(&clean_edn).map_err(|e| e.into())
     }
+}
 
+impl EntityTxResponse {
     #[cfg(test)]
     pub fn default() -> Self {
         Self {
@@ -129,56 +133,67 @@ impl EntityTxResponse {
     }
 }
 
-impl From<Edn> for EntityTxResponse {
-    fn from(edn: Edn) -> Self {
-        Self {
-            db___id: edn[":crux.db/id"].to_string(),
-            db___content_hash: edn[":crux.db/content-hash"].to_string(),
+impl Deserialize for EntityTxResponse {
+    fn deserialize(edn: &Edn) -> Result<Self, EdnError> {
+        Ok(Self {
+            db___id: Deserialize::deserialize(&edn[":crux.db/id"])?,
+            db___content_hash: Deserialize::deserialize(&edn[":crux.db/content-hash"])?,
             #[cfg(feature = "time_as_str")]
-            db___valid_time: edn[":crux.db/valid-time"].to_string(),
+            db___valid_time: Deserialize::deserialize(&edn[":crux.db/valid-time"]),
             #[cfg(not(feature = "time_as_str"))]
             db___valid_time: edn[":crux.db/valid-time"]
                 .to_string()
                 .parse::<DateTime<FixedOffset>>()
                 .unwrap(),
-            tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize),
+            tx___tx_id: Deserialize::deserialize(&edn[":crux.tx/tx-id"]).unwrap_or(0usize),
             #[cfg(feature = "time_as_str")]
-            tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
+            tx___tx_time: Deserialize::deserialize(&edn[":crux.tx/tx-time"]),
             #[cfg(not(feature = "time_as_str"))]
             tx___tx_time: edn[":crux.tx/tx-time"]
                 .to_string()
                 .parse::<DateTime<FixedOffset>>()
                 .unwrap(),
-        }
+        })
     }
 }
 
 #[doc(hidden)]
 #[cfg(not(feature = "async"))]
-pub(crate) struct QueryResponse;
+pub(crate) struct QueryResponse(pub(crate) BTreeSet<Vec<String>>);
 
 #[cfg(not(feature = "async"))]
-impl QueryResponse {
-    pub(crate) fn deserialize(resp: String) -> Result<BTreeSet<Vec<String>>, CruxError> {
-        let edn = from_str(&resp.clone())?;
+impl Deserialize for QueryResponse {
+    fn deserialize(edn: &Edn) -> Result<Self, EdnError> {
         if edn.set_iter().is_some() {
-            Ok(edn
-                .set_iter()
-                .ok_or(CruxError::ParseEdnError(format!(
-                    "The following Edn cannot be parsed to BTreeSet: {:?}",
-                    edn
-                )))?
-                .map(|e| e.to_vec().unwrap())
-                .collect::<BTreeSet<Vec<String>>>())
+            Ok(Self(
+                edn.set_iter()
+                    .ok_or(EdnError::Deserialize(format!(
+                        "The following Edn cannot be deserialized to BTreeSet: {:?}",
+                        edn
+                    )))?
+                    .map(|e| {
+                        e.to_vec().ok_or(EdnError::Deserialize(format!(
+                            "The following Edn cannot be deserialized to Vec: {:?}",
+                            edn
+                        )))
+                    })
+                    .collect::<Result<BTreeSet<Vec<String>>, EdnError>>()?,
+            ))
         } else {
-            Ok(edn
-                .iter()
-                .ok_or(CruxError::ParseEdnError(format!(
-                    "The following Edn cannot be parsed to BTreeSet: {:?}",
-                    edn
-                )))?
-                .map(|e| e.to_vec().unwrap())
-                .collect::<BTreeSet<Vec<String>>>())
+            Ok(Self(
+                edn.iter()
+                    .ok_or(EdnError::Deserialize(format!(
+                        "The following Edn cannot be deserialized to BTreeSet: {:?}",
+                        edn
+                    )))?
+                    .map(|e| {
+                        e.to_vec().ok_or(EdnError::Deserialize(format!(
+                            "The following Edn cannot be deserialized to Vec: {:?}",
+                            edn
+                        )))
+                    })
+                    .collect::<Result<BTreeSet<Vec<String>>, EdnError>>()?,
+            ))
         }
     }
 }
@@ -186,36 +201,43 @@ impl QueryResponse {
 #[cfg(feature = "async")]
 #[derive(Clone, Debug, PartialEq)]
 /// When feature `async` is enabled this is the response type for endpoint `/query`.
-pub struct QueryAsyncResponse(BTreeSet<Vec<String>>);
+pub struct QueryAsyncResponse(pub(crate) BTreeSet<Vec<String>>);
 
 #[cfg(feature = "async")]
-impl QueryAsyncResponse {
-    pub(crate) fn deserialize(resp: String) -> QueryAsyncResponse {
-        let edn = from_str(&resp.clone()).unwrap();
+impl Deserialize for QueryAsyncResponse {
+    fn deserialize(edn: &Edn) -> Result<Self, EdnError> {
         if edn.set_iter().is_some() {
-            QueryAsyncResponse {
+            Ok(Self {
                 0: edn
                     .set_iter()
-                    .ok_or(CruxError::ParseEdnError(format!(
-                        "The following Edn cannot be parsed to BTreeSet: {:?}",
+                    .ok_or(EdnError::Deserialize(format!(
+                        "The following Edn cannot be deserialize to BTreeSet: {:?}",
                         edn
-                    )))
-                    .unwrap()
-                    .map(|e| e.to_vec().unwrap())
-                    .collect::<BTreeSet<Vec<String>>>(),
-            }
+                    )))?
+                    .map(|e| {
+                        e.to_vec().ok_or(EdnError::Deserialize(format!(
+                            "The following Edn cannot be deserialized to Vec: {:?}",
+                            edn
+                        )))
+                    })
+                    .collect::<Result<BTreeSet<Vec<String>>, EdnError>>()?,
+            })
         } else {
-            QueryAsyncResponse {
+            Ok(Self {
                 0: edn
                     .iter()
-                    .ok_or(CruxError::ParseEdnError(format!(
-                        "The following Edn cannot be parsed to BTreeSet: {:?}",
+                    .ok_or(EdnError::Deserialize(format!(
+                        "The following Edn cannot be deserialize to BTreeSet: {:?}",
                         edn
-                    )))
-                    .unwrap()
-                    .map(|e| e.to_vec().unwrap())
-                    .collect::<BTreeSet<Vec<String>>>(),
-            }
+                    )))?
+                    .map(|e| {
+                        e.to_vec().ok_or(EdnError::Deserialize(format!(
+                            "The following Edn cannot be deserialized to Vec: {:?}",
+                            edn
+                        )))
+                    })
+                    .collect::<Result<BTreeSet<Vec<String>>, EdnError>>()?,
+            })
         }
     }
 }
@@ -234,6 +256,30 @@ pub struct EntityHistoryElement {
     pub tx___tx_time: DateTime<FixedOffset>,
     pub db___content_hash: String,
     pub db__doc: Option<Edn>,
+}
+
+impl Deserialize for EntityHistoryElement {
+    fn deserialize(edn: &Edn) -> Result<Self, EdnError> {
+        Ok(Self {
+            db___content_hash: Deserialize::deserialize(&edn[":crux.db/content-hash"])?,
+            #[cfg(feature = "time_as_str")]
+            db___valid_time: Deserialize::deserialize(&edn[":crux.db/valid-time"])?,
+            #[cfg(not(feature = "time_as_str"))]
+            db___valid_time: edn[":crux.db/valid-time"]
+                .to_string()
+                .parse::<DateTime<FixedOffset>>()
+                .unwrap(),
+            tx___tx_id: Deserialize::deserialize(&edn[":crux.tx/tx-id"]).unwrap_or(0usize),
+            #[cfg(feature = "time_as_str")]
+            tx___tx_time: Deserialize::deserialize(&edn[":crux.tx/tx-time"])?,
+            #[cfg(not(feature = "time_as_str"))]
+            tx___tx_time: edn[":crux.tx/tx-time"]
+                .to_string()
+                .parse::<DateTime<FixedOffset>>()
+                .unwrap(),
+            db__doc: edn.get(":crux.db/doc").map(|d| d.to_owned()),
+        })
+    }
 }
 
 #[cfg(test)]
@@ -267,56 +313,31 @@ impl EntityHistoryElement {
     }
 }
 
-impl From<Edn> for EntityHistoryElement {
-    fn from(edn: Edn) -> Self {
-        Self {
-            db___content_hash: edn[":crux.db/content-hash"].to_string(),
-            #[cfg(feature = "time_as_str")]
-            db___valid_time: edn[":crux.db/valid-time"].to_string(),
-            #[cfg(not(feature = "time_as_str"))]
-            db___valid_time: edn[":crux.db/valid-time"]
-                .to_string()
-                .parse::<DateTime<FixedOffset>>()
-                .unwrap(),
-            tx___tx_id: edn[":crux.tx/tx-id"].to_uint().unwrap_or(0usize),
-            #[cfg(feature = "time_as_str")]
-            tx___tx_time: edn[":crux.tx/tx-time"].to_string(),
-            #[cfg(not(feature = "time_as_str"))]
-            tx___tx_time: edn[":crux.tx/tx-time"]
-                .to_string()
-                .parse::<DateTime<FixedOffset>>()
-                .unwrap(),
-            db__doc: edn.get(":crux.db/doc").map(|d| d.to_owned()),
-        }
-    }
-}
-
 /// Definition for the response of a `GET` at `/entity-history` endpoint. This returns a Vec of  `EntityHistoryElement`.
 #[derive(Debug, PartialEq, Clone)]
 pub struct EntityHistoryResponse {
     pub history: Vec<EntityHistoryElement>,
 }
 
-impl EntityHistoryResponse {
-    pub fn deserialize(resp: String) -> Result<Self, CruxError> {
+impl FromStr for EntityHistoryResponse {
+    type Err = CruxError;
+    fn from_str(resp: &str) -> Result<Self, CruxError> {
         let clean_edn = resp.replace("#crux/id", "").replace("#inst", "");
-        let edn = from_str(&clean_edn)?;
-        Ok(edn.into())
+        edn_rs::from_str(&clean_edn).map_err(|e| e.into())
     }
 }
 
-impl From<Edn> for EntityHistoryResponse {
-    fn from(edn: Edn) -> Self {
-        Self {
+impl Deserialize for EntityHistoryResponse {
+    fn deserialize(edn: &Edn) -> Result<Self, EdnError> {
+        Ok(Self {
             history: edn
                 .iter()
-                .ok_or(CruxError::ParseEdnError(format!(
-                    "The following Edn cannot be parsed to entity-history: {:?}",
+                .ok_or(EdnError::Deserialize(format!(
+                    "The following Edn cannot be deserialize to entity-history: {:?}",
                     edn
-                )))
-                .unwrap()
-                .map(|el| el.to_owned().into())
-                .collect::<Vec<EntityHistoryElement>>(),
-        }
+                )))?
+                .map(Deserialize::deserialize)
+                .collect::<Result<Vec<EntityHistoryElement>, EdnError>>()?,
+        })
     }
 }

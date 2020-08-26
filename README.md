@@ -273,7 +273,7 @@ let is_sql = client.query(query_is_sql.unwrap()).unwrap();
 * `with_full_results` is a builder function to define the flag `full-results?` as true. This allows your `query` response to return the whole document instead of only the searched keys. The result of the Query `{:query {:find [?user ?a] :where [[?user :first-name ?a]] :full-results? true}}` will be a `BTreeSet<Vec<String>>` like `([{:crux.db/id :fafilda, :first-name "Jorge", :last-name "Klaus"} "Jorge"])`, so the document will need further EDN parsing to become the document's struct.
 
 Errors are defined in the [`CruxError`](https://docs.rs/transistor/1.2.0/transistor/types/error/enum.CruxError.html) enum.
-* `ParseEdnError` is originated by `edn_rs` crate. The provided EDN did not match schema.
+* `EdnError` is a wrapper over `edn_rs::EdnError`.
 * `RequestError` is originated by `reqwest` crate. Failed to make HTTP request.
 * `QueryFormatError` is originated when the provided Query struct did not match schema.
 * `QueryError` is responsible for encapsulation the Stacktrace error from Crux response:
