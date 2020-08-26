@@ -27,23 +27,7 @@ impl Deserialize for TxLogResponse {
                 .to_string()
                 .parse::<DateTime<FixedOffset>>()
                 .unwrap(),
-            tx__event___tx_events: match edn.get(":crux.tx.event/tx-events") {
-                Some(e) => Some(
-                    e.iter()
-                        .ok_or(EdnError::Deserialize(format!(
-                            "The following Edn cannot be deserialized to TxLog: {:?}",
-                            edn
-                        )))?
-                        .map(|el| {
-                            el.to_vec().ok_or(EdnError::Deserialize(format!(
-                                "The following Edn cannot be deserialized to Vec: {:?}",
-                                edn
-                            )))
-                        })
-                        .collect::<Result<Vec<Vec<String>>, EdnError>>()?,
-                ),
-                None => None,
-            },
+            tx__event___tx_events: Deserialize::deserialize(&edn[":crux.tx.event/tx-events"])?,
         })
     }
 }
