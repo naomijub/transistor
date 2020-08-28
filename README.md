@@ -10,7 +10,6 @@ A Rust Crux Client crate/lib. For now, this crate intends to support 2 ways to i
 
 > Other solutions may be added after the first release.
 
-* For information on Crux and how to use it, please follow the link to [opencrux](https://opencrux.com/reference/http.html#http-api).
 * [**Crux Getting Started**](https://opencrux.com/reference/get-started.html)
 * [**Crux FAQs**](https://opencrux.com/about/faq.html)
 * For examples on usage, please refer to [examples directory](https://github.com/naomijub/transistor/tree/master/examples) or to the [`ATM Crux`](https://github.com/naomijub/atm-crux) for more complete and interactive example.
