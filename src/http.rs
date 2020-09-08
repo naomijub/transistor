@@ -53,7 +53,8 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        edn_rs::from_str(&resp).map_err(|e| e.into())
+        let clean_resp = resp.replace("#inst", "");
+        edn_rs::from_str(&clean_resp).map_err(|e| e.into())
     }
 
     /// Function `tx_logs` requests endpoint `/tx-log` via `GET` and returns a list of all transactions
@@ -89,7 +90,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        let edn_resp = Edn::from_str(&resp);
+        let edn_resp = Edn::from_str(&resp.replace("#inst", ""));
         edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
     }
 
@@ -119,7 +120,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        let edn_resp = Edn::from_str(&resp);
+        let edn_resp = Edn::from_str(&resp.replace("#inst", ""));
         edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
     }
 
@@ -139,7 +140,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        EntityTxResponse::from_str(&resp)
+        EntityTxResponse::from_str(&resp.replace("#inst", ""))
     }
 
     /// Function `entity_tx_timed` is like `entity_tx` but with two optional fields `transaction_time` and `valid_time` that are of type `Option<DateTime<FixedOffset>>`.
@@ -164,7 +165,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        EntityTxResponse::from_str(&resp)
+        EntityTxResponse::from_str(&resp.replace("#inst", ""))
     }
 
     /// Function `entity_history` requests endpoint `/entity-history` via `GET` which returns a list with all entity's transaction history.
@@ -189,7 +190,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        EntityHistoryResponse::from_str(&resp)
+        EntityHistoryResponse::from_str(&resp.replace("#inst", ""))
     }
 
     /// Function `entity_history_timed` is an txtension of the function `entity_history`.
@@ -218,7 +219,7 @@ impl HttpClient {
             .send()?
             .text()?;
 
-        EntityHistoryResponse::from_str(&resp)
+        EntityHistoryResponse::from_str(&resp.replace("#inst", ""))
     }
 
     /// Function `query` requests endpoint `/query` via `POST` which retrives a Set containing a vector of the values defined by the function [`Query::find` - github example](https://github.com/naomijub/transistor/blob/master/examples/simple_query.rs#L53).
@@ -297,7 +298,7 @@ impl HttpClient {
             .text()
             .await?;
 
-        let edn_resp = Edn::from_str(&resp);
+        let edn_resp = Edn::from_str(&resp.replace("#inst", ""));
         edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
     }
 
@@ -317,7 +318,6 @@ impl HttpClient {
         s.push_str("}");
 
         let url = build_timed_url(self.uri.clone(), "entity", transaction_time, valid_time);
-        println!("{}", url);
         let resp = self
             .client
             .post(&url)
@@ -328,7 +328,7 @@ impl HttpClient {
             .text()
             .await?;
 
-        let edn_resp = Edn::from_str(&resp);
+        let edn_resp = Edn::from_str(&resp.replace("#inst", ""));
         edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
     }
 
@@ -348,7 +348,7 @@ impl HttpClient {
             .text()
             .await?;
 
-        EntityTxResponse::from_str(&resp)
+        EntityTxResponse::from_str(&resp.replace("#inst", ""))
     }
 
     pub async fn entity_tx_timed(
@@ -374,7 +374,7 @@ impl HttpClient {
             .text()
             .await?;
 
-        EntityTxResponse::from_str(&resp)
+        EntityTxResponse::from_str(&resp.replace("#inst", ""))
     }
 
     pub async fn entity_history(
@@ -399,7 +399,7 @@ impl HttpClient {
             .text()
             .await?;
 
-        EntityHistoryResponse::from_str(&resp)
+        EntityHistoryResponse::from_str(&resp.replace("#inst", ""))
     }
 
     pub async fn entity_history_timed(
@@ -427,7 +427,7 @@ impl HttpClient {
             .text()
             .await?;
 
-        EntityHistoryResponse::from_str(&resp)
+        EntityHistoryResponse::from_str(&resp.replace("#inst", ""))
     }
 
     pub async fn query(&self, query: Query) -> Result<BTreeSet<Vec<String>>, CruxError> {
@@ -546,9 +546,7 @@ mod http {
     }
 
     #[test]
-    #[should_panic(
-        expected = "The following Edn cannot be deserialized to TxLogs: Symbol(\\\"Holy\\\")"
-    )]
+    #[should_panic(expected = "ParseEdnError(\"H could not be parsed\")")]
     fn tx_log_error() {
         let _m = mock("GET", "/tx-log")
             .with_status(200)
@@ -569,7 +567,7 @@ mod http {
             .with_status(200)
             .match_body("{:eid :ivan}")
             .with_header("content-type", "application/edn")
-            .with_body(expected_body)
+            .with_body("{:crux.db/id :hello-entity :first-name \"Hello\", :last-name \"World\"}")
             .create();
 
         let edn_body = Crux::new("localhost", "3000")
@@ -577,7 +575,8 @@ mod http {
             .entity(":ivan".to_string())
             .unwrap();
 
-        assert!(edn_body.to_string().contains("Map"));
+        let resp = format!("{:?}", edn_body);
+        assert_eq!(resp, expected_body);
     }
 
     #[test]

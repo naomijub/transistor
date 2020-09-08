@@ -55,7 +55,7 @@ pub struct TxLogsResponse {
 impl FromStr for TxLogsResponse {
     type Err = CruxError;
     fn from_str(resp: &str) -> Result<Self, CruxError> {
-        let clean_edn = resp.replace("#crux/id", "");
+        let clean_edn = resp.replace("#crux/id", "").replace("#inst", "");
         edn_rs::from_str(&clean_edn).map_err(|e| e.into())
     }
 }
