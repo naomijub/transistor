@@ -8,6 +8,8 @@ pub enum CruxError {
     ParseEdnError(String),
     /// Error originated by `edn_rs` crate. There was an error on deserializing an Edn to a struct.
     DeserializeError(String),
+    /// Error originated by `edn_rs` crate. There was an error on iterating over an Edn structure.
+    IterError(String),
     /// Error originated by `reqwest` crate. Failed to make HTTP request.
     RequestError(Error),
     /// Query response error, most likely a Clojure stacktrace from Crux response.
@@ -24,6 +26,7 @@ impl std::error::Error for CruxError {
             CruxError::RequestError(_) => "HTTP request to Crux failed",
             CruxError::QueryError(s) => &s,
             CruxError::QueryFormatError(s) => &s,
+            CruxError::IterError(s) => &s,
         }
     }
 
@@ -40,6 +43,7 @@ impl std::fmt::Display for CruxError {
             CruxError::RequestError(e) => write!(f, "{:?}", &e),
             CruxError::QueryError(s) => write!(f, "{}", &s),
             CruxError::QueryFormatError(s) => write!(f, "{}", &s),
+            CruxError::IterError(s) => write!(f, "{}", &s),
         }
     }
 }
@@ -49,6 +53,7 @@ impl From<EdnError> for CruxError {
         match err {
             EdnError::ParseEdn(s) => CruxError::ParseEdnError(s),
             EdnError::Deserialize(s) => CruxError::DeserializeError(s),
+            EdnError::Iter(s) => CruxError::IterError(s),
         }
     }
 }
