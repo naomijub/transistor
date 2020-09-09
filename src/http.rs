@@ -65,6 +65,7 @@ impl HttpClient {
             .headers(self.headers.clone())
             .send()?
             .text()?;
+
         TxLogsResponse::from_str(&resp)
     }
 
