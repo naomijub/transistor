@@ -132,16 +132,12 @@ impl Deserialize for EntityTxResponse {
             #[cfg(feature = "time_as_str")]
             db___valid_time: Deserialize::deserialize(&edn[":crux.db/valid-time"]),
             #[cfg(not(feature = "time_as_str"))]
-            db___valid_time: valid_time
-                .parse::<DateTime<FixedOffset>>()
-                .unwrap(),
+            db___valid_time: valid_time.parse::<DateTime<FixedOffset>>().unwrap(),
             tx___tx_id: Deserialize::deserialize(&edn[":crux.tx/tx-id"]).unwrap_or(0usize),
             #[cfg(feature = "time_as_str")]
             tx___tx_time: Deserialize::deserialize(&edn[":crux.tx/tx-time"]),
             #[cfg(not(feature = "time_as_str"))]
-            tx___tx_time: tx_time
-                .parse::<DateTime<FixedOffset>>()
-                .unwrap(),
+            tx___tx_time: tx_time.parse::<DateTime<FixedOffset>>().unwrap(),
         })
     }
 }
@@ -259,16 +255,12 @@ impl Deserialize for EntityHistoryElement {
             #[cfg(feature = "time_as_str")]
             db___valid_time: Deserialize::deserialize(&edn[":crux.db/valid-time"])?,
             #[cfg(not(feature = "time_as_str"))]
-            db___valid_time: valid_time
-                .parse::<DateTime<FixedOffset>>()
-                .unwrap(),
+            db___valid_time: valid_time.parse::<DateTime<FixedOffset>>().unwrap(),
             tx___tx_id: Deserialize::deserialize(&edn[":crux.tx/tx-id"]).unwrap_or(0usize),
             #[cfg(feature = "time_as_str")]
             tx___tx_time: Deserialize::deserialize(&edn[":crux.tx/tx-time"])?,
             #[cfg(not(feature = "time_as_str"))]
-            tx___tx_time: tx_time
-                .parse::<DateTime<FixedOffset>>()
-                .unwrap(),
+            tx___tx_time: tx_time.parse::<DateTime<FixedOffset>>().unwrap(),
             db__doc: edn.get(":crux.db/doc").map(|d| d.to_owned()),
         })
     }
