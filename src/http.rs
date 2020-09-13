@@ -546,7 +546,7 @@ mod http {
     }
 
     #[test]
-    #[should_panic(expected = "ParseEdnError(\"H could not be parsed\")")]
+    #[should_panic(expected = "ParseEdnError(\"\\\"H\\\" could not be parsed\")")]
     fn tx_log_error() {
         let _m = mock("GET", "/tx-log")
             .with_status(200)
