@@ -20,6 +20,7 @@ impl Serialize for CruxId {
 impl Deserialize for CruxId {
     fn deserialize(edn: &Edn) -> Result<Self, EdnError> {
         match edn {
+            Edn::Key(k) => Ok(Self::new(k)),
             Edn::Str(s) => Ok(Self::new(s)),
             _ => Err(EdnError::Deserialize(format!(
                 "couldn't convert {} into CruxId",
