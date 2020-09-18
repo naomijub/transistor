@@ -28,9 +28,7 @@ impl Deserialize for TxLogResponse {
             #[cfg(not(feature = "time_as_str"))]
             tx___tx_time: tx_time
                 .parse::<DateTime<FixedOffset>>()
-                .map_err(|_| 
-                    EdnError::Deserialize("Unable to deserialize `:crux.tx/tx-time`, verify if the transaction time you're sending is correct".to_string())
-                )?,
+                .map_err(|_| EdnError::Deserialize("Unable to deserialize `:crux.tx/tx-time`, verify if the transaction time you're sending is correct".to_string()))?,
             tx__event___tx_events: edn_rs::from_edn(&edn[":crux.tx.event/tx-events"])?,
         })
     }
