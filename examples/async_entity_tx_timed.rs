@@ -1,6 +1,6 @@
 use chrono::prelude::*;
 use transistor::client::Crux;
-use transistor::edn_rs::{ser_struct, Serialize, Deserialize, EdnError};
+use transistor::edn_rs::{ser_struct, Deserialize, EdnError, Serialize};
 use transistor::types::http::Action;
 use transistor::types::CruxId;
 

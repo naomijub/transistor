@@ -1,6 +1,6 @@
 use chrono::prelude::*;
 use transistor::client::Crux;
-use transistor::edn_rs::{ser_struct, Serialize, Deserialize, EdnError};
+use transistor::edn_rs::{ser_struct, Deserialize, EdnError, Serialize};
 use transistor::types::http::Action;
 use transistor::types::CruxId;
 
@@ -54,7 +54,10 @@ async fn main() {
     //     ),
     // )
 
-    println!("\n Person Parsed Response = {:#?}", edn_rs::from_edn::<Person>(&edn_body));
+    println!(
+        "\n Person Parsed Response = {:#?}",
+        edn_rs::from_edn::<Person>(&edn_body)
+    );
     // Person Parsed Response = Person {
     //     crux__db___id: CruxId(
     //         ":hello-entity",
