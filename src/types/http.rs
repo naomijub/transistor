@@ -136,7 +136,7 @@ impl VecSer for Vec<TimeHistory> {
             String::new()
         } else {
             self.into_iter()
-                .map(|e| e.serialize())
+                .map(edn_rs::to_string)
                 .collect::<Vec<String>>()
                 .join("")
         }

@@ -185,8 +185,8 @@ mod integration {
         };
 
         vec![
-            Action::Put(person1.serialize(), None),
-            Action::Put(person2.serialize(), None),
+            Action::Put(edn_rs::to_string(person1), None),
+            Action::Put(edn_rs::to_string(person2), None),
         ]
     }
 

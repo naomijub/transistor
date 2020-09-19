@@ -9,18 +9,20 @@ fn main() {
         first_name: "Hello".to_string(),
         last_name: "World".to_string(),
     };
-    println!("{:?}", person.clone().serialize());
+    println!("{:?}", edn_rs::to_string(person.clone()));
     //"{ :crux.db/id :hello-entity, :first-name \"Hello\", :last-name \"World\", }"
 
     let client = Crux::new("localhost", "3000").http_client();
-    let put_person = Action::Put(person.clone().serialize(), None);
+    let put_person = Action::Put(edn_rs::to_string(person.clone()), None);
 
     let body = client.tx_log(vec![put_person]).unwrap();
     // "[[:crux.tx/put { :crux.db/id :hello-entity, :first-name \"Hello\", :last-name \"World\", }]]"
     println!("\n Body = {:?}", body);
     //  Body = "{:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}"
 
-    let edn_body = client.entity(person.crux__db___id.serialize()).unwrap();
+    let edn_body = client
+        .entity(edn_rs::to_string(person.crux__db___id))
+        .unwrap();
     println!("\n Edn Body = {:#?}", edn_body.clone());
     // Edn Body = Map(
     //     Map(

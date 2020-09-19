@@ -24,9 +24,9 @@ async fn main() {
     };
 
     let client = Crux::new("localhost", "3000").http_client();
-    let action1 = Action::Put(crux.serialize(), None);
-    let action2 = Action::Put(psql.serialize(), None);
-    let action3 = Action::Put(mysql.serialize(), None);
+    let action1 = Action::Put(edn_rs::to_string(crux), None);
+    let action2 = Action::Put(edn_rs::to_string(psql), None);
+    let action3 = Action::Put(edn_rs::to_string(mysql), None);
 
     let _ = client.tx_log(vec![action1, action2, action3]).await;
 
