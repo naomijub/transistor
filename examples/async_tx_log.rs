@@ -17,13 +17,14 @@ async fn main() {
         last_name: "Manuel".to_string(),
     };
 
-    let action1 = Action::Put(person1.serialize(), None);
-    let action2 = Action::Put(person2.serialize(), None);
+    let action1 = Action::Put(edn_rs::to_string(person1), None);
+    let action2 = Action::Put(edn_rs::to_string(person2), None);
 
     let body = Crux::new("localhost", "3000")
         .http_client()
         .tx_log(vec![action1, action2])
-        .await;
+        .await
+        .unwrap();
 
     println!("body = {:?}", body);
     //  Body = "{:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}"

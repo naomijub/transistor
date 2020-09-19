@@ -9,7 +9,7 @@ use crate::types::{
     response::{EntityHistoryResponse, EntityTxResponse, TxLogResponse, TxLogsResponse},
 };
 use chrono::prelude::*;
-use edn_rs::{edn, Edn, Map, Serialize};
+use edn_rs::{edn, Edn, Map};
 #[cfg(not(feature = "async"))]
 use reqwest::blocking;
 use reqwest::header::HeaderMap;
@@ -37,7 +37,7 @@ impl HttpClient {
     pub fn tx_log(&self, actions: Vec<Action>) -> Result<TxLogResponse, CruxError> {
         let actions_str = actions
             .into_iter()
-            .map(|edn| edn.serialize())
+            .map(edn_rs::to_string)
             .collect::<Vec<String>>()
             .join(", ");
         let mut s = String::new();
@@ -180,7 +180,7 @@ impl HttpClient {
             "{}/entity-history/{}?sort-order={}&with-docs={}",
             self.uri,
             hash,
-            order.serialize(),
+            edn_rs::to_string(order),
             with_docs
         );
         let resp = self
@@ -207,9 +207,9 @@ impl HttpClient {
             "{}/entity-history/{}?sort-order={}&with-docs={}{}",
             self.uri,
             hash,
-            order.serialize(),
+            edn_rs::to_string(order),
             with_docs,
-            time.serialize().replace("[", "").replace("]", ""),
+            edn_rs::to_string(time).replace("[", "").replace("]", ""),
         );
 
         let resp = self
@@ -229,7 +229,7 @@ impl HttpClient {
             .client
             .post(&format!("{}/query", self.uri))
             .headers(self.headers.clone())
-            .body(query.serialize())
+            .body(edn_rs::to_string(query))
             .send()?
             .text()?;
 
@@ -244,7 +244,7 @@ impl HttpClient {
     pub async fn tx_log(&self, actions: Vec<Action>) -> Result<TxLogResponse, CruxError> {
         let actions_str = actions
             .into_iter()
-            .map(|edn| edn.serialize())
+            .map(edn_rs::to_string)
             .collect::<Vec<String>>()
             .join(", ");
         let mut s = String::new();
@@ -387,7 +387,7 @@ impl HttpClient {
             "{}/entity-history/{}?sort-order={}&with-docs={}",
             self.uri,
             hash,
-            order.serialize(),
+            edn_rs::to_string(order),
             with_docs
         );
         let resp = self
@@ -413,9 +413,9 @@ impl HttpClient {
             "{}/entity-history/{}?sort-order={}&with-docs={}{}",
             self.uri,
             hash,
-            order.serialize(),
+            edn_rs::to_string(order),
             with_docs,
-            time.serialize().replace("[", "").replace("]", ""),
+            edn_rs::to_string(time).replace("[", "").replace("]", ""),
         );
 
         let resp = self
@@ -435,7 +435,7 @@ impl HttpClient {
             .client
             .post(&format!("{}/query", self.uri))
             .headers(self.headers.clone())
-            .body(query.serialize())
+            .body(edn_rs::to_string(query))
             .send()
             .await?
             .text()
@@ -522,8 +522,8 @@ mod http {
             last_name: "Manuel".to_string(),
         };
 
-        let action1 = Action::Put(person1.serialize(), None);
-        let action2 = Action::Put(person2.serialize(), None);
+        let action1 = Action::Put(edn_rs::to_string(person1), None);
+        let action2 = Action::Put(edn_rs::to_string(person2), None);
 
         let response = Crux::new("localhost", "4000")
             .http_client()

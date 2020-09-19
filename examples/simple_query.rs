@@ -24,17 +24,17 @@ fn main() -> Result<(), CruxError> {
         name: "MySQL".to_string(),
         is_sql: true,
     };
-    println!("{:?}", crux.clone().serialize());
-    println!("{:?}", psql.clone().serialize());
-    println!("{:?}", mysql.clone().serialize());
+    println!("{:?}", edn_rs::to_string(crux.clone()));
+    println!("{:?}", edn_rs::to_string(psql.clone()));
+    println!("{:?}", edn_rs::to_string(mysql.clone()));
     // "{ :crux.db/id :crux, :name \"Crux Datalog\", :is-sql false, }"
     // "{ :crux.db/id :postgres, :name \"Postgres\", :is-sql true, }"
     // "{ :crux.db/id :mysql, :name \"MySQL\", :is-sql true, }"
 
     let client = Crux::new("localhost", "3000").http_client();
-    let action1 = Action::Put(crux.serialize(), None);
-    let action2 = Action::Put(psql.serialize(), None);
-    let action3 = Action::Put(mysql.serialize(), None);
+    let action1 = Action::Put(edn_rs::to_string(crux), None);
+    let action2 = Action::Put(edn_rs::to_string(psql), None);
+    let action3 = Action::Put(edn_rs::to_string(mysql), None);
 
     let _ = client.tx_log(vec![action1, action2, action3])?;
     // Request body for vec![action1, action2]

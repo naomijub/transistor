@@ -14,7 +14,7 @@ fn main() -> Result<(), CruxError> {
     };
 
     let client = Crux::new("localhost", "3000").http_client();
-    let put_action = Action::Put(crux.clone().serialize(), None);
+    let put_action = Action::Put(edn_rs::to_string(crux.clone()), None);
     let _ = client.tx_log(vec![put_action])?;
 
     let query = Query::find(vec!["?d"])?
@@ -23,18 +23,18 @@ fn main() -> Result<(), CruxError> {
 
     let query_response = client.query(query)?;
 
-    let id = CruxId::new(&query_response.iter().next().unwrap()[0]).serialize();
+    let id = edn_rs::to_string(CruxId::new(&query_response.iter().next().unwrap()[0]));
     let edn_body = client.entity(id).unwrap();
     println!("{:?}", edn_body);
     // Map(Map({":crux.db/id": Key(":crux"), ":is-sql": Bool(false), ":name": Str("Crux Datalog")}))
 
     crux.name = "banana".to_string();
     let match_action = Action::Match(
-        CruxId::new(":crux").serialize(),
-        crux.clone().serialize(),
+        edn_rs::to_string(CruxId::new(":crux")),
+        edn_rs::to_string(crux.clone()),
         None,
     );
-    let put_action = Action::Put(crux.clone().serialize(), None);
+    let put_action = Action::Put(edn_rs::to_string(crux.clone()), None);
     let result = client.tx_log(vec![match_action, put_action])?;
 
     println!("{:?}", result);
@@ -46,7 +46,7 @@ fn main() -> Result<(), CruxError> {
 
     let query_response = client.query(query)?;
 
-    let id = CruxId::new(&query_response.iter().next().unwrap()[0]).serialize();
+    let id = edn_rs::to_string(CruxId::new(&query_response.iter().next().unwrap()[0]));
     let edn_body = client.entity(id).unwrap();
     println!("{:?}", edn_body);
     // Map(Map({":crux.db/id": Key(":crux"), ":is-sql": Bool(false), ":name": Str("Crux Datalog")}))
