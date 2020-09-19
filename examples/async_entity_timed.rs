@@ -1,6 +1,6 @@
 use chrono::prelude::*;
 use transistor::client::Crux;
-use transistor::edn_rs::{ser_struct, Serialize};
+use transistor::edn_rs::{ser_struct, Serialize, Deserialize, EdnError};
 use transistor::types::http::Action;
 use transistor::types::CruxId;
 
@@ -54,7 +54,7 @@ async fn main() {
     //     ),
     // )
 
-    println!("\n Person Parsed Response = {:#?}", Person::from(edn_body));
+    println!("\n Person Parsed Response = {:#?}", edn_rs::from_edn::<Person>(&edn_body));
     // Person Parsed Response = Person {
     //     crux__db___id: CruxId(
     //         ":hello-entity",
@@ -74,12 +74,12 @@ ser_struct! {
     }
 }
 
-impl From<edn_rs::Edn> for Person {
-    fn from(edn: edn_rs::Edn) -> Self {
-        Self {
-            crux__db___id: CruxId::new(&edn[":crux.db/id"].to_string()),
-            first_name: edn[":first-name"].to_string(),
-            last_name: edn[":last-name"].to_string(),
-        }
+impl Deserialize for Person {
+    fn deserialize(edn: &edn_rs::Edn) -> Result<Self, EdnError> {
+        Ok(Self {
+            crux__db___id: edn_rs::from_edn(&edn[":crux.db/id"])?,
+            first_name: edn_rs::from_edn(&edn[":first-name"])?,
+            last_name: edn_rs::from_edn(&edn[":last-name"])?,
+        })
     }
 }
