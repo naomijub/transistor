@@ -29,11 +29,13 @@ async fn main() {
     let _ = Crux::new("localhost", "3000")
         .http_client()
         .tx_log(vec![action1, action2])
-        .await;
+        .await
+        .unwrap();
 
     let edn_body = client
         .entity_timed(edn_rs::to_string(person1.crux__db___id), None, Some(timed))
-        .await;
+        .await
+        .unwrap();
 
     println!("\n Edn Body = {:#?}", edn_body);
     // Edn Body = Map(
@@ -52,10 +54,7 @@ async fn main() {
     //     ),
     // )
 
-    println!(
-        "\n Person Parsed Response = {:#?}",
-        Person::from(edn_body.unwrap())
-    );
+    println!("\n Person Parsed Response = {:#?}", Person::from(edn_body));
     // Person Parsed Response = Person {
     //     crux__db___id: CruxId(
     //         ":hello-entity",

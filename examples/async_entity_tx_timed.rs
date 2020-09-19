@@ -29,11 +29,13 @@ async fn main() {
     let _ = Crux::new("localhost", "3000")
         .http_client()
         .tx_log(vec![action1, action2])
-        .await;
+        .await
+        .unwrap();
 
     let edn_body = client
         .entity_tx_timed(edn_rs::to_string(person1.crux__db___id), None, Some(timed))
-        .await;
+        .await
+        .unwrap();
 
     println!("\n Edn Body = {:#?}", edn_body);
     // Edn Body = Map(

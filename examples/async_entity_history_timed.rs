@@ -37,20 +37,23 @@ async fn main() {
     let _ = Crux::new("localhost", "3000")
         .http_client()
         .tx_log(vec![action1, action2])
-        .await;
+        .await
+        .unwrap();
 
     let tx_body = client
         .entity_tx(edn_rs::to_string(person1.crux__db___id))
-        .await;
+        .await
+        .unwrap();
 
     let entity_history = client
         .entity_history_timed(
-            tx_body.unwrap().db___id.clone(),
+            tx_body.db___id.clone(),
             Order::Asc,
             true,
             vec![time_history],
         )
-        .await;
+        .await
+        .unwrap();
 
     println!("{:#?}", entity_history);
     // EntityHistoryResponse {
