@@ -1,6 +1,6 @@
 use chrono::prelude::*;
 use transistor::client::Crux;
-use transistor::edn_rs::{ser_struct, Serialize};
+use transistor::edn_rs::{ser_struct, Deserialize, EdnError, Serialize};
 use transistor::types::http::Action;
 use transistor::types::CruxId;
 
@@ -23,17 +23,19 @@ async fn main() {
         .parse::<DateTime<FixedOffset>>()
         .unwrap();
 
-    let action1 = Action::Put(person1.clone().serialize(), Some(timed));
-    let action2 = Action::Put(person2.serialize(), Some(timed));
+    let action1 = Action::Put(edn_rs::to_string(person1.clone()), Some(timed));
+    let action2 = Action::Put(edn_rs::to_string(person2), Some(timed));
 
     let _ = Crux::new("localhost", "3000")
         .http_client()
         .tx_log(vec![action1, action2])
-        .await;
+        .await
+        .unwrap();
 
     let edn_body = client
-        .entity_tx_timed(person1.crux__db___id.serialize(), None, Some(timed))
-        .await;
+        .entity_tx_timed(edn_rs::to_string(person1.crux__db___id), None, Some(timed))
+        .await
+        .unwrap();
 
     println!("\n Edn Body = {:#?}", edn_body);
     // Edn Body = Map(
@@ -63,12 +65,12 @@ ser_struct! {
     }
 }
 
-impl From<edn_rs::Edn> for Person {
-    fn from(edn: edn_rs::Edn) -> Self {
-        Self {
-            crux__db___id: CruxId::new(&edn[":crux.db/id"].to_string()),
-            first_name: edn[":first-name"].to_string(),
-            last_name: edn[":last-name"].to_string(),
-        }
+impl Deserialize for Person {
+    fn deserialize(edn: &edn_rs::Edn) -> Result<Self, EdnError> {
+        Ok(Self {
+            crux__db___id: edn_rs::from_edn(&edn[":crux.db/id"])?,
+            first_name: edn_rs::from_edn(&edn[":first-name"])?,
+            last_name: edn_rs::from_edn(&edn[":last-name"])?,
+        })
     }
 }

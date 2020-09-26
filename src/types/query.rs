@@ -190,19 +190,19 @@ impl Query {
 impl Serialize for Query {
     fn serialize(self) -> String {
         let mut q = String::from("{:query\n {");
-        q.push_str(&self.find.serialize());
-        q.push_str(&self.where_.unwrap().serialize());
+        q.push_str(&edn_rs::to_string(self.find));
+        q.push_str(&edn_rs::to_string(self.where_.unwrap()));
         if self.args.is_some() {
-            q.push_str(&self.args.unwrap().serialize());
+            q.push_str(&edn_rs::to_string(self.args.unwrap()));
         }
         if self.order_by.is_some() {
-            q.push_str(&self.order_by.unwrap().serialize());
+            q.push_str(&edn_rs::to_string(self.order_by.unwrap()));
         }
         if self.limit.is_some() {
-            q.push_str(&self.limit.unwrap().serialize());
+            q.push_str(&edn_rs::to_string(self.limit.unwrap()));
         }
         if self.offset.is_some() {
-            q.push_str(&self.offset.unwrap().serialize());
+            q.push_str(&edn_rs::to_string(self.offset.unwrap()));
         }
         if self.full_results == true {
             q.push_str(" :full-results? true\n")
@@ -303,7 +303,6 @@ fn args_key_bset(args: &Vec<&str>) -> BTreeSet<String> {
 mod test {
     use super::Query;
     use crate::client::Crux;
-    use edn_rs::Serialize;
 
     #[test]
     fn query_with_find_and_where() {
@@ -315,7 +314,7 @@ mod test {
             .unwrap()
             .build();
 
-        assert_eq!(q.unwrap().serialize(), expected);
+        assert_eq!(edn_rs::to_string(q.unwrap()), expected);
     }
 
     #[test]
@@ -339,7 +338,7 @@ mod test {
             .unwrap()
             .build();
 
-        assert_eq!(q.unwrap().serialize(), expected);
+        assert_eq!(edn_rs::to_string(q.unwrap()), expected);
     }
 
     #[test]
@@ -354,7 +353,7 @@ mod test {
             .unwrap()
             .build();
 
-        assert_eq!(q.unwrap().serialize(), expected);
+        assert_eq!(edn_rs::to_string(q.unwrap()), expected);
     }
 
     #[test]
@@ -369,7 +368,7 @@ mod test {
             .offset(10)
             .build();
 
-        assert_eq!(q.unwrap().serialize(), expected);
+        assert_eq!(edn_rs::to_string(q.unwrap()), expected);
     }
 
     #[test]
@@ -388,7 +387,7 @@ mod test {
             .offset(10)
             .build();
 
-        assert_eq!(q.unwrap().serialize(), expected);
+        assert_eq!(edn_rs::to_string(q.unwrap()), expected);
     }
 
     #[test]
@@ -464,6 +463,6 @@ mod test {
             .with_full_results()
             .build();
 
-        assert_eq!(q.unwrap().serialize(), expected);
+        assert_eq!(edn_rs::to_string(q.unwrap()), expected);
     }
 }

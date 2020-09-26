@@ -15,13 +15,13 @@ fn main() {
         first_name: "Diego".to_string(),
         last_name: "Manuel".to_string(),
     };
-    println!("{:?}", person1.clone().serialize());
+    println!("{:?}", edn_rs::to_string(person1.clone()));
     //"{ :crux.db/id :jorge-3, :first-name \"Michael\", :last-name \"Jorge\", }"
-    println!("{:?}", person2.clone().serialize());
+    println!("{:?}", edn_rs::to_string(person2.clone()));
     //"{ :crux.db/id :manuel-1, :first-name \"Diego\", :last-name \"Manuel\", }"
 
-    let action1 = Action::Put(person1.serialize(), None);
-    let action2 = Action::Put(person2.serialize(), None);
+    let action1 = Action::Put(edn_rs::to_string(person1), None);
+    let action2 = Action::Put(edn_rs::to_string(person2), None);
 
     let body = Crux::new("localhost", "3000")
         .http_client()

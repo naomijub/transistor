@@ -92,8 +92,8 @@ let person2 = Person {
     ..
 };
 
-let action1 = Action::Put(person1.serialize());
-let action2 = Action::Put(person2.serialize());
+let action1 = Action::Put(edn_rs::to_string(person1));
+let action2 = Action::Put(edn_rs::to_string(person2));
 
 let body = client.tx_log(vec![action1, action2]).unwrap();
 // {:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}
@@ -147,7 +147,7 @@ let person = Person {
 
 let client = Crux::new("localhost", "3000").http_client();
 
-let edn_body = client.entity(person.crux__db___id.serialize()).unwrap();
+let edn_body = client.entity(edn_rs::to_string(person.crux__db___id)).unwrap();
 // Map(
 //     Map(
 //         {
@@ -180,7 +180,7 @@ let person = Person {
 
 let client = Crux::new("localhost", "3000").http_client();
 
-let tx_body = client.entity_tx(person.crux__db___id.serialize()).unwrap();
+let tx_body = client.entity_tx(edn_rs::to_string(person.crux__db___id)).unwrap();
 // EntityTxResponse {
 //     db___id: "d72ccae848ce3a371bd313865cedc3d20b1478ca",
 //     db___content_hash: "1828ebf4466f98ea3f5252a58734208cd0414376",
@@ -204,7 +204,7 @@ let person = Person {
 
 let client = Crux::new("localhost", "3000").http_client();
 
-let tx_body = client.entity_tx(person.crux__db___id.serialize()).unwrap();
+let tx_body = client.entity_tx(edn_rs::to_string(person.crux__db___id)).unwrap();
 
 let entity_history = client.entity_history(tx_body.db___id.clone(), Order::Asc, true);
 // EntityHistoryResponse { history: [
@@ -346,7 +346,7 @@ fn mock_client() {
         /// ...
     };
 
-    let actions = vec![Action::Put(person1.serialize()), Action::Put(person2.serialize())];
+    let actions = vec![Action::Put(edn_rs::to_string(person1)), Action::Put(edn_rs::to_string(person2))];
     
     let body = Crux::new("localhost", "3000")
         .http_mock()
@@ -414,9 +414,9 @@ async fn main() {
     };
 
     let client = Crux::new("localhost", "3000").http_client();
-    let action1 = Action::Put(crux.serialize(), None);
-    let action2 = Action::Put(psql.serialize(), None);
-    let action3 = Action::Put(mysql.serialize(), None);
+    let action1 = Action::Put(edn_rs::to_string(crux), None);
+    let action2 = Action::Put(edn_rs::to_string(psql), None);
+    let action3 = Action::Put(edn_rs::to_string(mysql), None);
 
     let _ = client.tx_log(vec![action1, action2, action3]).await;
 
