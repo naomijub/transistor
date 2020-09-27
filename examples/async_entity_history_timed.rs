@@ -1,7 +1,7 @@
 use chrono::prelude::*;
 use transistor::client::Crux;
 use transistor::edn_rs::{ser_struct, Serialize};
-use transistor::types::http::{Action, Order, TimeHistory};
+use transistor::types::http::{Actions, Order, TimeHistory};
 use transistor::types::CruxId;
 
 #[tokio::main]
@@ -31,12 +31,14 @@ async fn main() {
         .unwrap();
     let time_history = TimeHistory::ValidTime(Some(start_timed), Some(end_timed));
 
-    let action1 = Action::put(person1.clone()).with_valid_date(timed);
-    let action2 = Action::put(person2).with_valid_date(timed);
+    let actions = Actions::new()
+        .append_put_timed(person1, timed)
+        .append_put_timed(person2, timed)
+        .build();
 
     let _ = Crux::new("localhost", "3000")
         .http_client()
-        .tx_log(vec![action1, action2])
+        .tx_log(actions)
         .await
         .unwrap();
 

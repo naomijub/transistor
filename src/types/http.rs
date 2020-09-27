@@ -20,6 +20,71 @@ pub enum Action {
     Match(String, String, Option<DateTime<FixedOffset>>),
 }
 
+pub struct Actions {
+    actions: Vec<Action>,
+}
+
+impl Actions {
+    pub fn new() -> Self {
+        Self {
+            actions: Vec::new(),
+        }
+    }
+
+    pub fn append_put<T: Serialize>(mut self, action: T) -> Self {
+        self.actions.push(Action::put(action));
+        self
+    }
+
+    pub fn append_put_timed<T: Serialize>(
+        mut self,
+        action: T,
+        date: DateTime<FixedOffset>,
+    ) -> Self {
+        self.actions.push(Action::put(action).with_valid_date(date));
+        self
+    }
+
+    pub fn append_delete(mut self, id: crate::types::CruxId) -> Self {
+        self.actions.push(Action::delete(id));
+        self
+    }
+
+    pub fn append_delete_timed(
+        mut self,
+        id: crate::types::CruxId,
+        date: DateTime<FixedOffset>,
+    ) -> Self {
+        self.actions.push(Action::delete(id).with_valid_date(date));
+        self
+    }
+
+    pub fn append_evict(mut self, id: crate::types::CruxId) -> Self {
+        self.actions.push(Action::evict(id));
+        self
+    }
+
+    pub fn append_match_doc<T: Serialize>(mut self, id: crate::types::CruxId, action: T) -> Self {
+        self.actions.push(Action::match_doc(id, action));
+        self
+    }
+
+    pub fn append_match_doc_timed<T: Serialize>(
+        mut self,
+        id: crate::types::CruxId,
+        action: T,
+        date: DateTime<FixedOffset>,
+    ) -> Self {
+        self.actions
+            .push(Action::match_doc(id, action).with_valid_date(date));
+        self
+    }
+
+    pub fn build(self) -> Vec<Action> {
+        self.actions
+    }
+}
+
 impl Action {
     /// Creates an `Action::Put` enforcing types for `action`
     pub fn put<T: Serialize>(action: T) -> Action {

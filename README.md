@@ -265,7 +265,60 @@ let is_sql = client.query(query_is_sql.unwrap()).unwrap();
 * [`Delete`](https://opencrux.com/reference/transactions.html#delete) - Deletes the specific document at a given valid time
 * [`Evict`](https://opencrux.com/reference/transactions.html#evict) - Evicts a document entirely, including all historical versions (receives only the ID to evict)
 * [`Match`](https://opencrux.com/reference/transactions.html#match) - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue
-* To create an `Action` use the static methods for `put`, `evict`, `delete`, `match` to create an `Action`. To add a `:valid-date` to your `Action` call builder function `with_valid_date`, like `Action::put(person).with_valid_date(timed)`.
+* To create a single `Action` use the static methods for `put`, `evict`, `delete`, `match_doc`. To add a `:valid-date` to your `Action` call builder function `with_valid_date`, like `Action::put(person).with_valid_date(timed)`.
+
+[`Actions`](https://docs.rs/transistor/1.3.11/transistor/http/enum.Actions.html) is a builder struct to help you create a `Vec<Action>` for `tx_log`. Available functions are:
+* `new` static method to instantiate struct `Actions`.
+* `append_put<T: Serialize>(action: T)` appends an `Action::Put` to `Actions` with no `valid-time`.
+* `append_put_timed<T: Serialize>(action: T, date: DateTime<FixedOffset>)` appends an `Action::Put` to `Actions` with `valid-time`.
+* `append_delete(id: crate::types::CruxId)` appends an `Action::Delete` to `Actions` with no `valid-time`.
+* `append_delete_timed(id: crate::types::CruxId, date: DateTime<FixedOffset>)` appends an `Action::Delete` to `Actions` with `valid-time`.
+* `append_evict(id: crate::types::CruxId)` appends an `Action::Evict` to `Actions`.
+* `append_match_doc<T: Serialize>(id: crate::types::CruxId, action: T)` appends an `Action::Match` to `Actions` with no `valid-time`.
+* `append_match_doc_timed<T: Serialize>(id: crate::types::CruxId, action: T, date: DateTime<FixedOffset>)` appends an `Action::Match` to `Actions` with `valid-time`.
+* `build` generates the `Vec<Action>` from `Actions`
+
+```rust
+use transistor::client::Crux;
+use transistor::types::http::Actions;
+
+fn main() -> Result<(), CruxError> {
+    let crux = Database {
+        // ...
+    };
+
+    let psql = Database {
+        // ...
+    };
+
+    let mysql = Database {
+        // ...
+    };
+
+    let cassandra = Database {
+        // ...
+    };
+
+    let sqlserver = Database {
+        // ...
+    };
+
+    let client = Crux::new("localhost", "3000").http_client();
+    let timed = "2014-11-28T21:00:09-09:00"
+        .parse::<DateTime<FixedOffset>>()
+        .unwrap();
+
+    let actions: Vec<Action> = Actions::new()
+        .append_put(crux)
+        .append_put(psql)
+        .append_put(mysql)
+        .append_put_timed(cassandra, timed)
+        .append_put(sqlserver)
+        .build();
+
+    let _ = client.tx_log(actions)?;
+}
+```
 
 [`Query`](https://docs.rs/transistor/1.3.11/transistor/types/query/struct.Query.html) is a struct responsible for creating the fields and serializing them into the correct `query` format. It has a function for each field and a `build` function to help check if it is correctyly formatted.
 * `find` is a static builder function to define the elements inside the `:find` clause.
@@ -281,6 +334,7 @@ Errors are defined in the [`CruxError`](https://docs.rs/transistor/1.3.11/transi
 * `RequestError` is originated by `reqwest` crate. Failed to make HTTP request.
 * `QueryFormatError` is originated when the provided Query struct did not match schema.
 * `QueryError` is responsible for encapsulation the Stacktrace error from Crux response:
+
 ```rust
 use transistor::client::Crux;
 use transistor::types::{query::Query};
