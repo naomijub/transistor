@@ -36,22 +36,13 @@ impl HttpClient {
     /// to CruxDB.
     /// The "write" endpoint, to post transactions.
     pub fn tx_log(&self, actions: Actions) -> Result<TxLogResponse, CruxError> {
-        let actions_str = actions
-            .build()
-            .into_iter()
-            .map(edn_rs::to_string)
-            .collect::<Vec<String>>()
-            .join(", ");
-        let mut s = String::new();
-        s.push_str("[");
-        s.push_str(&actions_str);
-        s.push_str("]");
+        let body = actions.build();
 
         let resp = self
             .client
             .post(&format!("{}/tx-log", self.uri))
             .headers(self.headers.clone())
-            .body(s)
+            .body(body)
             .send()?
             .text()?;
 
@@ -246,22 +237,13 @@ impl HttpClient {
 #[cfg(feature = "async")]
 impl HttpClient {
     pub async fn tx_log(&self, actions: Actions) -> Result<TxLogResponse, CruxError> {
-        let actions_str = actions
-            .build()
-            .into_iter()
-            .map(edn_rs::to_string)
-            .collect::<Vec<String>>()
-            .join(", ");
-        let mut s = String::new();
-        s.push_str("[");
-        s.push_str(&actions_str);
-        s.push_str("]");
+        let body = actions.build();
 
         let resp = self
             .client
             .post(&format!("{}/tx-log", self.uri))
             .headers(self.headers.clone())
-            .body(s)
+            .body(body)
             .send()
             .await?
             .text()
