@@ -14,13 +14,13 @@ fn main() {
 
     let client = Crux::new("localhost", "3000").http_client();
 
-    let put_person = Action::Put(edn_rs::to_string(person.clone()), None);
+    let put_person = Action::put(person.clone(), None);
     let body = client.tx_log(vec![put_person]).unwrap();
     // "[[:crux.tx/put { :crux.db/id :jorge-3, :first-name \"Michael\", :last-name \"Jorge\", }]]"
     println!("\n Body = {:?}", body);
     //  Body = "{:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}"
 
-    let evict_person = Action::Evict(edn_rs::to_string(person.crux__db___id));
+    let evict_person = Action::evict(person.crux__db___id);
     let evict_body = client.tx_log(vec![evict_person]).unwrap();
     println!("\n Evict Body = {:?}", evict_body);
 }

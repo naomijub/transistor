@@ -12,12 +12,34 @@ static DATETIME_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S";
 /// * `Delete` - Deletes the specific document at a given valid time, if `Option<DateTime<FixedOffset>>` is `None` it deletes the last `valid-`time` else it deletes the passed `valid-time`.
 /// * `Evict` - Evicts a document entirely, including all historical versions (receives only the ID to evict).
 /// * `Match` - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue. First argument is struct's `crux__db___id`,  the second is the serialized document that you want to match and the third argument is an `Option<DateTime<FixedOffset>>` which corresponds to a `valid-time` for the `Match`
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq)] // Id to CruxId
 pub enum Action {
     Put(String, Option<DateTime<FixedOffset>>),
     Delete(String, Option<DateTime<FixedOffset>>),
     Evict(String),
     Match(String, String, Option<DateTime<FixedOffset>>),
+}
+
+impl Action {
+    pub fn put<T: Serialize>(edn: T, date: Option<DateTime<FixedOffset>>) -> Action {
+        Action::Put(edn_rs::to_string(edn), date)
+    }
+
+    pub fn delete(id: crate::types::CruxId, date: Option<DateTime<FixedOffset>>) -> Action {
+        Action::Delete(edn_rs::to_string(id), date)
+    }
+
+    pub fn evict(id: crate::types::CruxId) -> Action {
+        Action::Evict(edn_rs::to_string(id))
+    }
+
+    pub fn match_doc<T: Serialize>(
+        id: crate::types::CruxId,
+        edn: T,
+        date: Option<DateTime<FixedOffset>>,
+    ) -> Action {
+        Action::Match(edn_rs::to_string(id), edn_rs::to_string(edn), date)
+    }
 }
 
 impl Serialize for Action {
@@ -29,10 +51,10 @@ impl Serialize for Action {
                 edn,
                 date.format(ACTION_DATE_FORMAT).to_string()
             ),
-            Action::Delete(edn, None) => format!("[:crux.tx/delete {}]", edn),
-            Action::Delete(edn, Some(date)) => format!(
+            Action::Delete(id, None) => format!("[:crux.tx/delete {}]", id),
+            Action::Delete(id, Some(date)) => format!(
                 "[:crux.tx/delete {} #inst \"{}\"]",
-                edn,
+                id,
                 date.format(ACTION_DATE_FORMAT).to_string()
             ),
             Action::Evict(id) => {

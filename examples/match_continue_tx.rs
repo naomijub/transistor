@@ -28,13 +28,9 @@ fn main() -> Result<(), CruxError> {
     println!("{:?}", edn_body);
     // Map(Map({":crux.db/id": Key(":crux"), ":is-sql": Bool(false), ":name": Str("Crux Datalog")}))
 
-    let match_action = Action::Match(
-        edn_rs::to_string(CruxId::new(":crux")),
-        edn_rs::to_string(crux.clone()),
-        None,
-    );
+    let match_action = Action::match_doc(CruxId::new(":crux"), crux.clone(), None);
     crux.name = "banana".to_string();
-    let put_action = Action::Put(edn_rs::to_string(crux.clone()), None);
+    let put_action = Action::put(crux.clone(), None);
     let result = client.tx_log(vec![match_action, put_action])?;
 
     println!("{:?}", result);
