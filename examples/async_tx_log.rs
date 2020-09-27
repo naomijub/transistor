@@ -17,8 +17,8 @@ async fn main() {
         last_name: "Manuel".to_string(),
     };
 
-    let action1 = Action::Put(edn_rs::to_string(person1), None);
-    let action2 = Action::Put(edn_rs::to_string(person2), None);
+    let action1 = Action::put(person1, None);
+    let action2 = Action::put(person2, None);
 
     let body = Crux::new("localhost", "3000")
         .http_client()

@@ -23,8 +23,8 @@ async fn main() {
         .parse::<DateTime<FixedOffset>>()
         .unwrap();
 
-    let action1 = Action::Put(edn_rs::to_string(person1.clone()), Some(timed));
-    let action2 = Action::Put(edn_rs::to_string(person2), Some(timed));
+    let action1 = Action::Put(person1.clone(), Some(timed));
+    let action2 = Action::Put(person2, Some(timed));
 
     let _ = Crux::new("localhost", "3000")
         .http_client()
@@ -33,7 +33,7 @@ async fn main() {
         .unwrap();
 
     let edn_body = client
-        .entity_tx_timed(edn_rs::to_string(person1.crux__db___id), None, Some(timed))
+        .entity_tx_timed(person1.crux__db___id, None, Some(timed))
         .await
         .unwrap();
 

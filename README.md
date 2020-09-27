@@ -92,8 +92,9 @@ let person2 = Person {
     ..
 };
 
-let action1 = Action::Put(edn_rs::to_string(person1));
-let action2 = Action::Put(edn_rs::to_string(person2));
+// put expects a `T: Serialize`
+let action1 = Action::put(person1);
+let action2 = Action::put(person2);
 
 let body = client.tx_log(vec![action1, action2]).unwrap();
 // {:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}
@@ -147,7 +148,8 @@ let person = Person {
 
 let client = Crux::new("localhost", "3000").http_client();
 
-let edn_body = client.entity(edn_rs::to_string(person.crux__db___id)).unwrap();
+// entity expects a CruxId
+let edn_body = client.entity(person.crux__db___id).unwrap();
 // Map(
 //     Map(
 //         {
@@ -346,7 +348,7 @@ fn mock_client() {
         /// ...
     };
 
-    let actions = vec![Action::Put(edn_rs::to_string(person1)), Action::Put(edn_rs::to_string(person2))];
+    let actions = vec![Action::put(person1), Action::put(person2)];
     
     let body = Crux::new("localhost", "3000")
         .http_mock()
@@ -414,9 +416,9 @@ async fn main() {
     };
 
     let client = Crux::new("localhost", "3000").http_client();
-    let action1 = Action::Put(edn_rs::to_string(crux), None);
-    let action2 = Action::Put(edn_rs::to_string(psql), None);
-    let action3 = Action::Put(edn_rs::to_string(mysql), None);
+    let action1 = Action::put(crux, None);
+    let action2 = Action::put(psql, None);
+    let action3 = Action::put(mysql, None);
 
     let _ = client.tx_log(vec![action1, action2, action3]).await;
 

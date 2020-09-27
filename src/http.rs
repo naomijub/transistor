@@ -7,6 +7,7 @@ use crate::types::{
     http::{Action, Order},
     query::Query,
     response::{EntityHistoryResponse, EntityTxResponse, TxLogResponse, TxLogsResponse},
+    CruxId,
 };
 use chrono::prelude::*;
 use edn_rs::{edn, Edn, Map};
@@ -72,14 +73,15 @@ impl HttpClient {
     /// in CruxDB.
     /// Field with `CruxId` is required.
     /// Response is a `reqwest::Result<edn_rs::Edn>` with the last Entity with that ID.
-    pub fn entity(&self, id: String) -> Result<Edn, CruxError> {
-        if !id.starts_with(":") {
+    pub fn entity(&self, id: CruxId) -> Result<Edn, CruxError> {
+        let crux_id = edn_rs::to_string(id);
+        if !crux_id.starts_with(":") {
             return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
         }
 
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&id);
+        s.push_str(&crux_id);
         s.push_str("}");
 
         let resp = self
@@ -97,17 +99,18 @@ impl HttpClient {
     /// Function `entity_timed` is like `entity` but with two optional fields `transaction_time` and `valid_time` that are of type `Option<DateTime<FixedOffset>>`.
     pub fn entity_timed(
         &self,
-        id: String,
+        id: CruxId,
         transaction_time: Option<DateTime<FixedOffset>>,
         valid_time: Option<DateTime<FixedOffset>>,
     ) -> Result<Edn, CruxError> {
-        if !id.starts_with(":") {
+        let crux_id = edn_rs::to_string(id);
+        if !crux_id.starts_with(":") {
             return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
         }
 
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&id);
+        s.push_str(&crux_id);
         s.push_str("}");
 
         let url = build_timed_url(self.uri.clone(), "entity", transaction_time, valid_time);
@@ -278,14 +281,15 @@ impl HttpClient {
         TxLogsResponse::from_str(&resp)
     }
 
-    pub async fn entity(&self, id: String) -> Result<Edn, CruxError> {
-        if !id.starts_with(":") {
+    pub async fn entity(&self, id: CruxId) -> Result<Edn, CruxError> {
+        let crux_id = edn_rs::to_string(id);
+        if !crux_id.starts_with(":") {
             return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
         }
 
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&id);
+        s.push_str(&crux_id);
         s.push_str("}");
 
         let resp = self
@@ -304,17 +308,18 @@ impl HttpClient {
 
     pub async fn entity_timed(
         &self,
-        id: String,
+        id: CruxId,
         transaction_time: Option<DateTime<FixedOffset>>,
         valid_time: Option<DateTime<FixedOffset>>,
     ) -> Result<Edn, CruxError> {
-        if !id.starts_with(":") {
+        let crux_id = edn_rs::to_string(id);
+        if !crux_id.starts_with(":") {
             return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
         }
 
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&id);
+        s.push_str(&crux_id);
         s.push_str("}");
 
         let url = build_timed_url(self.uri.clone(), "entity", transaction_time, valid_time);
@@ -572,9 +577,10 @@ mod http {
             .with_body("{:crux.db/id :hello-entity :first-name \"Hello\", :last-name \"World\"}")
             .create();
 
+        let id = CruxId::new(":ivan");
         let edn_body = Crux::new("localhost", "3000")
             .http_client()
-            .entity(":ivan".to_string())
+            .entity(id)
             .unwrap();
 
         let resp = format!("{:?}", edn_body);

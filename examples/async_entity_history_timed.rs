@@ -31,8 +31,8 @@ async fn main() {
         .unwrap();
     let time_history = TimeHistory::ValidTime(Some(start_timed), Some(end_timed));
 
-    let action1 = Action::Put(edn_rs::to_string(person1.clone()), Some(timed));
-    let action2 = Action::Put(edn_rs::to_string(person2), Some(timed));
+    let action1 = Action::Put(person1.clone(), Some(timed));
+    let action2 = Action::Put(person2, Some(timed));
 
     let _ = Crux::new("localhost", "3000")
         .http_client()
@@ -40,10 +40,7 @@ async fn main() {
         .await
         .unwrap();
 
-    let tx_body = client
-        .entity_tx(edn_rs::to_string(person1.crux__db___id))
-        .await
-        .unwrap();
+    let tx_body = client.entity_tx(person1.crux__db___id).await.unwrap();
 
     let entity_history = client
         .entity_history_timed(

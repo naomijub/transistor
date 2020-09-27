@@ -23,7 +23,7 @@ fn main() -> Result<(), CruxError> {
 
     let query_response = client.query(query)?;
 
-    let id = edn_rs::to_string(CruxId::new(&query_response.iter().next().unwrap()[0]));
+    let id = CruxId::new(&query_response.iter().next().unwrap()[0]);
     let edn_body = client.entity(id).unwrap();
     println!("{:?}", edn_body);
     // Map(Map({":crux.db/id": Key(":crux"), ":is-sql": Bool(false), ":name": Str("Crux Datalog")}))
@@ -42,7 +42,7 @@ fn main() -> Result<(), CruxError> {
 
     let query_response = client.query(query)?;
 
-    let id = edn_rs::to_string(CruxId::new(&query_response.iter().next().unwrap()[0]));
+    let id = CruxId::new(&query_response.iter().next().unwrap()[0]);
     let edn_body = client.entity(id).unwrap();
     println!("{:?}", edn_body);
     // Map(Map({":crux.db/id": Key(":crux"), ":is-sql": Bool(false), ":name": Str("banana")}))
