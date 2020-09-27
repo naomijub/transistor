@@ -2,16 +2,6 @@ use chrono::prelude::*;
 use edn_rs::Serialize;
 static ACTION_DATE_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S%Z";
 static DATETIME_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S";
-
-/// Action to perform in Crux. Receives a serialized Edn.
-///
-/// **First field of your struct should be `crux__db___id: CruxId`**
-///
-/// Allowed actions:
-/// * `PUT` - Write a version of a document can receive an `Option<DateTime<FixedOffset>>` as second argument which corresponds to a `valid-time`.
-/// * `Delete` - Deletes the specific document at a given valid time, if `Option<DateTime<FixedOffset>>` is `None` it deletes the last `valid-`time` else it deletes the passed `valid-time`.
-/// * `Evict` - Evicts a document entirely, including all historical versions (receives only the ID to evict).
-/// * `Match` - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue. First argument is struct's `crux__db___id`,  the second is the serialized document that you want to match and the third argument is an `Option<DateTime<FixedOffset>>` which corresponds to a `valid-time` for the `Match`
 #[derive(Debug, PartialEq)]
 pub(crate) enum Action {
     Put(String, Option<DateTime<FixedOffset>>),
@@ -20,6 +10,7 @@ pub(crate) enum Action {
     Match(String, String, Option<DateTime<FixedOffset>>),
 }
 
+/// Test enum to debug Actions
 #[cfg(feature = "mock")]
 #[derive(Debug, PartialEq)]
 pub enum ActionMock {
@@ -29,6 +20,13 @@ pub enum ActionMock {
     Match(String, String, Option<DateTime<FixedOffset>>),
 }
 
+/// Actions to perform in Crux. It is a builder struct to help you create a `Vec<Action>` for `tx_log`.
+///
+/// Allowed actions:
+/// * `PUT` - Write a version of a document. Functions are `append_put` and `append_put_timed`.
+/// * `Delete` - Deletes the specific document at a given valid time. Functions are `append_delete` and `append_delete_timed`.
+/// * `Evict` - Evicts a document entirely, including all historical versions (receives only the ID to evict). Function is `append_evict`.
+/// * `Match` - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue. Functions are `append_match` and `append_match_timed`.
 pub struct Actions {
     actions: Vec<Action>,
 }

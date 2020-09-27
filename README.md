@@ -76,9 +76,9 @@ let body = client.state().unwrap();
 // }
 ```
 
-* [`tx_log`](https://docs.rs/transistor/1.3.11/transistor/http/struct.HttpClient.html#method.tx_log) requests endpoint [`/tx-log`](https://opencrux.com/reference/http.html#tx-log-post) via `POST`. A Vector of `Action` is expected as argument. The "write" endpoint, to post transactions.
+* [`tx_log`](https://docs.rs/transistor/1.3.11/transistor/http/struct.HttpClient.html#method.tx_log) requests endpoint [`/tx-log`](https://opencrux.com/reference/http.html#tx-log-post) via `POST`. `Actions` is expected as argument. The "write" endpoint, to post transactions.
 ```rust
-use transistor::http::{Action};
+use transistor::http::{Actions};
 use transistor::client::Crux;
 use transistor::types::{CruxId};
 
@@ -92,11 +92,11 @@ let person2 = Person {
     ..
 };
 
-// put expects a `T: Serialize`
-let action1 = Action::put(person1);
-let action2 = Action::put(person2);
+let actions = Actions::new()
+    .append_put(person1)
+    .append_put(person2);
 
-let body = client.tx_log(vec![action1, action2]).unwrap();
+let body = client.tx_log(actions).unwrap();
 // {:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}
 ```
 
@@ -260,22 +260,17 @@ let is_sql = client.query(query_is_sql.unwrap()).unwrap();
 // {[":mysql", "MySQL"], [":postgres", "Postgres"]} BTreeSet
 ```
 
-[`Action`](https://docs.rs/transistor/1.3.11/transistor/http/enum.Action.html) is an enum with a set of options to use in association with the function `tx_log`:
-* [`Put`](https://opencrux.com/reference/transactions.html#put) - Write a version of a document
-* [`Delete`](https://opencrux.com/reference/transactions.html#delete) - Deletes the specific document at a given valid time
-* [`Evict`](https://opencrux.com/reference/transactions.html#evict) - Evicts a document entirely, including all historical versions (receives only the ID to evict)
-* [`Match`](https://opencrux.com/reference/transactions.html#match) - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue
-* To create a single `Action` use the static methods for `put`, `evict`, `delete`, `match_doc`. To add a `:valid-date` to your `Action` call builder function `with_valid_date`, like `Action::put(person).with_valid_date(timed)`.
+### Transisitor's Structs and Enums
 
 [`Actions`](https://docs.rs/transistor/1.3.11/transistor/http/enum.Actions.html) is a builder struct to help you create a `Vec<Action>` for `tx_log`. Available functions are:
 * `new` static method to instantiate struct `Actions`.
-* `append_put<T: Serialize>(action: T)` appends an `Action::Put` to `Actions` with no `valid-time`.
-* `append_put_timed<T: Serialize>(action: T, date: DateTime<FixedOffset>)` appends an `Action::Put` to `Actions` with `valid-time`.
-* `append_delete(id: crate::types::CruxId)` appends an `Action::Delete` to `Actions` with no `valid-time`.
-* `append_delete_timed(id: crate::types::CruxId, date: DateTime<FixedOffset>)` appends an `Action::Delete` to `Actions` with `valid-time`.
-* `append_evict(id: crate::types::CruxId)` appends an `Action::Evict` to `Actions`.
-* `append_match_doc<T: Serialize>(id: crate::types::CruxId, action: T)` appends an `Action::Match` to `Actions` with no `valid-time`.
-* `append_match_doc_timed<T: Serialize>(id: crate::types::CruxId, action: T, date: DateTime<FixedOffset>)` appends an `Action::Match` to `Actions` with `valid-time`.
+* `append_put<T: Serialize>(action: T)` appends a [`Put`](https://opencrux.com/reference/transactions.html#put) to `Actions` with no `valid-time`. `Put` writes a document.
+* `append_put_timed<T: Serialize>(action: T, date: DateTime<FixedOffset>)` appends a [`Put`](https://opencrux.com/reference/transactions.html#put) to `Actions` with `valid-time`.
+* `append_delete(id: crate::types::CruxId)` appends a [`Delete`](https://opencrux.com/reference/transactions.html#delete) to `Actions` with no `valid-time`. Deletes the specific document at last `valid-time`.
+* `append_delete_timed(id: crate::types::CruxId, date: DateTime<FixedOffset>)` appends a [`Delete`](https://opencrux.com/reference/transactions.html#delete)  to `Actions` with `valid-time`. Deletes the specific document at the given `valid-time`.
+* `append_evict(id: crate::types::CruxId)` appends a [`Evict`](https://opencrux.com/reference/transactions.html#evict) to `Actions`. Evicts a document entirely, including all historical versions (receives only the ID to evict).
+* `append_match_doc<T: Serialize>(id: crate::types::CruxId, action: T)` appends a [`Match`](https://opencrux.com/reference/transactions.html#match) to `Actions` with no `valid-time`. Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue.
+* `append_match_doc_timed<T: Serialize>(id: crate::types::CruxId, action: T, date: DateTime<FixedOffset>)` appends a [`Match`](https://opencrux.com/reference/transactions.html#match) to `Actions` with `valid-time`.
 * `build` generates the `Vec<Action>` from `Actions`
 
 ```rust
