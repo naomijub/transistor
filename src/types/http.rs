@@ -12,7 +12,7 @@ static DATETIME_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S";
 /// * `Delete` - Deletes the specific document at a given valid time, if `Option<DateTime<FixedOffset>>` is `None` it deletes the last `valid-`time` else it deletes the passed `valid-time`.
 /// * `Evict` - Evicts a document entirely, including all historical versions (receives only the ID to evict).
 /// * `Match` - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue. First argument is struct's `crux__db___id`,  the second is the serialized document that you want to match and the third argument is an `Option<DateTime<FixedOffset>>` which corresponds to a `valid-time` for the `Match`
-#[derive(Debug, PartialEq)] // Id to CruxId
+#[derive(Debug, PartialEq)]
 pub enum Action {
     Put(String, Option<DateTime<FixedOffset>>),
     Delete(String, Option<DateTime<FixedOffset>>),
@@ -22,13 +22,23 @@ pub enum Action {
 
 impl Action {
     /// Creates an `Action::Put` enforcing types for `action`
-    pub fn put<T: Serialize>(action: T, date: Option<DateTime<FixedOffset>>) -> Action {
-        Action::Put(edn_rs::to_string(action), date)
+    pub fn put<T: Serialize>(action: T) -> Action {
+        Action::Put(edn_rs::to_string(action), None)
+    }
+
+    /// Overrides valid-time field in the previous `Action`
+    pub fn with_valid_date(self, date: DateTime<FixedOffset>) -> Action {
+        match self {
+            Action::Put(action, _) => Action::Put(action, Some(date)),
+            Action::Delete(action, _) => Action::Delete(action, Some(date)),
+            Action::Match(id, action, _) => Action::Match(id, action, Some(date)),
+            action => action,
+        }
     }
 
     /// Creates an `Action::Delete` enforcing types for `id`
-    pub fn delete(id: crate::types::CruxId, date: Option<DateTime<FixedOffset>>) -> Action {
-        Action::Delete(edn_rs::to_string(id), date)
+    pub fn delete(id: crate::types::CruxId) -> Action {
+        Action::Delete(edn_rs::to_string(id), None)
     }
 
     /// Creates an `Action::Evict` enforcing types for `id`
@@ -37,12 +47,8 @@ impl Action {
     }
 
     /// Creates an `Action::Match` enforcing types for `id, action`
-    pub fn match_doc<T: Serialize>(
-        id: crate::types::CruxId,
-        action: T,
-        date: Option<DateTime<FixedOffset>>,
-    ) -> Action {
-        Action::Match(edn_rs::to_string(id), edn_rs::to_string(action), date)
+    pub fn match_doc<T: Serialize>(id: crate::types::CruxId, action: T) -> Action {
+        Action::Match(edn_rs::to_string(id), edn_rs::to_string(action), None)
     }
 }
 

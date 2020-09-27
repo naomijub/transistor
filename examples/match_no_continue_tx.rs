@@ -14,7 +14,7 @@ fn main() -> Result<(), CruxError> {
     };
 
     let client = Crux::new("localhost", "3000").http_client();
-    let put_action = Action::put(crux.clone(), None);
+    let put_action = Action::put(crux.clone());
     let _ = client.tx_log(vec![put_action])?;
 
     let query = Query::find(vec!["?d"])?
@@ -29,8 +29,8 @@ fn main() -> Result<(), CruxError> {
     // Map(Map({":crux.db/id": Key(":crux"), ":is-sql": Bool(false), ":name": Str("Crux Datalog")}))
 
     crux.name = "banana".to_string();
-    let match_action = Action::match_doc(CruxId::new(":crux"), crux.clone(), None);
-    let put_action = Action::put(crux.clone(), None);
+    let match_action = Action::match_doc(CruxId::new(":crux"), crux.clone());
+    let put_action = Action::put(crux.clone());
     let result = client.tx_log(vec![match_action, put_action])?;
 
     println!("{:?}", result);

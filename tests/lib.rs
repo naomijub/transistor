@@ -185,7 +185,7 @@ mod integration {
             last_name: "Manuel".to_string(),
         };
 
-        vec![Action::put(person1, None), Action::put(person2, None)]
+        vec![Action::put(person1), Action::put(person2)]
     }
 
     ser_struct! {

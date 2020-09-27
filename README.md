@@ -206,7 +206,7 @@ let person = Person {
 
 let client = Crux::new("localhost", "3000").http_client();
 
-let tx_body = client.entity_tx(edn_rs::to_string(person.crux__db___id)).unwrap();
+let tx_body = client.entity_tx(person.crux__db___id).unwrap();
 
 let entity_history = client.entity_history(tx_body.db___id.clone(), Order::Asc, true);
 // EntityHistoryResponse { history: [
@@ -265,6 +265,7 @@ let is_sql = client.query(query_is_sql.unwrap()).unwrap();
 * [`Delete`](https://opencrux.com/reference/transactions.html#delete) - Deletes the specific document at a given valid time
 * [`Evict`](https://opencrux.com/reference/transactions.html#evict) - Evicts a document entirely, including all historical versions (receives only the ID to evict)
 * [`Match`](https://opencrux.com/reference/transactions.html#match) - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue
+* To create an `Action` use the static methods for `put`, `evict`, `delete`, `match` to create an `Action`. To add a `:valid-date` to your `Action` call builder function `with_valid_date`, like `Action::put(person).with_valid_date(timed)`.
 
 [`Query`](https://docs.rs/transistor/1.3.11/transistor/types/query/struct.Query.html) is a struct responsible for creating the fields and serializing them into the correct `query` format. It has a function for each field and a `build` function to help check if it is correctyly formatted.
 * `find` is a static builder function to define the elements inside the `:find` clause.

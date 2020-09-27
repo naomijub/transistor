@@ -10,7 +10,7 @@ fn main() {
         last_name: "World".to_string(),
     };
 
-    let put_person = Action::put(person.clone(), None);
+    let put_person = Action::put(person.clone());
 
     let client = Crux::new("localhost", "3000").http_client();
     let _ = client.tx_log(vec![put_person]).unwrap();

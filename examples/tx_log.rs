@@ -20,8 +20,8 @@ fn main() {
     println!("{:?}", edn_rs::to_string(person2.clone()));
     //"{ :crux.db/id :manuel-1, :first-name \"Diego\", :last-name \"Manuel\", }"
 
-    let action1 = Action::put(person1, None);
-    let action2 = Action::put(person2, None);
+    let action1 = Action::put(person1);
+    let action2 = Action::put(person2);
 
     let body = Crux::new("localhost", "3000")
         .http_client()

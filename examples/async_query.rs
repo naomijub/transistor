@@ -24,9 +24,9 @@ async fn main() {
     };
 
     let client = Crux::new("localhost", "3000").http_client();
-    let action1 = Action::put(crux, None);
-    let action2 = Action::put(psql, None);
-    let action3 = Action::put(mysql, None);
+    let action1 = Action::put(crux);
+    let action2 = Action::put(psql);
+    let action3 = Action::put(mysql);
 
     let _ = client
         .tx_log(vec![action1, action2, action3])
