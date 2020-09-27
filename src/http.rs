@@ -4,7 +4,7 @@ use crate::types::response::QueryAsyncResponse;
 use crate::types::response::QueryResponse;
 use crate::types::{
     error::CruxError,
-    http::{Action, Order},
+    http::{Actions, Order},
     query::Query,
     response::{EntityHistoryResponse, EntityTxResponse, TxLogResponse, TxLogsResponse},
     CruxId,
@@ -35,8 +35,9 @@ impl HttpClient {
     /// Function `tx_log` requests endpoint `/tx-log` via `POST` which allow you to send actions `Action`
     /// to CruxDB.
     /// The "write" endpoint, to post transactions.
-    pub fn tx_log(&self, actions: Vec<Action>) -> Result<TxLogResponse, CruxError> {
+    pub fn tx_log(&self, actions: Actions) -> Result<TxLogResponse, CruxError> {
         let actions_str = actions
+            .build()
             .into_iter()
             .map(edn_rs::to_string)
             .collect::<Vec<String>>()
@@ -244,8 +245,9 @@ impl HttpClient {
 
 #[cfg(feature = "async")]
 impl HttpClient {
-    pub async fn tx_log(&self, actions: Vec<Action>) -> Result<TxLogResponse, CruxError> {
+    pub async fn tx_log(&self, actions: Actions) -> Result<TxLogResponse, CruxError> {
         let actions_str = actions
+            .build()
             .into_iter()
             .map(edn_rs::to_string)
             .collect::<Vec<String>>()
@@ -486,7 +488,7 @@ fn build_timed_url(
 #[cfg(test)]
 mod http {
     use crate::client::Crux;
-    use crate::types::http::Action;
+    use crate::types::http::Actions;
     use crate::types::http::Order;
     use crate::types::{
         query::Query,
@@ -527,12 +529,9 @@ mod http {
             last_name: "Manuel".to_string(),
         };
 
-        let action1 = Action::put(person1);
-        let action2 = Action::put(person2);
+        let actions = Actions::new().append_put(person1).append_put(person2);
 
-        let response = Crux::new("localhost", "4000")
-            .http_client()
-            .tx_log(vec![action1, action2]);
+        let response = Crux::new("localhost", "4000").http_client().tx_log(actions);
 
         assert_eq!(response.unwrap(), TxLogResponse::default())
     }

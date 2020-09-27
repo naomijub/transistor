@@ -1,6 +1,6 @@
 use transistor::client::Crux;
 use transistor::edn_rs::{ser_struct, Serialize};
-use transistor::types::http::{Action, Order};
+use transistor::types::http::{Actions, Order};
 use transistor::types::CruxId;
 
 fn main() {
@@ -10,10 +10,10 @@ fn main() {
         last_name: "World".to_string(),
     };
 
-    let put_person = Action::put(person.clone());
+    let put_person = Actions::new().append_put(person.clone());
 
     let client = Crux::new("localhost", "3000").http_client();
-    let _ = client.tx_log(vec![put_person]).unwrap();
+    let _ = client.tx_log(put_person).unwrap();
 
     let tx_body = client.entity_tx(person.crux__db___id).unwrap();
 

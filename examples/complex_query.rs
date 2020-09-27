@@ -43,8 +43,7 @@ fn main() -> Result<(), CruxError> {
         .append_put(psql)
         .append_put(mysql)
         .append_put(cassandra)
-        .append_put(sqlserver)
-        .build();
+        .append_put(sqlserver);
 
     let _ = client.tx_log(actions)?;
     // Request body for vec![action1, action2]

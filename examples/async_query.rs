@@ -1,6 +1,6 @@
 use transistor::client::Crux;
 use transistor::edn_rs::{ser_struct, Serialize};
-use transistor::types::http::Action;
+use transistor::types::http::Actions;
 use transistor::types::{query::Query, CruxId};
 
 #[tokio::main]
@@ -24,14 +24,12 @@ async fn main() {
     };
 
     let client = Crux::new("localhost", "3000").http_client();
-    let action1 = Action::put(crux);
-    let action2 = Action::put(psql);
-    let action3 = Action::put(mysql);
+    let actions = Actions::new()
+        .append_put(crux)
+        .append_put(psql)
+        .append_put(mysql);
 
-    let _ = client
-        .tx_log(vec![action1, action2, action3])
-        .await
-        .unwrap();
+    let _ = client.tx_log(actions).await.unwrap();
 
     let query_is_sql = Query::find(vec!["?p1", "?n"])
         .unwrap()

@@ -13,7 +13,16 @@ static DATETIME_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S";
 /// * `Evict` - Evicts a document entirely, including all historical versions (receives only the ID to evict).
 /// * `Match` - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue. First argument is struct's `crux__db___id`,  the second is the serialized document that you want to match and the third argument is an `Option<DateTime<FixedOffset>>` which corresponds to a `valid-time` for the `Match`
 #[derive(Debug, PartialEq)]
-pub enum Action {
+pub(crate) enum Action {
+    Put(String, Option<DateTime<FixedOffset>>),
+    Delete(String, Option<DateTime<FixedOffset>>),
+    Evict(String),
+    Match(String, String, Option<DateTime<FixedOffset>>),
+}
+
+#[cfg(feature = "mock")]
+#[derive(Debug, PartialEq)]
+pub enum ActionMock {
     Put(String, Option<DateTime<FixedOffset>>),
     Delete(String, Option<DateTime<FixedOffset>>),
     Evict(String),
@@ -31,11 +40,13 @@ impl Actions {
         }
     }
 
+    /// Appends an `Action::Put` enforcing types for `action` field to be a `T: Serialize`
     pub fn append_put<T: Serialize>(mut self, action: T) -> Self {
         self.actions.push(Action::put(action));
         self
     }
 
+    /// Appends an `Action::Put` that includes `date` enforcing types for `action` field to be a `T: Serialize` and `date` to be `DateTime<FixedOffset>`.
     pub fn append_put_timed<T: Serialize>(
         mut self,
         action: T,
@@ -45,11 +56,13 @@ impl Actions {
         self
     }
 
+    /// Appends an `Action::Delete` enforcing types for `id` field to be a `CruxId`
     pub fn append_delete(mut self, id: crate::types::CruxId) -> Self {
         self.actions.push(Action::delete(id));
         self
     }
 
+    /// Appends an `Action::Delete` that includes `date` enforcing types for `id` field to be a `CruxId` and `date` to be `DateTime<FixedOffset>`.
     pub fn append_delete_timed(
         mut self,
         id: crate::types::CruxId,
@@ -59,16 +72,19 @@ impl Actions {
         self
     }
 
+    /// Appends an `Action::Evict` enforcing types for `id` field to be a `CruxId`
     pub fn append_evict(mut self, id: crate::types::CruxId) -> Self {
         self.actions.push(Action::evict(id));
         self
     }
 
+    /// Appends an `Action::Match` enforcing types for `id` field to be a `CruxId` and `action` field to be a `T: Serialize`
     pub fn append_match_doc<T: Serialize>(mut self, id: crate::types::CruxId, action: T) -> Self {
         self.actions.push(Action::match_doc(id, action));
         self
     }
 
+    /// Appends an `Action::Match` that includes `date` enforcing types for `id` field to be a `CruxId`, `action` field to be a `T: Serialize` and `date` to be `DateTime<FixedOffset>`.
     pub fn append_match_doc_timed<T: Serialize>(
         mut self,
         id: crate::types::CruxId,
@@ -80,19 +96,17 @@ impl Actions {
         self
     }
 
-    pub fn build(self) -> Vec<Action> {
+    pub(crate) fn build(self) -> Vec<Action> {
         self.actions
     }
 }
 
 impl Action {
-    /// Creates an `Action::Put` enforcing types for `action`
-    pub fn put<T: Serialize>(action: T) -> Action {
+    fn put<T: Serialize>(action: T) -> Action {
         Action::Put(edn_rs::to_string(action), None)
     }
 
-    /// Overrides valid-time field in the previous `Action`
-    pub fn with_valid_date(self, date: DateTime<FixedOffset>) -> Action {
+    fn with_valid_date(self, date: DateTime<FixedOffset>) -> Action {
         match self {
             Action::Put(action, _) => Action::Put(action, Some(date)),
             Action::Delete(action, _) => Action::Delete(action, Some(date)),
@@ -101,18 +115,15 @@ impl Action {
         }
     }
 
-    /// Creates an `Action::Delete` enforcing types for `id`
-    pub fn delete(id: crate::types::CruxId) -> Action {
+    fn delete(id: crate::types::CruxId) -> Action {
         Action::Delete(edn_rs::to_string(id), None)
     }
 
-    /// Creates an `Action::Evict` enforcing types for `id`
-    pub fn evict(id: crate::types::CruxId) -> Action {
+    fn evict(id: crate::types::CruxId) -> Action {
         Action::Evict(edn_rs::to_string(id))
     }
 
-    /// Creates an `Action::Match` enforcing types for `id, action`
-    pub fn match_doc<T: Serialize>(id: crate::types::CruxId, action: T) -> Action {
+    fn match_doc<T: Serialize>(id: crate::types::CruxId, action: T) -> Action {
         Action::Match(edn_rs::to_string(id), edn_rs::to_string(action), None)
     }
 }

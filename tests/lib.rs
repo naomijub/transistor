@@ -5,7 +5,7 @@ mod integration {
     use transistor::client::Crux;
     use transistor::edn_rs::{ser_struct, Serialize};
     use transistor::types::http::TimeHistory;
-    use transistor::types::http::{Action, Order};
+    use transistor::types::http::{Actions, Order};
     use transistor::types::CruxId;
 
     #[test]
@@ -172,7 +172,7 @@ mod integration {
         m.assert();
     }
 
-    fn actions() -> Vec<Action> {
+    fn actions() -> Actions {
         let person1 = Person {
             crux__db___id: CruxId::new("jorge-3"),
             first_name: "Michael".to_string(),
@@ -185,7 +185,7 @@ mod integration {
             last_name: "Manuel".to_string(),
         };
 
-        vec![Action::put(person1), Action::put(person2)]
+        Actions::new().append_put(person1).append_put(person2)
     }
 
     ser_struct! {
