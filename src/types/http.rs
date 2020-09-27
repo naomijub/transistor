@@ -2,7 +2,7 @@ use chrono::prelude::*;
 use edn_rs::Serialize;
 static ACTION_DATE_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S%Z";
 static DATETIME_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S";
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub(crate) enum Action {
     Put(String, Option<DateTime<FixedOffset>>),
     Delete(String, Option<DateTime<FixedOffset>>),
@@ -10,7 +10,7 @@ pub(crate) enum Action {
     Match(String, String, Option<DateTime<FixedOffset>>),
 }
 
-/// Test enum to debug Actions
+/// Test enum to test and debug `Actions`. Implements `PartialEq` with `Actions`
 #[cfg(feature = "mock")]
 #[derive(Debug, PartialEq)]
 pub enum ActionMock {
@@ -27,6 +27,7 @@ pub enum ActionMock {
 /// * `Delete` - Deletes the specific document at a given valid time. Functions are `append_delete` and `append_delete_timed`.
 /// * `Evict` - Evicts a document entirely, including all historical versions (receives only the ID to evict). Function is `append_evict`.
 /// * `Match` - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue. Functions are `append_match` and `append_match_timed`.
+#[derive(Debug, PartialEq, Clone)]
 pub struct Actions {
     actions: Vec<Action>,
 }
@@ -245,6 +246,121 @@ impl VecSer for Vec<TimeHistory> {
                 .map(edn_rs::to_string)
                 .collect::<Vec<String>>()
                 .join("")
+        }
+    }
+}
+
+#[cfg(feature = "mock")]
+impl std::cmp::PartialEq<Vec<ActionMock>> for Actions {
+    fn eq(&self, other: &Vec<ActionMock>) -> bool {
+        self.actions
+            .iter()
+            .zip(other.iter())
+            .map(|(acs, acm)| match (acs, acm) {
+                (Action::Put(ap, tp), ActionMock::Put(am, tm)) if ap == am && tp == tm => true,
+                (Action::Evict(id), ActionMock::Evict(idm)) if id == idm => true,
+                (Action::Delete(id, tp), ActionMock::Delete(idm, tm)) if id == idm && tp == tm => {
+                    true
+                }
+                (Action::Match(id, a, tp), ActionMock::Match(idm, am, tm))
+                    if id == idm && a == am && tp == tm =>
+                {
+                    true
+                }
+                _ => false,
+            })
+            .fold(true, |acc, e| acc && e)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::CruxId;
+    use edn_rs::ser_struct;
+
+    #[test]
+    fn actions() {
+        let person1 = Person {
+            crux__db___id: CruxId::new("jorge-3"),
+            first_name: "Michael".to_string(),
+            last_name: "Jorge".to_string(),
+        };
+
+        let person2 = Person {
+            crux__db___id: CruxId::new("manuel-1"),
+            first_name: "Diego".to_string(),
+            last_name: "Manuel".to_string(),
+        };
+
+        let person3 = Person {
+            crux__db___id: CruxId::new("manuel-1"),
+            first_name: "Diego".to_string(),
+            last_name: "Manuel".to_string(),
+        };
+
+        let timed = "2014-11-28T21:00:09-09:00"
+            .parse::<DateTime<FixedOffset>>()
+            .unwrap();
+
+        let actions = Actions::new()
+            .append_put_timed(person1.clone(), timed)
+            .append_put(person2.clone())
+            .append_evict(person1.crux__db___id)
+            .append_delete(person2.crux__db___id)
+            .append_match_doc(person3.clone().crux__db___id, person3);
+
+        assert_eq!(actions.clone(), expected_actions());
+    }
+
+    fn expected_actions() -> Actions {
+        let person1 = Person {
+            crux__db___id: CruxId::new("jorge-3"),
+            first_name: "Michael".to_string(),
+            last_name: "Jorge".to_string(),
+        };
+
+        let person2 = Person {
+            crux__db___id: CruxId::new("manuel-1"),
+            first_name: "Diego".to_string(),
+            last_name: "Manuel".to_string(),
+        };
+
+        let person3 = Person {
+            crux__db___id: CruxId::new("manuel-1"),
+            first_name: "Diego".to_string(),
+            last_name: "Manuel".to_string(),
+        };
+
+        Actions {
+            actions: vec![
+                Action::Put(
+                    person1.clone().serialize(),
+                    Some(
+                        "2014-11-28T21:00:09-09:00"
+                            .parse::<DateTime<FixedOffset>>()
+                            .unwrap(),
+                    ),
+                ),
+                Action::Put(person2.clone().serialize(), None),
+                Action::Evict(person1.crux__db___id.serialize()),
+                Action::Delete(person2.crux__db___id.serialize(), None),
+                Action::Match(
+                    person3.clone().crux__db___id.serialize(),
+                    person3.serialize(),
+                    None,
+                ),
+            ],
+        }
+    }
+
+    ser_struct! {
+        #[derive(Debug, Clone)]
+        #[allow(non_snake_case)]
+        pub struct Person {
+            crux__db___id: CruxId,
+            first_name: String,
+            last_name: String
         }
     }
 }

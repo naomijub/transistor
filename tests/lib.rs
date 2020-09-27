@@ -5,7 +5,7 @@ mod integration {
     use transistor::client::Crux;
     use transistor::edn_rs::{ser_struct, Serialize};
     use transistor::types::http::TimeHistory;
-    use transistor::types::http::{Actions, Order};
+    use transistor::types::http::{ActionMock, Actions, Order};
     use transistor::types::CruxId;
 
     #[test]
@@ -170,6 +170,43 @@ mod integration {
             );
 
         m.assert();
+    }
+
+    #[test]
+    fn test_actions_eq_actions_mock() {
+        let actions = test_actions();
+        let mock = test_action_mock();
+
+        assert_eq!(actions, mock);
+    }
+
+    fn test_action_mock() -> Vec<ActionMock> {
+        let person1 = Person {
+            crux__db___id: CruxId::new("jorge-3"),
+            first_name: "Michael".to_string(),
+            last_name: "Jorge".to_string(),
+        };
+
+        let person2 = Person {
+            crux__db___id: CruxId::new("manuel-1"),
+            first_name: "Diego".to_string(),
+            last_name: "Manuel".to_string(),
+        };
+
+        vec![
+            ActionMock::Put(person1.clone().serialize(), None),
+            ActionMock::Put(person2.serialize(), None),
+            ActionMock::Delete(person1.crux__db___id.serialize(), None),
+        ]
+    }
+
+    fn test_actions() -> Actions {
+        let person1 = Person {
+            crux__db___id: CruxId::new("jorge-3"),
+            first_name: "Michael".to_string(),
+            last_name: "Jorge".to_string(),
+        };
+        actions().append_delete(person1.crux__db___id)
     }
 
     fn actions() -> Actions {

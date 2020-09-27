@@ -422,6 +422,54 @@ ser_struct! {
 
 ```
 
+Also, struct `Actions` can be tested with feature `mock` by using enum `ActionMock` due to the implementation of `impl PartialEq<Vec<ActionMock>> for Actions`. A demo example can be:
+
+```rust
+use transistor::types::http::{Actions, ActionMock};
+
+fn test_actions_eq_actions_mock() {
+    let actions = test_actions();
+    let mock = test_action_mock();
+
+    assert_eq!(actions, mock);
+}
+
+fn test_action_mock() -> Vec<ActionMock> {
+    let person1 = Person {
+        crux__db___id: CruxId::new("jorge-3"),
+        first_name: "Michael".to_string(),
+        last_name: "Jorge".to_string(),
+    };
+
+    let person2 = Person {
+        crux__db___id: CruxId::new("manuel-1"),
+        first_name: "Diego".to_string(),
+        last_name: "Manuel".to_string(),
+    };
+
+    vec![
+        ActionMock::Put(person1.clone().serialize(), None),
+        ActionMock::Put(person2.serialize(), None),
+        ActionMock::Delete(person1.crux__db___id.serialize(), None),
+    ]
+}
+
+fn test_actions() -> Actions {
+    let person1 = Person {
+        crux__db___id: CruxId::new("jorge-3"),
+        first_name: "Michael".to_string(),
+        last_name: "Jorge".to_string(),
+    };
+
+    let person2 = Person {
+        crux__db___id: CruxId::new("manuel-1"),
+        first_name: "Diego".to_string(),
+        last_name: "Manuel".to_string(),
+    };
+    Actions::new().append_put(person1.clone()).append_put(person2).append_delete(person1.crux__db___id)
+}
+```
+
 ### Async support
 
 **Async feature is still in BETA** as it depends heavily on `unwraps`.
