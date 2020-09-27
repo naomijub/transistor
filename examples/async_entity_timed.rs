@@ -23,8 +23,8 @@ async fn main() {
         .parse::<DateTime<FixedOffset>>()
         .unwrap();
 
-    let action1 = Action::Put(person1.clone(), Some(timed));
-    let action2 = Action::Put(person2, Some(timed));
+    let action1 = Action::put(person1.clone(), Some(timed));
+    let action2 = Action::put(person2, Some(timed));
 
     let _ = Crux::new("localhost", "3000")
         .http_client()

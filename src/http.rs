@@ -129,10 +129,10 @@ impl HttpClient {
 
     /// Function `entity_tx` requests endpoint `/entity-tx` via `POST` which retrieves the docs and tx infos
     /// for the last document for that ID saved in CruxDB.
-    pub fn entity_tx(&self, id: String) -> Result<EntityTxResponse, CruxError> {
+    pub fn entity_tx(&self, id: CruxId) -> Result<EntityTxResponse, CruxError> {
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&id);
+        s.push_str(&edn_rs::to_string(id));
         s.push_str("}");
 
         let resp = self
@@ -149,13 +149,13 @@ impl HttpClient {
     /// Function `entity_tx_timed` is like `entity_tx` but with two optional fields `transaction_time` and `valid_time` that are of type `Option<DateTime<FixedOffset>>`.
     pub fn entity_tx_timed(
         &self,
-        id: String,
+        id: CruxId,
         transaction_time: Option<DateTime<FixedOffset>>,
         valid_time: Option<DateTime<FixedOffset>>,
     ) -> Result<EntityTxResponse, CruxError> {
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&id);
+        s.push_str(&edn_rs::to_string(id));
         s.push_str("}");
 
         let url = build_timed_url(self.uri.clone(), "entity-tx", transaction_time, valid_time);
@@ -337,10 +337,10 @@ impl HttpClient {
         edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
     }
 
-    pub async fn entity_tx(&self, id: String) -> Result<EntityTxResponse, CruxError> {
+    pub async fn entity_tx(&self, id: CruxId) -> Result<EntityTxResponse, CruxError> {
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&id);
+        s.push_str(&edn_rs::to_string(id));
         s.push_str("}");
 
         let resp = self
@@ -358,13 +358,13 @@ impl HttpClient {
 
     pub async fn entity_tx_timed(
         &self,
-        id: String,
+        id: CruxId,
         transaction_time: Option<DateTime<FixedOffset>>,
         valid_time: Option<DateTime<FixedOffset>>,
     ) -> Result<EntityTxResponse, CruxError> {
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&id);
+        s.push_str(&edn_rs::to_string(id));
         s.push_str("}");
 
         let url = build_timed_url(self.uri.clone(), "entity-tx", transaction_time, valid_time);
@@ -597,9 +597,10 @@ mod http {
             .with_body(expected_body)
             .create();
 
+        let id = CruxId::new(":ivan");
         let body = Crux::new("localhost", "3000")
             .http_client()
-            .entity_tx(":ivan".to_string())
+            .entity_tx(id)
             .unwrap();
 
         assert_eq!(body, EntityTxResponse::default());

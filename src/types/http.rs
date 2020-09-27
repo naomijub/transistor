@@ -21,24 +21,28 @@ pub enum Action {
 }
 
 impl Action {
-    pub fn put<T: Serialize>(edn: T, date: Option<DateTime<FixedOffset>>) -> Action {
-        Action::Put(edn_rs::to_string(edn), date)
+    /// Creates an `Action::Put` enforcing types for `action`
+    pub fn put<T: Serialize>(action: T, date: Option<DateTime<FixedOffset>>) -> Action {
+        Action::Put(edn_rs::to_string(action), date)
     }
 
+    /// Creates an `Action::Delete` enforcing types for `id`
     pub fn delete(id: crate::types::CruxId, date: Option<DateTime<FixedOffset>>) -> Action {
         Action::Delete(edn_rs::to_string(id), date)
     }
 
+    /// Creates an `Action::Evict` enforcing types for `id`
     pub fn evict(id: crate::types::CruxId) -> Action {
         Action::Evict(edn_rs::to_string(id))
     }
 
+    /// Creates an `Action::Match` enforcing types for `id, action`
     pub fn match_doc<T: Serialize>(
         id: crate::types::CruxId,
-        edn: T,
+        action: T,
         date: Option<DateTime<FixedOffset>>,
     ) -> Action {
-        Action::Match(edn_rs::to_string(id), edn_rs::to_string(edn), date)
+        Action::Match(edn_rs::to_string(id), edn_rs::to_string(action), date)
     }
 }
 

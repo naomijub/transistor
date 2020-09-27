@@ -83,9 +83,10 @@ mod integration {
             .with_body(expected_body)
             .create();
 
+        let id = CruxId::new(":ivan");
         let body = Crux::new("localhost", "3000")
             .http_mock()
-            .entity_tx(":ivan".to_string())
+            .entity_tx(id)
             .unwrap();
 
         let actual = format!("{:?}", body);

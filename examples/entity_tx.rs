@@ -20,9 +20,7 @@ fn main() {
     println!("\n Body = {:?}", body);
     //  Body = "{:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}"
 
-    let tx_body = client
-        .entity_tx(edn_rs::to_string(person.crux__db___id))
-        .unwrap();
+    let tx_body = client.entity_tx(person.crux__db___id).unwrap();
     println!("\n Tx Body = {:#?}", tx_body);
     // Tx Body = EntityTxResponse {
     //     db___id: "d72ccae848ce3a371bd313865cedc3d20b1478ca",

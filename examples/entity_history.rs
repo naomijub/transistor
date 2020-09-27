@@ -15,9 +15,7 @@ fn main() {
     let client = Crux::new("localhost", "3000").http_client();
     let _ = client.tx_log(vec![put_person]).unwrap();
 
-    let tx_body = client
-        .entity_tx(edn_rs::to_string(person.crux__db___id))
-        .unwrap();
+    let tx_body = client.entity_tx(person.crux__db___id).unwrap();
 
     let entity_history = client.entity_history(tx_body.db___id.clone(), Order::Asc, true);
     println!("{:?}", entity_history.unwrap());

@@ -14,7 +14,7 @@ fn main() -> Result<(), CruxError> {
     };
 
     let client = Crux::new("localhost", "3000").http_client();
-    let put_action = Action::Put(edn_rs::to_string(crux.clone()), None);
+    let put_action = Action::put(crux.clone(), None);
     let _ = client.tx_log(vec![put_action])?;
 
     let query = Query::find(vec!["?d"])?
