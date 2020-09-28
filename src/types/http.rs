@@ -42,6 +42,10 @@ impl Actions {
         }
     }
 
+    pub(crate) fn is_empty(&self) -> bool {
+        self.actions.is_empty()
+    }
+
     /// Appends an `Action::Put` enforcing types for `action` field to be a `T: Serialize`
     pub fn append_put<T: Serialize>(mut self, action: T) -> Self {
         self.actions.push(Action::put(action));

@@ -36,6 +36,11 @@ impl HttpClient {
     /// to CruxDB.
     /// The "write" endpoint, to post transactions.
     pub fn tx_log(&self, actions: Actions) -> Result<TxLogResponse, CruxError> {
+        if actions.is_empty() {
+            return Err(CruxError::TxLogActionError(
+                "Actions cannont be empty.".to_string(),
+            ));
+        }
         let body = actions.build();
 
         let resp = self
@@ -237,6 +242,12 @@ impl HttpClient {
 #[cfg(feature = "async")]
 impl HttpClient {
     pub async fn tx_log(&self, actions: Actions) -> Result<TxLogResponse, CruxError> {
+        if actions.is_empty() {
+            return Err(CruxError::TxLogActionError(
+                "Actions cannont be empty.".to_string(),
+            ));
+        }
+
         let body = actions.build();
 
         let resp = self
@@ -516,6 +527,15 @@ mod http {
         let response = Crux::new("localhost", "4000").http_client().tx_log(actions);
 
         assert_eq!(response.unwrap(), TxLogResponse::default())
+    }
+
+    #[test]
+    #[should_panic(expected = "TxLogActionError(\"Actions cannont be empty.\")")]
+    fn empty_actions_on_tx_log() {
+        let actions = Actions::new();
+
+        let err = Crux::new("localhost", "4000").http_client().tx_log(actions);
+        err.unwrap();
     }
 
     #[test]
