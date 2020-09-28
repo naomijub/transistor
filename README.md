@@ -266,11 +266,11 @@ let is_sql = client.query(query_is_sql.unwrap()).unwrap();
 * `new` static method to instantiate struct `Actions`.
 * `append_put<T: Serialize>(action: T)` appends a [`Put`](https://opencrux.com/reference/transactions.html#put) to `Actions` with no `valid-time`. `Put` writes a document.
 * `append_put_timed<T: Serialize>(action: T, date: DateTime<FixedOffset>)` appends a [`Put`](https://opencrux.com/reference/transactions.html#put) to `Actions` with `valid-time`.
-* `append_delete(id: crate::types::CruxId)` appends a [`Delete`](https://opencrux.com/reference/transactions.html#delete) to `Actions` with no `valid-time`. Deletes the specific document at last `valid-time`.
-* `append_delete_timed(id: crate::types::CruxId, date: DateTime<FixedOffset>)` appends a [`Delete`](https://opencrux.com/reference/transactions.html#delete)  to `Actions` with `valid-time`. Deletes the specific document at the given `valid-time`.
-* `append_evict(id: crate::types::CruxId)` appends a [`Evict`](https://opencrux.com/reference/transactions.html#evict) to `Actions`. Evicts a document entirely, including all historical versions (receives only the ID to evict).
-* `append_match_doc<T: Serialize>(id: crate::types::CruxId, action: T)` appends a [`Match`](https://opencrux.com/reference/transactions.html#match) to `Actions` with no `valid-time`. Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue.
-* `append_match_doc_timed<T: Serialize>(id: crate::types::CruxId, action: T, date: DateTime<FixedOffset>)` appends a [`Match`](https://opencrux.com/reference/transactions.html#match) to `Actions` with `valid-time`.
+* `append_delete(id: CruxId)` appends a [`Delete`](https://opencrux.com/reference/transactions.html#delete) to `Actions` with no `valid-time`. Deletes the specific document at last `valid-time`.
+* `append_delete_timed(id: CruxId, date: DateTime<FixedOffset>)` appends a [`Delete`](https://opencrux.com/reference/transactions.html#delete)  to `Actions` with `valid-time`. Deletes the specific document at the given `valid-time`.
+* `append_evict(id: CruxId)` appends a [`Evict`](https://opencrux.com/reference/transactions.html#evict) to `Actions`. Evicts a document entirely, including all historical versions (receives only the ID to evict).
+* `append_match_doc<T: Serialize>(id: CruxId, action: T)` appends a [`Match`](https://opencrux.com/reference/transactions.html#match) to `Actions` with no `valid-time`. Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue.
+* `append_match_doc_timed<T: Serialize>(id: CruxId, action: T, date: DateTime<FixedOffset>)` appends a [`Match`](https://opencrux.com/reference/transactions.html#match) to `Actions` with `valid-time`.
 * `build` generates the `Vec<Action>` from `Actions`
 
 ```rust

@@ -1,7 +1,10 @@
+use crate::types::CruxId;
 use chrono::prelude::*;
 use edn_rs::Serialize;
+
 static ACTION_DATE_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S%Z";
 static DATETIME_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S";
+
 #[derive(Debug, PartialEq, Clone)]
 pub(crate) enum Action {
     Put(String, Option<DateTime<FixedOffset>>),
@@ -56,29 +59,25 @@ impl Actions {
     }
 
     /// Appends an `Action::Delete` enforcing types for `id` field to be a `CruxId`
-    pub fn append_delete(mut self, id: crate::types::CruxId) -> Self {
+    pub fn append_delete(mut self, id: CruxId) -> Self {
         self.actions.push(Action::delete(id));
         self
     }
 
     /// Appends an `Action::Delete` that includes `date` enforcing types for `id` field to be a `CruxId` and `date` to be `DateTime<FixedOffset>`.
-    pub fn append_delete_timed(
-        mut self,
-        id: crate::types::CruxId,
-        date: DateTime<FixedOffset>,
-    ) -> Self {
+    pub fn append_delete_timed(mut self, id: CruxId, date: DateTime<FixedOffset>) -> Self {
         self.actions.push(Action::delete(id).with_valid_date(date));
         self
     }
 
     /// Appends an `Action::Evict` enforcing types for `id` field to be a `CruxId`
-    pub fn append_evict(mut self, id: crate::types::CruxId) -> Self {
+    pub fn append_evict(mut self, id: CruxId) -> Self {
         self.actions.push(Action::evict(id));
         self
     }
 
     /// Appends an `Action::Match` enforcing types for `id` field to be a `CruxId` and `action` field to be a `T: Serialize`
-    pub fn append_match_doc<T: Serialize>(mut self, id: crate::types::CruxId, action: T) -> Self {
+    pub fn append_match_doc<T: Serialize>(mut self, id: CruxId, action: T) -> Self {
         self.actions.push(Action::match_doc(id, action));
         self
     }
@@ -86,7 +85,7 @@ impl Actions {
     /// Appends an `Action::Match` that includes `date` enforcing types for `id` field to be a `CruxId`, `action` field to be a `T: Serialize` and `date` to be `DateTime<FixedOffset>`.
     pub fn append_match_doc_timed<T: Serialize>(
         mut self,
-        id: crate::types::CruxId,
+        id: CruxId,
         action: T,
         date: DateTime<FixedOffset>,
     ) -> Self {
@@ -124,15 +123,15 @@ impl Action {
         }
     }
 
-    fn delete(id: crate::types::CruxId) -> Action {
+    fn delete(id: CruxId) -> Action {
         Action::Delete(edn_rs::to_string(id), None)
     }
 
-    fn evict(id: crate::types::CruxId) -> Action {
+    fn evict(id: CruxId) -> Action {
         Action::Evict(edn_rs::to_string(id))
     }
 
-    fn match_doc<T: Serialize>(id: crate::types::CruxId, action: T) -> Action {
+    fn match_doc<T: Serialize>(id: CruxId, action: T) -> Action {
         Action::Match(edn_rs::to_string(id), edn_rs::to_string(action), None)
     }
 }
