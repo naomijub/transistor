@@ -6,7 +6,7 @@ use transistor::types::{
     {query::Query, CruxId},
 };
 
-fn main() -> Result<(), CruxError> {
+fn limit_offset() -> Result<(), CruxError> {
     let crux = Database {
         crux__db___id: CruxId::new("crux"),
         name: "Crux Datalog".to_string(),
@@ -44,12 +44,11 @@ fn main() -> Result<(), CruxError> {
         .append_put(mysql)
         .append_put(cassandra)
         .append_put(sqlserver);
+    //  [[:crux.tx/put { :crux.db/id :crux, :name \"Crux Datalog\", :is-sql false, }],
+    //   [:crux.tx/put { :crux.db/id :mysql, :name \"MySQL\", :is-sql true, }],
+    //   [:crux.tx/put { :crux.db/id :postgres, :name \"Postgres\", :is-sql true, }]]
 
     let _ = client.tx_log(actions)?;
-    // Request body for vec![action1, action2]
-    // "[[:crux.tx/put { :crux.db/id :crux, :name \"Crux Datalog\", :is-sql false, }],
-    //   [:crux.tx/put { :crux.db/id :mysql, :name \"MySQL\", :is-sql true, }],
-    //   [:crux.tx/put { :crux.db/id :postgres, :name \"Postgres\", :is-sql true, }]]"
 
     let query_is_sql = Query::find(vec!["?p1", "?n"])?
         .where_clause(vec!["?p1 :name ?n"])?
@@ -59,11 +58,19 @@ fn main() -> Result<(), CruxError> {
         .build();
     // "{:query\n {:find [?p1 ?n]\n:where [[?p1 :name ?n]]\n:order-by [[?n :desc]]\n:limit 3\n:offset 1\n}}"
 
-    let is_sql = client.query(query_is_sql?)?;
-    println!("{:?}", is_sql);
+    let _ = client.query(query_is_sql?)?;
     // {[":crux", "Crux Datalog"], [":mysql", "MySQL"], [":postgres", "Postgres"]}
 
     Ok(())
+}
+
+fn main() {
+    let _ = limit_offset();
+}
+
+#[test]
+fn test_limit_offset() {
+    limit_offset().unwrap();
 }
 
 #[derive(Debug, Clone, Serialize)]

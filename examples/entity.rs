@@ -4,24 +4,40 @@ use transistor::edn_rs::{Deserialize, EdnError};
 use transistor::types::http::Actions;
 use transistor::types::CruxId;
 
-fn main() {
+fn entity() -> edn_rs::Edn {
     let person = Person {
         crux__db___id: CruxId::new("hello-entity"),
         first_name: "Hello".to_string(),
         last_name: "World".to_string(),
     };
-    println!("{:?}", edn_rs::to_string(person.clone()));
-    //"{ :crux.db/id :hello-entity, :first-name \"Hello\", :last-name \"World\", }"
+    // { :crux.db/id :hello-entity, :first-name \"Hello\", :last-name \"World\", }
 
     let client = Crux::new("localhost", "3000").http_client();
     let put_person = Actions::new().append_put(person.clone());
 
-    let body = client.tx_log(put_person).unwrap();
-    // "[[:crux.tx/put { :crux.db/id :hello-entity, :first-name \"Hello\", :last-name \"World\", }]]"
-    println!("\n Body = {:?}", body);
-    //  Body = "{:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}"
+    let _ = client.tx_log(put_person).unwrap();
+    // {:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}
 
     let edn_body = client.entity(person.crux__db___id).unwrap();
+
+    return edn_body;
+}
+
+#[test]
+fn test_entity() {
+    let edn_body = entity();
+    let person = edn_rs::from_edn::<Person>(&edn_body);
+    let expected = Person {
+        crux__db___id: CruxId::new("hello-entity"),
+        first_name: "Hello".to_string(),
+        last_name: "World".to_string(),
+    };
+
+    assert_eq!(person.unwrap(), expected);
+}
+
+fn main() {
+    let edn_body = entity();
     println!("\n Edn Body = {:#?}", edn_body.clone());
     // Edn Body = Map(
     //     Map(
@@ -52,7 +68,7 @@ fn main() {
     // }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, PartialEq, Clone, Serialize)]
 #[allow(non_snake_case)]
 pub struct Person {
     crux__db___id: CruxId,

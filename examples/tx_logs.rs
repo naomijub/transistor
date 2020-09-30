@@ -12,7 +12,8 @@ fn tx_logs() -> TxLogsResponse {
 
 #[test]
 fn test_tx_logs() {
-    tx_logs();
+    let logs = tx_logs();
+    assert!(logs.tx_events.len() > 0);
 }
 
 fn main() {

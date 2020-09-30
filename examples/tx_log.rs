@@ -33,7 +33,8 @@ fn tx_log() -> TxLogResponse {
 
 #[test]
 fn test_tx_log() {
-    tx_log();
+    let tx_log = tx_log();
+    assert!(tx_log.tx___tx_id > 0)
 }
 
 fn main() {
