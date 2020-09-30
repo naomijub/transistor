@@ -24,9 +24,8 @@ async fn main() {
         .unwrap();
 
     let actions = Actions::new()
-        .append_put_timed(person1, timed)
-        .append_put_timed(person2, timed)
-        .build();
+        .append_put_timed(person1.clone(), timed)
+        .append_put_timed(person2, timed);
 
     let _ = Crux::new("localhost", "3000")
         .http_client()

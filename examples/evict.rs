@@ -1,6 +1,6 @@
 use transistor::client::Crux;
 use transistor::edn_rs::{ser_struct, Serialize};
-use transistor::types::http::Action;
+use transistor::types::http::Actions;
 use transistor::types::CruxId;
 
 fn main() {
@@ -14,14 +14,14 @@ fn main() {
 
     let client = Crux::new("localhost", "3000").http_client();
 
-    let put_person = Action::put(person.clone());
-    let body = client.tx_log(vec![put_person]).unwrap();
+    let actions = Actions::new().append_put(person.clone());
+    let body = client.tx_log(actions).unwrap();
     // "[[:crux.tx/put { :crux.db/id :jorge-3, :first-name \"Michael\", :last-name \"Jorge\", }]]"
     println!("\n Body = {:?}", body);
     //  Body = "{:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}"
 
-    let evict_person = Action::evict(person.crux__db___id);
-    let evict_body = client.tx_log(vec![evict_person]).unwrap();
+    let actions = Actions::new().append_evict(person.crux__db___id);
+    let evict_body = client.tx_log(actions).unwrap();
     println!("\n Evict Body = {:?}", evict_body);
 }
 

@@ -5,7 +5,7 @@ mod integration {
     use transistor::client::Crux;
     use transistor::edn_rs::{ser_struct, Serialize};
     use transistor::types::http::TimeHistory;
-    use transistor::types::http::{Action, Order};
+    use transistor::types::http::{ActionMock, Actions, Order};
     use transistor::types::CruxId;
 
     #[test]
@@ -172,7 +172,15 @@ mod integration {
         m.assert();
     }
 
-    fn actions() -> Vec<Action> {
+    #[test]
+    fn test_actions_eq_actions_mock() {
+        let actions = test_actions();
+        let mock = test_action_mock();
+
+        assert_eq!(actions, mock);
+    }
+
+    fn test_action_mock() -> Vec<ActionMock> {
         let person1 = Person {
             crux__db___id: CruxId::new("jorge-3"),
             first_name: "Michael".to_string(),
@@ -185,7 +193,36 @@ mod integration {
             last_name: "Manuel".to_string(),
         };
 
-        vec![Action::put(person1), Action::put(person2)]
+        vec![
+            ActionMock::Put(edn_rs::to_string(person1.clone()), None),
+            ActionMock::Put(edn_rs::to_string(person2), None),
+            ActionMock::Delete(edn_rs::to_string(person1.crux__db___id), None),
+        ]
+    }
+
+    fn test_actions() -> Actions {
+        let person1 = Person {
+            crux__db___id: CruxId::new("jorge-3"),
+            first_name: "Michael".to_string(),
+            last_name: "Jorge".to_string(),
+        };
+        actions().append_delete(person1.crux__db___id)
+    }
+
+    fn actions() -> Actions {
+        let person1 = Person {
+            crux__db___id: CruxId::new("jorge-3"),
+            first_name: "Michael".to_string(),
+            last_name: "Jorge".to_string(),
+        };
+
+        let person2 = Person {
+            crux__db___id: CruxId::new("manuel-1"),
+            first_name: "Diego".to_string(),
+            last_name: "Manuel".to_string(),
+        };
+
+        Actions::new().append_put(person1).append_put(person2)
     }
 
     ser_struct! {

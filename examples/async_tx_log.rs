@@ -1,6 +1,6 @@
 use transistor::client::Crux;
 use transistor::edn_rs::{ser_struct, Serialize};
-use transistor::types::http::Action;
+use transistor::types::http::Actions;
 use transistor::types::CruxId;
 
 #[tokio::main]
@@ -17,12 +17,11 @@ async fn main() {
         last_name: "Manuel".to_string(),
     };
 
-    let action1 = Action::put(person1);
-    let action2 = Action::put(person2);
+    let actions = Actions::new().append_put(person1).append_put(person2);
 
     let body = Crux::new("localhost", "3000")
         .http_client()
-        .tx_log(vec![action1, action2])
+        .tx_log(actions)
         .await
         .unwrap();
 

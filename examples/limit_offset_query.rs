@@ -1,6 +1,6 @@
 use transistor::client::Crux;
 use transistor::edn_rs::{ser_struct, Serialize};
-use transistor::types::http::Action;
+use transistor::types::http::Actions;
 use transistor::types::{
     error::CruxError,
     {query::Query, CruxId},
@@ -38,13 +38,14 @@ fn main() -> Result<(), CruxError> {
     };
 
     let client = Crux::new("localhost", "3000").http_client();
-    let action1 = Action::put(crux);
-    let action2 = Action::put(psql);
-    let action3 = Action::put(mysql);
-    let action4 = Action::put(cassandra);
-    let action5 = Action::put(sqlserver);
+    let actions = Actions::new()
+        .append_put(crux)
+        .append_put(psql)
+        .append_put(mysql)
+        .append_put(cassandra)
+        .append_put(sqlserver);
 
-    let _ = client.tx_log(vec![action1, action2, action3, action4, action5])?;
+    let _ = client.tx_log(actions)?;
     // Request body for vec![action1, action2]
     // "[[:crux.tx/put { :crux.db/id :crux, :name \"Crux Datalog\", :is-sql false, }],
     //   [:crux.tx/put { :crux.db/id :mysql, :name \"MySQL\", :is-sql true, }],
