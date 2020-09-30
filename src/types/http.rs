@@ -99,17 +99,7 @@ impl Actions {
     }
 
     pub(crate) fn build(self) -> String {
-        let actions_str = self
-            .actions
-            .into_iter()
-            .map(edn_rs::to_string)
-            .collect::<Vec<String>>()
-            .join(", ");
-
-        let mut s = String::from("[");
-        s.push_str(&actions_str);
-        s.push_str("]");
-        s
+        edn_rs::to_string(self.actions)
     }
 }
 
