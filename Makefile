@@ -7,4 +7,7 @@ int:
 unit:
 	cargo test --locked  --no-fail-fast --lib
 
-test: unit int
+examples:
+	cargo test --examples
+
+test: unit int examples

@@ -1,11 +1,22 @@
 use transistor::client::Crux;
+use transistor::types::response::TxLogsResponse;
 
-fn main() {
+fn tx_logs() -> TxLogsResponse {
     let body = Crux::new("localhost", "3000")
         .http_client()
         .tx_logs()
         .unwrap();
 
+    return body;
+}
+
+#[test]
+fn test_tx_logs() {
+    tx_logs();
+}
+
+fn main() {
+    let body = tx_logs();
     println!("Body = {:#?}", body);
     // Body = TxLogsResponse {
     //     tx_events: [

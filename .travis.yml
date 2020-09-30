@@ -13,17 +13,7 @@ before_install:
   - docker run -d -p 3000:3000 juxt/crux-standalone:20.07-1.10.0
 script:
     - cargo build
-    - cargo run --example tx_log
-    - cargo run --example tx_logs
-    - cargo run --example evict
-    - cargo run --example entity
-    - cargo run --example entity_tx
-    - cargo run --example entity_history
-    - cargo run --example simple_query
-    - cargo run --example complex_query
-    - cargo run --example limit_offset_query
-    - cargo run --example match_no_continue_tx
-    - cargo run --example match_continue_tx
+    - cargo test --examples
     - cargo run --example async_tx_log --features "async"
     - cargo run --example async_tx_logs --features "async"
     - cargo run --example async_entity_timed --features "async"
