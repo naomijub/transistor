@@ -1,5 +1,6 @@
+use edn_derive::Serialize;
 use transistor::client::Crux;
-use transistor::edn_rs::{ser_struct, Deserialize, EdnError, Serialize};
+use transistor::edn_rs::{Deserialize, EdnError};
 use transistor::types::http::Actions;
 use transistor::types::CruxId;
 
@@ -51,14 +52,12 @@ fn main() {
     // }
 }
 
-ser_struct! {
-    #[derive(Debug, Clone)]
-    #[allow(non_snake_case)]
-    pub struct Person {
-        crux__db___id: CruxId,
-        first_name: String,
-        last_name: String
-    }
+#[derive(Debug, Clone, Serialize)]
+#[allow(non_snake_case)]
+pub struct Person {
+    crux__db___id: CruxId,
+    first_name: String,
+    last_name: String,
 }
 
 impl Deserialize for Person {

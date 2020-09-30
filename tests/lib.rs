@@ -1,9 +1,9 @@
 #[cfg(feature = "mock")]
 mod integration {
     use chrono::prelude::*;
+    use edn_derive::Serialize;
     use mockito::mock;
     use transistor::client::Crux;
-    use transistor::edn_rs::{ser_struct, Serialize};
     use transistor::types::http::TimeHistory;
     use transistor::types::http::{ActionMock, Actions, Order};
     use transistor::types::CruxId;
@@ -225,13 +225,11 @@ mod integration {
         Actions::new().append_put(person1).append_put(person2)
     }
 
-    ser_struct! {
-        #[derive(Debug, Clone)]
-        #[allow(non_snake_case)]
-        pub struct Person {
-            crux__db___id: CruxId,
-            first_name: String,
-            last_name: String
-        }
+    #[derive(Debug, Clone, Serialize)]
+    #[allow(non_snake_case)]
+    pub struct Person {
+        crux__db___id: CruxId,
+        first_name: String,
+        last_name: String,
     }
 }

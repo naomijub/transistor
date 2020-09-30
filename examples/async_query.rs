@@ -1,5 +1,5 @@
+use edn_derive::Serialize;
 use transistor::client::Crux;
-use transistor::edn_rs::{ser_struct, Serialize};
 use transistor::types::http::Actions;
 use transistor::types::{query::Query, CruxId};
 
@@ -55,12 +55,10 @@ async fn main() {
     //  ["{:crux.db/id: Key(\":crux\"), :is-sql: Bool(false), :name: Str(\"Crux Datalog\"), }", "Crux Datalog", "false"]}
 }
 
-ser_struct! {
-    #[derive(Debug, Clone)]
-    #[allow(non_snake_case)]
-    pub struct Database {
-        crux__db___id: CruxId,
-        name: String,
-        is_sql: bool
-    }
+#[derive(Debug, Clone, Serialize)]
+#[allow(non_snake_case)]
+pub struct Database {
+    crux__db___id: CruxId,
+    name: String,
+    is_sql: bool,
 }

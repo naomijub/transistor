@@ -376,7 +376,7 @@ For testing purpose there is a `feature` called `mock` that enables the `http_mo
 ```rust
 use transistor::client::Crux;
 use transistor::http::Action;
-use transistor::edn_rs::{ser_struct, Serialize};
+use edn_derive::Serialize;
 use transistor::types::{CruxId};
 use mockito::mock;
 
@@ -411,13 +411,11 @@ fn mock_client() {
     );
 }
 
-ser_struct! {
-    #[derive(Debug, Clone)]
-    #[allow(non_snake_case)]
-    pub struct Person {
-        crux__db___id: CruxId,
-        // ...
-    }
+#[derive(Debug, Clone, Serialize)]
+#[allow(non_snake_case)]
+pub struct Person {
+    crux__db___id: CruxId,
+    // ...
 }
 
 ```
@@ -486,7 +484,7 @@ An async query example can be found below:
 ```rust
 use tokio::prelude::*;
 use transistor::client::Crux;
-use transistor::edn_rs::{ser_struct, Serialize};
+use edn_derive::Serialize;
 use transistor::types::http::Action;
 use transistor::types::{
     error::CruxError,
@@ -538,14 +536,12 @@ async fn main() {
     let is_no_sql = client.query(query_is_no_sql.unwrap()).await;
 }
 
-ser_struct! {
-    #[derive(Debug, Clone)]
-    #[allow(non_snake_case)]
-    pub struct Database {
-        crux__db___id: CruxId,
-        name: String,
-        is_sql: bool
-    }
+#[derive(Debug, Clone, Serialize)]
+#[allow(non_snake_case)]
+pub struct Database {
+    crux__db___id: CruxId,
+    name: String,
+    is_sql: bool
 }
 
 ```
