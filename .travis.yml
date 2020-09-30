@@ -4,11 +4,6 @@ services:
   - docker
 rust:
   - stable
-  - beta
-  - nightly
-matrix:
-  allow_failures:
-    - rust: nightly
 before_install:
   - docker run -d -p 3000:3000 juxt/crux-standalone:20.07-1.10.0
 script:
