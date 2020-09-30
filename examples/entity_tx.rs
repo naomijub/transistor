@@ -4,6 +4,7 @@ use transistor::types::http::Actions;
 use transistor::types::response::EntityTxResponse;
 use transistor::types::CruxId;
 
+#[cfg(not(feature = "async"))]
 fn entity_tx() -> EntityTxResponse {
     let person = Person {
         crux__db___id: CruxId::new("hello-entity"),
@@ -22,6 +23,7 @@ fn entity_tx() -> EntityTxResponse {
     return tx_body;
 }
 
+#[cfg(not(feature = "async"))]
 fn main() {
     let entity_tx = entity_tx();
     println!("Tx Body = {:#?}", entity_tx);
@@ -35,6 +37,7 @@ fn main() {
 }
 
 #[test]
+#[cfg(not(feature = "async"))]
 fn test_entity_tx() {
     let entity_tx = entity_tx();
 

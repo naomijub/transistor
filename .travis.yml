@@ -9,9 +9,4 @@ before_install:
 script:
     - cargo build
     - cargo test --examples
-    - cargo run --example async_tx_log --features "async"
-    - cargo run --example async_tx_logs --features "async"
-    - cargo run --example async_entity_timed --features "async"
-    - cargo run --example async_entity_tx_timed --features "async"
-    - cargo run --example async_entity_history_timed --features "async"
-    - cargo run --example async_query --features "async"
+    - cargo test --examples --features "async"

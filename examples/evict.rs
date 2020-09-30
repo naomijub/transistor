@@ -4,6 +4,7 @@ use transistor::types::http::Actions;
 use transistor::types::response::TxLogResponse;
 use transistor::types::CruxId;
 
+#[cfg(not(feature = "async"))]
 fn evict() -> TxLogResponse {
     let person = Person {
         crux__db___id: CruxId::new("hello-evict"),
@@ -25,12 +26,14 @@ fn evict() -> TxLogResponse {
     return evict_body;
 }
 
+#[cfg(not(feature = "async"))]
 fn main() {
     let evict_body = evict();
     println!("\n Evict Body = {:?}", evict_body);
 }
 
 #[test]
+#[cfg(not(feature = "async"))]
 fn test_evict() {
     let evict = evict();
     assert!(evict.tx___tx_id > 0);

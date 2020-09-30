@@ -6,6 +6,7 @@ use transistor::types::{
     {query::Query, CruxId},
 };
 
+#[cfg(not(feature = "async"))]
 fn match_continue() -> Result<(), CruxError> {
     let crux = Database {
         crux__db___id: CruxId::new("crux"),
@@ -48,11 +49,13 @@ fn match_continue() -> Result<(), CruxError> {
     Ok(())
 }
 
+#[cfg(not(feature = "async"))]
 fn main() {
     let _ = match_continue();
 }
 
 #[test]
+#[cfg(not(feature = "async"))]
 fn test_match_continue() {
     match_continue().unwrap();
 }

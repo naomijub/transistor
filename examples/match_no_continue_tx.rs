@@ -6,6 +6,7 @@ use transistor::types::{
     {query::Query, CruxId},
 };
 
+#[cfg(not(feature = "async"))]
 fn match_break() -> Result<(), CruxError> {
     let mut crux = Database {
         crux__db___id: CruxId::new("crux"),
@@ -49,11 +50,13 @@ fn match_break() -> Result<(), CruxError> {
     Ok(())
 }
 
+#[cfg(not(feature = "async"))]
 fn main() {
     let _ = match_break();
 }
 
 #[test]
+#[cfg(not(feature = "async"))]
 fn test_match_break() {
     match_break().unwrap();
 }

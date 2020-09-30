@@ -4,6 +4,7 @@ use transistor::types::http::Actions;
 use transistor::types::response::TxLogResponse;
 use transistor::types::CruxId;
 
+#[cfg(not(feature = "async"))]
 fn tx_log() -> TxLogResponse {
     let person1 = Person {
         crux__db___id: CruxId::new("jorge-3"),
@@ -32,11 +33,13 @@ fn tx_log() -> TxLogResponse {
 }
 
 #[test]
+#[cfg(not(feature = "async"))]
 fn test_tx_log() {
     let tx_log = tx_log();
     assert!(tx_log.tx___tx_id > 0)
 }
 
+#[cfg(not(feature = "async"))]
 fn main() {
     let body = tx_log();
     println!("Body = {:?}", body);

@@ -1,6 +1,7 @@
 use transistor::client::Crux;
 use transistor::types::response::TxLogsResponse;
 
+#[cfg(not(feature = "async"))]
 fn tx_logs() -> TxLogsResponse {
     let body = Crux::new("localhost", "3000")
         .http_client()
@@ -11,11 +12,13 @@ fn tx_logs() -> TxLogsResponse {
 }
 
 #[test]
+#[cfg(not(feature = "async"))]
 fn test_tx_logs() {
     let logs = tx_logs();
     assert!(logs.tx_events.len() > 0);
 }
 
+#[cfg(not(feature = "async"))]
 fn main() {
     let body = tx_logs();
     println!("Body = {:#?}", body);

@@ -4,6 +4,7 @@ use transistor::edn_rs::{Deserialize, EdnError};
 use transistor::types::http::Actions;
 use transistor::types::CruxId;
 
+#[cfg(not(feature = "async"))]
 fn entity() -> edn_rs::Edn {
     let person = Person {
         crux__db___id: CruxId::new("hello-entity"),
@@ -24,6 +25,7 @@ fn entity() -> edn_rs::Edn {
 }
 
 #[test]
+#[cfg(not(feature = "async"))]
 fn test_entity() {
     let edn_body = entity();
     let person = edn_rs::from_edn::<Person>(&edn_body);
@@ -36,6 +38,7 @@ fn test_entity() {
     assert_eq!(person.unwrap(), expected);
 }
 
+#[cfg(not(feature = "async"))]
 fn main() {
     let edn_body = entity();
     println!("\n Edn Body = {:#?}", edn_body.clone());

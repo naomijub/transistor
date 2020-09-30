@@ -6,6 +6,7 @@ use transistor::types::{
     {query::Query, CruxId},
 };
 
+#[cfg(not(feature = "async"))]
 fn limit_offset() -> Result<(), CruxError> {
     let crux = Database {
         crux__db___id: CruxId::new("crux"),
@@ -64,11 +65,13 @@ fn limit_offset() -> Result<(), CruxError> {
     Ok(())
 }
 
+#[cfg(not(feature = "async"))]
 fn main() {
     let _ = limit_offset();
 }
 
 #[test]
+#[cfg(not(feature = "async"))]
 fn test_limit_offset() {
     limit_offset().unwrap();
 }

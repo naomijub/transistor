@@ -4,6 +4,7 @@ use transistor::types::http::{Actions, Order};
 use transistor::types::response::EntityTxResponse;
 use transistor::types::CruxId;
 
+#[cfg(not(feature = "async"))]
 fn entity_tx() -> EntityTxResponse {
     let person = Person {
         crux__db___id: CruxId::new("hello-history"),
@@ -21,6 +22,7 @@ fn entity_tx() -> EntityTxResponse {
 }
 
 #[test]
+#[cfg(not(feature = "async"))]
 fn tent_entity_history_with_docs() {
     let client = Crux::new("localhost", "3000").http_client();
     let tx_body = entity_tx();
@@ -31,6 +33,7 @@ fn tent_entity_history_with_docs() {
 }
 
 #[test]
+#[cfg(not(feature = "async"))]
 fn tent_entity_history_without_docs() {
     let client = Crux::new("localhost", "3000").http_client();
     let tx_body = entity_tx();
@@ -40,6 +43,7 @@ fn tent_entity_history_without_docs() {
     assert!(docs.history[0].db__doc.is_none())
 }
 
+#[cfg(not(feature = "async"))]
 fn main() {
     let client = Crux::new("localhost", "3000").http_client();
     let tx_body = entity_tx();

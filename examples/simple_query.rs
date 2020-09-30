@@ -6,6 +6,7 @@ use transistor::types::{
     {query::Query, CruxId},
 };
 
+#[cfg(not(feature = "async"))]
 fn query() -> Result<(), CruxError> {
     let crux = Database {
         crux__db___id: CruxId::new("crux"),
@@ -70,11 +71,13 @@ fn query() -> Result<(), CruxError> {
     Ok(())
 }
 
+#[cfg(not(feature = "async"))]
 fn main() {
     let _ = query();
 }
 
 #[test]
+#[cfg(not(feature = "async"))]
 fn test_query() {
     query().unwrap()
 }

@@ -7,7 +7,10 @@ int:
 unit:
 	cargo test --locked  --no-fail-fast --lib
 
-examples:
+examples-sync:
 	cargo test --examples
 
-test: unit int examples
+examples-async:
+	cargo test --examples --features "async"
+
+test: unit int examples-sync examples-async
