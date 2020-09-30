@@ -38,7 +38,7 @@ impl HttpClient {
     pub fn tx_log(&self, actions: Actions) -> Result<TxLogResponse, CruxError> {
         if actions.is_empty() {
             return Err(CruxError::TxLogActionError(
-                "Actions cannont be empty.".to_string(),
+                "Actions cannot be empty.".to_string(),
             ));
         }
         let body = actions.build();
@@ -244,7 +244,7 @@ impl HttpClient {
     pub async fn tx_log(&self, actions: Actions) -> Result<TxLogResponse, CruxError> {
         if actions.is_empty() {
             return Err(CruxError::TxLogActionError(
-                "Actions cannont be empty.".to_string(),
+                "Actions cannot be empty.".to_string(),
             ));
         }
 
@@ -530,7 +530,7 @@ mod http {
     }
 
     #[test]
-    #[should_panic(expected = "TxLogActionError(\"Actions cannont be empty.\")")]
+    #[should_panic(expected = "TxLogActionError(\"Actions cannot be empty.\")")]
     fn empty_actions_on_tx_log() {
         let actions = Actions::new();
 

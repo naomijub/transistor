@@ -268,7 +268,7 @@ let is_sql = client.query(query_is_sql.unwrap()).unwrap();
 * `append_put_timed<T: Serialize>(action: T, date: DateTime<FixedOffset>)` appends a [`Put`](https://opencrux.com/reference/transactions.html#put) to `Actions` with `valid-time`.
 * `append_delete(id: CruxId)` appends a [`Delete`](https://opencrux.com/reference/transactions.html#delete) to `Actions` with no `valid-time`. Deletes the specific document at last `valid-time`.
 * `append_delete_timed(id: CruxId, date: DateTime<FixedOffset>)` appends a [`Delete`](https://opencrux.com/reference/transactions.html#delete)  to `Actions` with `valid-time`. Deletes the specific document at the given `valid-time`.
-* `append_evict(id: CruxId)` appends a [`Evict`](https://opencrux.com/reference/transactions.html#evict) to `Actions`. Evicts a document entirely, including all historical versions (receives only the ID to evict).
+* `append_evict(id: CruxId)` appends an [`Evict`](https://opencrux.com/reference/transactions.html#evict) to `Actions`. Evicts a document entirely, including all historical versions (receives only the ID to evict).
 * `append_match_doc<T: Serialize>(id: CruxId, action: T)` appends a [`Match`](https://opencrux.com/reference/transactions.html#match) to `Actions` with no `valid-time`. Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue.
 * `append_match_doc_timed<T: Serialize>(id: CruxId, action: T, date: DateTime<FixedOffset>)` appends a [`Match`](https://opencrux.com/reference/transactions.html#match) to `Actions` with `valid-time`.
 * `build` generates the `Vec<Action>` from `Actions`
@@ -448,9 +448,9 @@ fn test_action_mock() -> Vec<ActionMock> {
     };
 
     vec![
-        ActionMock::Put(person1.clone().serialize(), None),
-        ActionMock::Put(person2.serialize(), None),
-        ActionMock::Delete(person1.crux__db___id.serialize(), None),
+        ActionMock::Put(edn_rs::to_string(person1.clone()), None),
+        ActionMock::Put(edn_rs::to_string(person2), None),
+        ActionMock::Delete(edn_rs::to_string(person1.crux__db___id), None),
     ]
 }
 

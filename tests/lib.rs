@@ -194,9 +194,9 @@ mod integration {
         };
 
         vec![
-            ActionMock::Put(person1.clone().serialize(), None),
-            ActionMock::Put(person2.serialize(), None),
-            ActionMock::Delete(person1.crux__db___id.serialize(), None),
+            ActionMock::Put(edn_rs::to_string(person1.clone()), None),
+            ActionMock::Put(edn_rs::to_string(person2), None),
+            ActionMock::Delete(edn_rs::to_string(person1.crux__db___id), None),
         ]
     }
 
