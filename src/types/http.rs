@@ -280,7 +280,7 @@ impl std::cmp::PartialEq<Vec<ActionMock>> for Actions {
 mod tests {
     use super::*;
     use crate::types::CruxId;
-    use edn_rs::ser_struct;
+    use edn_derive::Serialize;
 
     #[test]
     fn actions() {
@@ -357,13 +357,11 @@ mod tests {
         }
     }
 
-    ser_struct! {
-        #[derive(Debug, Clone)]
-        #[allow(non_snake_case)]
-        pub struct Person {
-            crux__db___id: CruxId,
-            first_name: String,
-            last_name: String
-        }
+    #[derive(Debug, Clone, Serialize)]
+    #[allow(non_snake_case)]
+    pub struct Person {
+        crux__db___id: CruxId,
+        first_name: String,
+        last_name: String,
     }
 }

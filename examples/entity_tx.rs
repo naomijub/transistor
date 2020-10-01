@@ -1,27 +1,32 @@
+use edn_derive::Serialize;
 use transistor::client::Crux;
-use transistor::edn_rs::{ser_struct, Serialize};
 use transistor::types::http::Actions;
+use transistor::types::response::EntityTxResponse;
 use transistor::types::CruxId;
 
-fn main() {
+#[cfg(not(feature = "async"))]
+fn entity_tx() -> EntityTxResponse {
     let person = Person {
         crux__db___id: CruxId::new("hello-entity"),
         first_name: "Hello".to_string(),
         last_name: "World".to_string(),
     };
-    println!("{:?}", edn_rs::to_string(person.clone()));
-    //"{ :crux.db/id :hello-entity, :first-name \"Hello\", :last-name \"World\", }"
+    // { :crux.db/id :hello-entity, :first-name \"Hello\", :last-name \"World\", }
 
     let client = Crux::new("localhost", "3000").http_client();
     let put_person = Actions::new().append_put(person.clone());
 
-    let body = client.tx_log(put_person).unwrap();
-    // "[[:crux.tx/put { :crux.db/id :hello-entity, :first-name \"Hello\", :last-name \"World\", }]]"
-    println!("\n Body = {:?}", body);
-    //  Body = "{:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}"
+    let _ = client.tx_log(put_person).unwrap();
+    // {:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}
 
     let tx_body = client.entity_tx(person.crux__db___id).unwrap();
-    println!("\n Tx Body = {:#?}", tx_body);
+    return tx_body;
+}
+
+#[cfg(not(feature = "async"))]
+fn main() {
+    let entity_tx = entity_tx();
+    println!("Tx Body = {:#?}", entity_tx);
     // Tx Body = EntityTxResponse {
     //     db___id: "d72ccae848ce3a371bd313865cedc3d20b1478ca",
     //     db___content_hash: "1828ebf4466f98ea3f5252a58734208cd0414376",
@@ -31,12 +36,18 @@ fn main() {
     // }
 }
 
-ser_struct! {
-    #[derive(Debug, Clone)]
-    #[allow(non_snake_case)]
-    pub struct Person {
-        crux__db___id: CruxId,
-        first_name: String,
-        last_name: String
-    }
+#[test]
+#[cfg(not(feature = "async"))]
+fn test_entity_tx() {
+    let entity_tx = entity_tx();
+
+    assert!(entity_tx.tx___tx_id > 0);
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[allow(non_snake_case)]
+pub struct Person {
+    crux__db___id: CruxId,
+    first_name: String,
+    last_name: String,
 }

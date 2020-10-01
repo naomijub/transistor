@@ -1,10 +1,10 @@
+use edn_derive::Serialize;
 use transistor::client::Crux;
-use transistor::edn_rs::{ser_struct, Serialize};
+use transistor::types::error::CruxError;
 use transistor::types::http::Actions;
 use transistor::types::{query::Query, CruxId};
 
-#[tokio::main]
-async fn main() {
+async fn query() -> Result<(), CruxError> {
     let crux = Database {
         crux__db___id: CruxId::new("crux"),
         name: "Crux Datalog".to_string(),
@@ -38,7 +38,6 @@ async fn main() {
         .build();
 
     let is_sql = client.query(query_is_sql.unwrap()).await.unwrap();
-    println!("{:?}", is_sql);
     // QueryAsyncResponse({[":mysql", "MySQL"], [":postgres", "Postgres"]}) BTreeSet
 
     let query_is_no_sql = Query::find(vec!["?p1", "?n", "?s"])
@@ -50,17 +49,26 @@ async fn main() {
         .unwrap();
 
     let is_no_sql = client.query(query_is_no_sql).await.unwrap();
-    println!("{:?}", is_no_sql);
     // {["{:crux.db/id: Key(\":cassandra\"), :is-sql: Bool(false), :name: Str(\"Cassandra\"), }", "Cassandra", "false"],
     //  ["{:crux.db/id: Key(\":crux\"), :is-sql: Bool(false), :name: Str(\"Crux Datalog\"), }", "Crux Datalog", "false"]}
+
+    Ok(())
 }
 
-ser_struct! {
-    #[derive(Debug, Clone)]
-    #[allow(non_snake_case)]
-    pub struct Database {
-        crux__db___id: CruxId,
-        name: String,
-        is_sql: bool
-    }
+#[tokio::main]
+async fn main() {
+    let _ = query().await.unwrap();
+}
+
+#[tokio::test]
+async fn test_query() {
+    let _ = query().await.unwrap();
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[allow(non_snake_case)]
+pub struct Database {
+    crux__db___id: CruxId,
+    name: String,
+    is_sql: bool,
 }

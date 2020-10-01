@@ -1,11 +1,11 @@
 use chrono::prelude::*;
+use edn_derive::Serialize;
 use transistor::client::Crux;
-use transistor::edn_rs::{ser_struct, Serialize};
 use transistor::types::http::{Actions, Order, TimeHistory};
+use transistor::types::response::EntityHistoryResponse;
 use transistor::types::CruxId;
 
-#[tokio::main]
-async fn main() {
+async fn entity_history_timed() -> EntityHistoryResponse {
     let person1 = Person {
         crux__db___id: CruxId::new("jorge-3"),
         first_name: "Michael".to_string(),
@@ -53,6 +53,12 @@ async fn main() {
         .await
         .unwrap();
 
+    return entity_history;
+}
+
+#[tokio::main]
+async fn main() {
+    let entity_history = entity_history_timed().await;
     println!("{:#?}", entity_history);
     // EntityHistoryResponse {
     //     history: [
@@ -106,12 +112,16 @@ async fn main() {
     // }
 }
 
-ser_struct! {
-    #[derive(Debug, Clone)]
-    #[allow(non_snake_case)]
-    pub struct Person {
-        crux__db___id: CruxId,
-        first_name: String,
-        last_name: String
-    }
+#[tokio::test]
+async fn test_entity_history() {
+    let entity = entity_history_timed().await;
+    assert!(entity.history.len() > 0);
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[allow(non_snake_case)]
+pub struct Person {
+    crux__db___id: CruxId,
+    first_name: String,
+    last_name: String,
 }
