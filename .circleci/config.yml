@@ -1,0 +1,46 @@
+version: 2.1
+
+jobs:
+  build:
+    parameters:
+      toolchain:
+        description: rust toolchain
+        type: string
+
+    docker:
+      - image: buildpack-deps:trusty
+      - image: juxt/crux-standalone:20.07-1.10.0
+
+    steps:
+      - checkout
+      - run: >
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | 
+          sh -s -- -v -y --profile minimal --default-toolchain <<parameters.toolchain>>
+      - run: $HOME/.cargo/bin/cargo build
+      - run: $HOME/.cargo/bin/cargo run --example tx_log
+      - run: $HOME/.cargo/bin/cargo run --example tx_logs
+      - run: $HOME/.cargo/bin/cargo run --example evict
+      - run: $HOME/.cargo/bin/cargo run --example entity
+      - run: $HOME/.cargo/bin/cargo run --example entity_tx
+      - run: $HOME/.cargo/bin/cargo run --example entity_history
+      - run: $HOME/.cargo/bin/cargo run --example simple_query
+      - run: $HOME/.cargo/bin/cargo run --example complex_query
+      - run: $HOME/.cargo/bin/cargo run --example limit_offset_query
+      - run: $HOME/.cargo/bin/cargo run --example match_no_continue_tx
+      - run: $HOME/.cargo/bin/cargo run --example match_continue_tx
+      - run: $HOME/.cargo/bin/cargo run --example async_tx_log --features "async"
+      - run: $HOME/.cargo/bin/cargo run --example async_tx_logs --features "async"
+      - run: $HOME/.cargo/bin/cargo run --example async_entity_timed --features "async"
+      - run: $HOME/.cargo/bin/cargo run --example async_entity_tx_timed --features "async"
+      - run: $HOME/.cargo/bin/cargo run --example async_entity_history_timed --features "async"
+      - run: $HOME/.cargo/bin/cargo run --example async_query --features "async"
+
+workflows:
+  version: 2.1
+
+  build_and_test:
+    jobs:
+      - build:
+          matrix:
+            parameters:
+              toolchain: ["stable", "beta", "nightly"]
