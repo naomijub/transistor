@@ -1,7 +1,7 @@
 use edn_derive::Serialize;
 use transistor::client::Crux;
 use transistor::types::error::CruxError;
-use transistor::types::http::Actions;
+use transistor::types::Actions;
 use transistor::types::{query::Query, CruxId};
 
 async fn query() -> Result<(), CruxError> {

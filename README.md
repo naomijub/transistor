@@ -275,7 +275,7 @@ let is_sql = client.query(query_is_sql.unwrap()).unwrap();
 
 ```rust
 use transistor::client::Crux;
-use transistor::types::http::Actions;
+use transistor::types::Actions;
 
 fn main() -> Result<(), CruxError> {
     let crux = Database {

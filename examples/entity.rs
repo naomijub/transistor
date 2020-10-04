@@ -1,7 +1,7 @@
 use edn_derive::Serialize;
 use transistor::client::Crux;
 use transistor::edn_rs::{Deserialize, EdnError};
-use transistor::types::http::Actions;
+use transistor::types::Actions;
 use transistor::types::CruxId;
 
 #[cfg(not(feature = "async"))]

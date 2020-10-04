@@ -2,8 +2,8 @@ use chrono::prelude::*;
 use edn_derive::Serialize;
 use transistor::client::Crux;
 use transistor::edn_rs::EdnError;
-use transistor::types::http::Actions;
 use transistor::types::response::EntityTxResponse;
+use transistor::types::Actions;
 use transistor::types::CruxId;
 
 async fn entity_tx_timed() -> EntityTxResponse {

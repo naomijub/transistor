@@ -1,7 +1,7 @@
 use chrono::prelude::*;
 use edn_derive::{Deserialize, Serialize};
 use transistor::client::Crux;
-use transistor::types::http::Actions;
+use transistor::types::Actions;
 use transistor::types::CruxId;
 
 async fn entity_timed() -> edn_rs::Edn {

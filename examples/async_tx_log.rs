@@ -1,7 +1,7 @@
 use edn_derive::Serialize;
 use transistor::client::Crux;
-use transistor::types::http::Actions;
 use transistor::types::response::TxLogResponse;
+use transistor::types::Actions;
 use transistor::types::CruxId;
 
 async fn tx_log() -> TxLogResponse {

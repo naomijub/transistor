@@ -23,7 +23,7 @@ fn entity_tx() -> EntityTxResponse {
 
 #[test]
 #[cfg(not(feature = "async"))]
-fn tent_entity_history_with_docs() {
+fn test_entity_history_with_docs() {
     let client = Crux::new("localhost", "3000").http_client();
     let tx_body = entity_tx();
     let docs = client
@@ -34,7 +34,7 @@ fn tent_entity_history_with_docs() {
 
 #[test]
 #[cfg(not(feature = "async"))]
-fn tent_entity_history_without_docs() {
+fn test_entity_history_without_docs() {
     let client = Crux::new("localhost", "3000").http_client();
     let tx_body = entity_tx();
     let docs = client
