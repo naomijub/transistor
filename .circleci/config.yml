@@ -1,6 +1,18 @@
 version: 2.1
 
 jobs:
+  lint:
+    docker:
+      - image: rust
+    steps:
+      - checkout
+      - run:
+          name: Install cargo fmt
+          command: rustup component add rustfmt
+      - run:
+          name: Run lint
+          command: cargo fmt -- --check
+          
   build:
     parameters:
       toolchain:
