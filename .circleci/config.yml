@@ -1,0 +1,33 @@
+version: 2.1
+
+jobs:
+  build:
+    parameters:
+      toolchain:
+        description: rust toolchain
+        type: string
+
+    docker:
+      - image: buildpack-deps:trusty
+      - image: juxt/crux-standalone:20.07-1.10.0
+
+    steps:
+      - checkout
+      - run: >
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | 
+          sh -s -- -v -y --profile minimal --default-toolchain <<parameters.toolchain>>
+      - run: $HOME/.cargo/bin/cargo build
+      - run: $HOME/.cargo/bin/cargo test --examples
+      - run: $HOME/.cargo/bin/cargo test --examples --features "async"
+      - run: $HOME/.cargo/bin/cargo test --locked  --no-fail-fast --lib
+      - run: $HOME/.cargo/bin/cargo test --test lib --no-fail-fast --features "mock"
+      
+workflows:
+  version: 2.1
+
+  build_and_test:
+    jobs:
+      - build:
+          matrix:
+            parameters:
+              toolchain: ["stable", "beta", "nightly"]
