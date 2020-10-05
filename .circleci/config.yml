@@ -1,0 +1,59 @@
+version: 2.1
+
+jobs:
+  lint:
+    docker:
+      - image: rust
+    steps:
+      - checkout
+      - run:
+          name: Install cargo fmt
+          command: rustup component add rustfmt
+      - run:
+          name: Run lint
+          command: cargo fmt -- --check
+
+  clippy:
+    docker:
+      - image: rust
+    steps:
+      - checkout
+      - run:
+          name: Install cargo clippy
+          command: rustup component add clippy
+      - run:
+          name: Run Clippy
+          command: cargo clippy -- -W clippy::pedantic
+          
+  build:
+    parameters:
+      toolchain:
+        description: rust toolchain
+        type: string
+
+    docker:
+      - image: buildpack-deps:trusty
+      - image: juxt/crux-standalone:20.07-1.10.0
+
+    steps:
+      - checkout
+      - run: >
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | 
+          sh -s -- -v -y --profile minimal --default-toolchain <<parameters.toolchain>>
+      - run: $HOME/.cargo/bin/cargo build
+      - run: $HOME/.cargo/bin/cargo test --examples
+      - run: $HOME/.cargo/bin/cargo test --examples --features "async"
+      - run: $HOME/.cargo/bin/cargo test --locked  --no-fail-fast --lib
+      - run: $HOME/.cargo/bin/cargo test --test lib --no-fail-fast --features "mock"
+      
+workflows:
+  version: 2.1
+
+  build_and_test:
+    jobs:
+      - lint
+      - clippy
+      - build:
+          matrix:
+            parameters:
+              toolchain: ["stable", "beta", "nightly"]
