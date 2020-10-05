@@ -59,3 +59,15 @@ required-features = ["async"]
 [[example]]
 name = "async_query"
 required-features = ["async"]
+
+[[bench]]
+name = "tx_log"
+harness = false
+
+[[bench]]
+name = "entity"
+harness = false
+
+[[bench]]
+name = "query"
+harness = false
