@@ -32,7 +32,7 @@ jobs:
 
     docker:
       - image: buildpack-deps:trusty
-      - image: juxt/crux-standalone:20.07-1.10.0
+      - image: juxt/crux-standalone:20.09-1.11.0
 
     steps:
       - checkout
