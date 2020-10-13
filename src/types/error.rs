@@ -16,6 +16,8 @@ pub enum CruxError {
     QueryError(String),
     /// Provided Query struct did not match schema.
     QueryFormatError(String),
+    /// Provided Actions cannot be empty.
+    TxLogActionError(String),
 }
 
 impl std::error::Error for CruxError {
@@ -27,6 +29,7 @@ impl std::error::Error for CruxError {
             CruxError::QueryError(s) => &s,
             CruxError::QueryFormatError(s) => &s,
             CruxError::IterError(s) => &s,
+            CruxError::TxLogActionError(s) => &s,
         }
     }
 
@@ -44,6 +47,7 @@ impl std::fmt::Display for CruxError {
             CruxError::QueryError(s) => write!(f, "{}", &s),
             CruxError::QueryFormatError(s) => write!(f, "{}", &s),
             CruxError::IterError(s) => write!(f, "{}", &s),
+            CruxError::TxLogActionError(s) => write!(f, "{}", &s),
         }
     }
 }

@@ -1,10 +1,10 @@
+use edn_derive::Serialize;
 use transistor::client::Crux;
-use transistor::edn_rs::{ser_struct, Serialize};
-use transistor::types::http::Action;
+use transistor::types::response::TxLogResponse;
+use transistor::types::Actions;
 use transistor::types::CruxId;
 
-#[tokio::main]
-async fn main() {
+async fn tx_log() -> TxLogResponse {
     let person1 = Person {
         crux__db___id: CruxId::new("jorge-3"),
         first_name: "Michael".to_string(),
@@ -17,25 +17,34 @@ async fn main() {
         last_name: "Manuel".to_string(),
     };
 
-    let action1 = Action::Put(edn_rs::to_string(person1), None);
-    let action2 = Action::Put(edn_rs::to_string(person2), None);
+    let actions = Actions::new().append_put(person1).append_put(person2);
 
     let body = Crux::new("localhost", "3000")
         .http_client()
-        .tx_log(vec![action1, action2])
+        .tx_log(actions)
         .await
         .unwrap();
 
-    println!("body = {:?}", body);
-    //  Body = "{:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}"
+    return body;
 }
 
-ser_struct! {
-    #[derive(Debug, Clone)]
-    #[allow(non_snake_case)]
-    pub struct Person {
-        crux__db___id: CruxId,
-        first_name: String,
-        last_name: String
-    }
+#[tokio::main]
+async fn main() {
+    let tx_log = tx_log().await;
+    println!("body = {:?}", tx_log);
+    // Body = "{:crux.tx/tx-id 7, :crux.tx/tx-time #inst \"2020-07-16T21:50:39.309-00:00\"}"
+}
+
+#[tokio::test]
+async fn test_tx_log() {
+    let tx_log = tx_log().await;
+    assert!(tx_log.tx___tx_id > 0);
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[allow(non_snake_case)]
+pub struct Person {
+    crux__db___id: CruxId,
+    first_name: String,
+    last_name: String,
 }

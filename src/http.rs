@@ -4,9 +4,10 @@ use crate::types::response::QueryAsyncResponse;
 use crate::types::response::QueryResponse;
 use crate::types::{
     error::CruxError,
-    http::{Action, Order},
+    http::{Actions, Order},
     query::Query,
     response::{EntityHistoryResponse, EntityTxResponse, TxLogResponse, TxLogsResponse},
+    CruxId,
 };
 use chrono::prelude::*;
 use edn_rs::{edn, Edn, Map};
@@ -34,22 +35,19 @@ impl HttpClient {
     /// Function `tx_log` requests endpoint `/tx-log` via `POST` which allow you to send actions `Action`
     /// to CruxDB.
     /// The "write" endpoint, to post transactions.
-    pub fn tx_log(&self, actions: Vec<Action>) -> Result<TxLogResponse, CruxError> {
-        let actions_str = actions
-            .into_iter()
-            .map(edn_rs::to_string)
-            .collect::<Vec<String>>()
-            .join(", ");
-        let mut s = String::new();
-        s.push_str("[");
-        s.push_str(&actions_str);
-        s.push_str("]");
+    pub fn tx_log(&self, actions: Actions) -> Result<TxLogResponse, CruxError> {
+        if actions.is_empty() {
+            return Err(CruxError::TxLogActionError(
+                "Actions cannot be empty.".to_string(),
+            ));
+        }
+        let body = actions.build();
 
         let resp = self
             .client
             .post(&format!("{}/tx-log", self.uri))
             .headers(self.headers.clone())
-            .body(s)
+            .body(body)
             .send()?
             .text()?;
 
@@ -72,14 +70,15 @@ impl HttpClient {
     /// in CruxDB.
     /// Field with `CruxId` is required.
     /// Response is a `reqwest::Result<edn_rs::Edn>` with the last Entity with that ID.
-    pub fn entity(&self, id: String) -> Result<Edn, CruxError> {
-        if !id.starts_with(":") {
+    pub fn entity(&self, id: CruxId) -> Result<Edn, CruxError> {
+        let crux_id = edn_rs::to_string(id);
+        if !crux_id.starts_with(":") {
             return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
         }
 
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&id);
+        s.push_str(&crux_id);
         s.push_str("}");
 
         let resp = self
@@ -97,17 +96,18 @@ impl HttpClient {
     /// Function `entity_timed` is like `entity` but with two optional fields `transaction_time` and `valid_time` that are of type `Option<DateTime<FixedOffset>>`.
     pub fn entity_timed(
         &self,
-        id: String,
+        id: CruxId,
         transaction_time: Option<DateTime<FixedOffset>>,
         valid_time: Option<DateTime<FixedOffset>>,
     ) -> Result<Edn, CruxError> {
-        if !id.starts_with(":") {
+        let crux_id = edn_rs::to_string(id);
+        if !crux_id.starts_with(":") {
             return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
         }
 
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&id);
+        s.push_str(&crux_id);
         s.push_str("}");
 
         let url = build_timed_url(self.uri.clone(), "entity", transaction_time, valid_time);
@@ -126,10 +126,10 @@ impl HttpClient {
 
     /// Function `entity_tx` requests endpoint `/entity-tx` via `POST` which retrieves the docs and tx infos
     /// for the last document for that ID saved in CruxDB.
-    pub fn entity_tx(&self, id: String) -> Result<EntityTxResponse, CruxError> {
+    pub fn entity_tx(&self, id: CruxId) -> Result<EntityTxResponse, CruxError> {
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&id);
+        s.push_str(&edn_rs::to_string(id));
         s.push_str("}");
 
         let resp = self
@@ -146,13 +146,13 @@ impl HttpClient {
     /// Function `entity_tx_timed` is like `entity_tx` but with two optional fields `transaction_time` and `valid_time` that are of type `Option<DateTime<FixedOffset>>`.
     pub fn entity_tx_timed(
         &self,
-        id: String,
+        id: CruxId,
         transaction_time: Option<DateTime<FixedOffset>>,
         valid_time: Option<DateTime<FixedOffset>>,
     ) -> Result<EntityTxResponse, CruxError> {
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&id);
+        s.push_str(&edn_rs::to_string(id));
         s.push_str("}");
 
         let url = build_timed_url(self.uri.clone(), "entity-tx", transaction_time, valid_time);
@@ -241,22 +241,20 @@ impl HttpClient {
 
 #[cfg(feature = "async")]
 impl HttpClient {
-    pub async fn tx_log(&self, actions: Vec<Action>) -> Result<TxLogResponse, CruxError> {
-        let actions_str = actions
-            .into_iter()
-            .map(edn_rs::to_string)
-            .collect::<Vec<String>>()
-            .join(", ");
-        let mut s = String::new();
-        s.push_str("[");
-        s.push_str(&actions_str);
-        s.push_str("]");
+    pub async fn tx_log(&self, actions: Actions) -> Result<TxLogResponse, CruxError> {
+        if actions.is_empty() {
+            return Err(CruxError::TxLogActionError(
+                "Actions cannot be empty.".to_string(),
+            ));
+        }
+
+        let body = actions.build();
 
         let resp = self
             .client
             .post(&format!("{}/tx-log", self.uri))
             .headers(self.headers.clone())
-            .body(s)
+            .body(body)
             .send()
             .await?
             .text()
@@ -278,14 +276,15 @@ impl HttpClient {
         TxLogsResponse::from_str(&resp)
     }
 
-    pub async fn entity(&self, id: String) -> Result<Edn, CruxError> {
-        if !id.starts_with(":") {
+    pub async fn entity(&self, id: CruxId) -> Result<Edn, CruxError> {
+        let crux_id = edn_rs::to_string(id);
+        if !crux_id.starts_with(":") {
             return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
         }
 
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&id);
+        s.push_str(&crux_id);
         s.push_str("}");
 
         let resp = self
@@ -304,17 +303,18 @@ impl HttpClient {
 
     pub async fn entity_timed(
         &self,
-        id: String,
+        id: CruxId,
         transaction_time: Option<DateTime<FixedOffset>>,
         valid_time: Option<DateTime<FixedOffset>>,
     ) -> Result<Edn, CruxError> {
-        if !id.starts_with(":") {
+        let crux_id = edn_rs::to_string(id);
+        if !crux_id.starts_with(":") {
             return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
         }
 
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&id);
+        s.push_str(&crux_id);
         s.push_str("}");
 
         let url = build_timed_url(self.uri.clone(), "entity", transaction_time, valid_time);
@@ -332,10 +332,10 @@ impl HttpClient {
         edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
     }
 
-    pub async fn entity_tx(&self, id: String) -> Result<EntityTxResponse, CruxError> {
+    pub async fn entity_tx(&self, id: CruxId) -> Result<EntityTxResponse, CruxError> {
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&id);
+        s.push_str(&edn_rs::to_string(id));
         s.push_str("}");
 
         let resp = self
@@ -353,13 +353,13 @@ impl HttpClient {
 
     pub async fn entity_tx_timed(
         &self,
-        id: String,
+        id: CruxId,
         transaction_time: Option<DateTime<FixedOffset>>,
         valid_time: Option<DateTime<FixedOffset>>,
     ) -> Result<EntityTxResponse, CruxError> {
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&id);
+        s.push_str(&edn_rs::to_string(id));
         s.push_str("}");
 
         let url = build_timed_url(self.uri.clone(), "entity-tx", transaction_time, valid_time);
@@ -481,24 +481,22 @@ fn build_timed_url(
 #[cfg(test)]
 mod http {
     use crate::client::Crux;
-    use crate::types::http::Action;
+    use crate::types::http::Actions;
     use crate::types::http::Order;
     use crate::types::{
         query::Query,
         response::{EntityHistoryElement, EntityHistoryResponse, EntityTxResponse, TxLogResponse},
         CruxId,
     };
-    use edn_rs::{ser_struct, Serialize};
+    use edn_derive::Serialize;
     use mockito::mock;
 
-    ser_struct! {
-        #[derive(Debug, Clone)]
-        #[allow(non_snake_case)]
-        pub struct Person {
-            crux__db___id: CruxId,
-            first_name: String,
-            last_name: String
-        }
+    #[derive(Debug, Clone, Serialize)]
+    #[allow(non_snake_case)]
+    pub struct Person {
+        crux__db___id: CruxId,
+        first_name: String,
+        last_name: String,
     }
 
     #[test]
@@ -522,14 +520,20 @@ mod http {
             last_name: "Manuel".to_string(),
         };
 
-        let action1 = Action::Put(edn_rs::to_string(person1), None);
-        let action2 = Action::Put(edn_rs::to_string(person2), None);
+        let actions = Actions::new().append_put(person1).append_put(person2);
 
-        let response = Crux::new("localhost", "4000")
-            .http_client()
-            .tx_log(vec![action1, action2]);
+        let response = Crux::new("localhost", "4000").http_client().tx_log(actions);
 
         assert_eq!(response.unwrap(), TxLogResponse::default())
+    }
+
+    #[test]
+    #[should_panic(expected = "TxLogActionError(\"Actions cannot be empty.\")")]
+    fn empty_actions_on_tx_log() {
+        let actions = Actions::new();
+
+        let err = Crux::new("localhost", "4000").http_client().tx_log(actions);
+        err.unwrap();
     }
 
     #[test]
@@ -572,9 +576,10 @@ mod http {
             .with_body("{:crux.db/id :hello-entity :first-name \"Hello\", :last-name \"World\"}")
             .create();
 
+        let id = CruxId::new(":ivan");
         let edn_body = Crux::new("localhost", "3000")
             .http_client()
-            .entity(":ivan".to_string())
+            .entity(id)
             .unwrap();
 
         let resp = format!("{:?}", edn_body);
@@ -591,9 +596,10 @@ mod http {
             .with_body(expected_body)
             .create();
 
+        let id = CruxId::new(":ivan");
         let body = Crux::new("localhost", "3000")
             .http_client()
-            .entity_tx(":ivan".to_string())
+            .entity_tx(id)
             .unwrap();
 
         assert_eq!(body, EntityTxResponse::default());

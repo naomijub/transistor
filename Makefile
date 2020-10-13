@@ -1,5 +1,5 @@
 crux:
-	docker run -d -p 3000:3000 --name CruxDB juxt/crux-standalone:20.08-1.10.1
+	docker run -d -p 3000:3000 --name CruxDB juxt/crux-standalone:20.09-1.11.0
 
 int:
 	cargo test --test lib --no-fail-fast --features "mock"
@@ -7,4 +7,10 @@ int:
 unit:
 	cargo test --locked  --no-fail-fast --lib
 
-test: unit int
+examples-sync:
+	cargo test --examples
+
+examples-async:
+	cargo test --examples --features "async"
+
+test: unit int examples-sync examples-async
