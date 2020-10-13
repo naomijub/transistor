@@ -1,23 +1,133 @@
+use crate::types::CruxId;
 use chrono::prelude::*;
 use edn_rs::Serialize;
+
 static ACTION_DATE_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S%Z";
 static DATETIME_FORMAT: &'static str = "%Y-%m-%dT%H:%M:%S";
 
-/// Action to perform in Crux. Receives a serialized Edn.
-///
-/// **First field of your struct should be `crux__db___id: CruxId`**
-///
-/// Allowed actions:
-/// * `PUT` - Write a version of a document can receive an `Option<DateTime<FixedOffset>>` as second argument which corresponds to a `valid-time`.
-/// * `Delete` - Deletes the specific document at a given valid time, if `Option<DateTime<FixedOffset>>` is `None` it deletes the last `valid-`time` else it deletes the passed `valid-time`.
-/// * `Evict` - Evicts a document entirely, including all historical versions (receives only the ID to evict).
-/// * `Match` - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue. First argument is struct's `crux__db___id`,  the second is the serialized document that you want to match and the third argument is an `Option<DateTime<FixedOffset>>` which corresponds to a `valid-time` for the `Match`
-#[derive(Debug, PartialEq)]
-pub enum Action {
+#[derive(Debug, PartialEq, Clone)]
+pub(crate) enum Action {
     Put(String, Option<DateTime<FixedOffset>>),
     Delete(String, Option<DateTime<FixedOffset>>),
     Evict(String),
     Match(String, String, Option<DateTime<FixedOffset>>),
+}
+
+/// Test enum to test and debug `Actions`. Implements `PartialEq` with `Actions`
+#[cfg(feature = "mock")]
+#[derive(Debug, PartialEq)]
+pub enum ActionMock {
+    Put(String, Option<DateTime<FixedOffset>>),
+    Delete(String, Option<DateTime<FixedOffset>>),
+    Evict(String),
+    Match(String, String, Option<DateTime<FixedOffset>>),
+}
+
+/// Actions to perform in Crux. It is a builder struct to help you create a `Vec<Action>` for `tx_log`.
+///
+/// Allowed actions:
+/// * `PUT` - Write a version of a document. Functions are `append_put` and `append_put_timed`.
+/// * `Delete` - Deletes the specific document at a given valid time. Functions are `append_delete` and `append_delete_timed`.
+/// * `Evict` - Evicts a document entirely, including all historical versions (receives only the ID to evict). Function is `append_evict`.
+/// * `Match` - Matches the current state of an entity, if the state doesn't match the provided document, the transaction will not continue. Functions are `append_match` and `append_match_timed`.
+#[derive(Debug, PartialEq, Clone)]
+pub struct Actions {
+    actions: Vec<Action>,
+}
+
+impl Actions {
+    pub fn new() -> Self {
+        Self {
+            actions: Vec::new(),
+        }
+    }
+
+    pub(crate) fn is_empty(&self) -> bool {
+        self.actions.is_empty()
+    }
+
+    /// Appends an `Action::Put` enforcing types for `action` field to be a `T: Serialize`
+    pub fn append_put<T: Serialize>(mut self, action: T) -> Self {
+        self.actions.push(Action::put(action));
+        self
+    }
+
+    /// Appends an `Action::Put` that includes `date` enforcing types for `action` field to be a `T: Serialize` and `date` to be `DateTime<FixedOffset>`.
+    pub fn append_put_timed<T: Serialize>(
+        mut self,
+        action: T,
+        date: DateTime<FixedOffset>,
+    ) -> Self {
+        self.actions.push(Action::put(action).with_valid_date(date));
+        self
+    }
+
+    /// Appends an `Action::Delete` enforcing types for `id` field to be a `CruxId`
+    pub fn append_delete(mut self, id: CruxId) -> Self {
+        self.actions.push(Action::delete(id));
+        self
+    }
+
+    /// Appends an `Action::Delete` that includes `date` enforcing types for `id` field to be a `CruxId` and `date` to be `DateTime<FixedOffset>`.
+    pub fn append_delete_timed(mut self, id: CruxId, date: DateTime<FixedOffset>) -> Self {
+        self.actions.push(Action::delete(id).with_valid_date(date));
+        self
+    }
+
+    /// Appends an `Action::Evict` enforcing types for `id` field to be a `CruxId`
+    pub fn append_evict(mut self, id: CruxId) -> Self {
+        self.actions.push(Action::evict(id));
+        self
+    }
+
+    /// Appends an `Action::Match` enforcing types for `id` field to be a `CruxId` and `action` field to be a `T: Serialize`
+    pub fn append_match_doc<T: Serialize>(mut self, id: CruxId, action: T) -> Self {
+        self.actions.push(Action::match_doc(id, action));
+        self
+    }
+
+    /// Appends an `Action::Match` that includes `date` enforcing types for `id` field to be a `CruxId`, `action` field to be a `T: Serialize` and `date` to be `DateTime<FixedOffset>`.
+    pub fn append_match_doc_timed<T: Serialize>(
+        mut self,
+        id: CruxId,
+        action: T,
+        date: DateTime<FixedOffset>,
+    ) -> Self {
+        self.actions
+            .push(Action::match_doc(id, action).with_valid_date(date));
+        self
+    }
+
+    pub(crate) fn build(self) -> String {
+        edn_rs::to_string(self.actions)
+    }
+}
+
+impl Action {
+    fn put<T: Serialize>(action: T) -> Action {
+        Action::Put(edn_rs::to_string(action), None)
+    }
+
+    fn with_valid_date(self, date: DateTime<FixedOffset>) -> Action {
+        match self {
+            Action::Put(action, _) => Action::Put(action, Some(date)),
+            Action::Delete(action, _) => Action::Delete(action, Some(date)),
+            Action::Match(id, action, _) => Action::Match(id, action, Some(date)),
+            action => action,
+        }
+    }
+
+    fn delete(id: CruxId) -> Action {
+        Action::Delete(edn_rs::to_string(id), None)
+    }
+
+    fn evict(id: CruxId) -> Action {
+        Action::Evict(edn_rs::to_string(id))
+    }
+
+    fn match_doc<T: Serialize>(id: CruxId, action: T) -> Action {
+        Action::Match(edn_rs::to_string(id), edn_rs::to_string(action), None)
+    }
 }
 
 impl Serialize for Action {
@@ -29,10 +139,10 @@ impl Serialize for Action {
                 edn,
                 date.format(ACTION_DATE_FORMAT).to_string()
             ),
-            Action::Delete(edn, None) => format!("[:crux.tx/delete {}]", edn),
-            Action::Delete(edn, Some(date)) => format!(
+            Action::Delete(id, None) => format!("[:crux.tx/delete {}]", id),
+            Action::Delete(id, Some(date)) => format!(
                 "[:crux.tx/delete {} #inst \"{}\"]",
-                edn,
+                id,
                 date.format(ACTION_DATE_FORMAT).to_string()
             ),
             Action::Evict(id) => {
@@ -140,5 +250,118 @@ impl VecSer for Vec<TimeHistory> {
                 .collect::<Vec<String>>()
                 .join("")
         }
+    }
+}
+
+#[cfg(feature = "mock")]
+impl std::cmp::PartialEq<Vec<ActionMock>> for Actions {
+    fn eq(&self, other: &Vec<ActionMock>) -> bool {
+        self.actions
+            .iter()
+            .zip(other.iter())
+            .map(|(acs, acm)| match (acs, acm) {
+                (Action::Put(ap, tp), ActionMock::Put(am, tm)) if ap == am && tp == tm => true,
+                (Action::Evict(id), ActionMock::Evict(idm)) if id == idm => true,
+                (Action::Delete(id, tp), ActionMock::Delete(idm, tm)) if id == idm && tp == tm => {
+                    true
+                }
+                (Action::Match(id, a, tp), ActionMock::Match(idm, am, tm))
+                    if id == idm && a == am && tp == tm =>
+                {
+                    true
+                }
+                _ => false,
+            })
+            .fold(true, |acc, e| acc && e)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::CruxId;
+    use edn_derive::Serialize;
+
+    #[test]
+    fn actions() {
+        let person1 = Person {
+            crux__db___id: CruxId::new("jorge-3"),
+            first_name: "Michael".to_string(),
+            last_name: "Jorge".to_string(),
+        };
+
+        let person2 = Person {
+            crux__db___id: CruxId::new("manuel-1"),
+            first_name: "Diego".to_string(),
+            last_name: "Manuel".to_string(),
+        };
+
+        let person3 = Person {
+            crux__db___id: CruxId::new("manuel-1"),
+            first_name: "Diego".to_string(),
+            last_name: "Manuel".to_string(),
+        };
+
+        let timed = "2014-11-28T21:00:09-09:00"
+            .parse::<DateTime<FixedOffset>>()
+            .unwrap();
+
+        let actions = Actions::new()
+            .append_put_timed(person1.clone(), timed)
+            .append_put(person2.clone())
+            .append_evict(person1.crux__db___id)
+            .append_delete(person2.crux__db___id)
+            .append_match_doc(person3.clone().crux__db___id, person3);
+
+        assert_eq!(actions.clone(), expected_actions());
+    }
+
+    fn expected_actions() -> Actions {
+        let person1 = Person {
+            crux__db___id: CruxId::new("jorge-3"),
+            first_name: "Michael".to_string(),
+            last_name: "Jorge".to_string(),
+        };
+
+        let person2 = Person {
+            crux__db___id: CruxId::new("manuel-1"),
+            first_name: "Diego".to_string(),
+            last_name: "Manuel".to_string(),
+        };
+
+        let person3 = Person {
+            crux__db___id: CruxId::new("manuel-1"),
+            first_name: "Diego".to_string(),
+            last_name: "Manuel".to_string(),
+        };
+
+        Actions {
+            actions: vec![
+                Action::Put(
+                    person1.clone().serialize(),
+                    Some(
+                        "2014-11-28T21:00:09-09:00"
+                            .parse::<DateTime<FixedOffset>>()
+                            .unwrap(),
+                    ),
+                ),
+                Action::Put(person2.clone().serialize(), None),
+                Action::Evict(person1.crux__db___id.serialize()),
+                Action::Delete(person2.crux__db___id.serialize(), None),
+                Action::Match(
+                    person3.clone().crux__db___id.serialize(),
+                    person3.serialize(),
+                    None,
+                ),
+            ],
+        }
+    }
+
+    #[derive(Debug, Clone, Serialize)]
+    #[allow(non_snake_case)]
+    pub struct Person {
+        crux__db___id: CruxId,
+        first_name: String,
+        last_name: String,
     }
 }

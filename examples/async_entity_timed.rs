@@ -1,11 +1,10 @@
 use chrono::prelude::*;
+use edn_derive::{Deserialize, Serialize};
 use transistor::client::Crux;
-use transistor::edn_rs::{ser_struct, Deserialize, EdnError, Serialize};
-use transistor::types::http::Action;
+use transistor::types::Actions;
 use transistor::types::CruxId;
 
-#[tokio::main]
-async fn main() {
+async fn entity_timed() -> edn_rs::Edn {
     let person1 = Person {
         crux__db___id: CruxId::new("jorge-3"),
         first_name: "Michael".to_string(),
@@ -23,19 +22,27 @@ async fn main() {
         .parse::<DateTime<FixedOffset>>()
         .unwrap();
 
-    let action1 = Action::Put(edn_rs::to_string(person1.clone()), Some(timed));
-    let action2 = Action::Put(edn_rs::to_string(person2), Some(timed));
+    let actions = Actions::new()
+        .append_put_timed(person1.clone(), timed)
+        .append_put_timed(person2, timed);
 
     let _ = Crux::new("localhost", "3000")
         .http_client()
-        .tx_log(vec![action1, action2])
+        .tx_log(actions)
         .await
         .unwrap();
 
     let edn_body = client
-        .entity_timed(edn_rs::to_string(person1.crux__db___id), None, Some(timed))
+        .entity_timed(person1.crux__db___id, None, Some(timed))
         .await
         .unwrap();
+
+    return edn_body;
+}
+
+#[tokio::main]
+async fn main() {
+    let edn_body = entity_timed().await;
 
     println!("\n Edn Body = {:#?}", edn_body);
     // Edn Body = Map(
@@ -67,22 +74,23 @@ async fn main() {
     // }
 }
 
-ser_struct! {
-    #[derive(Debug, Clone)]
-    #[allow(non_snake_case)]
-    pub struct Person {
-        crux__db___id: CruxId,
-        first_name: String,
-        last_name: String
-    }
+#[tokio::test]
+async fn test_entity_timed() {
+    let edn_body = entity_timed().await;
+    let entity = edn_rs::from_edn::<Person>(&edn_body).unwrap();
+    let expected = Person {
+        crux__db___id: CruxId::new("jorge-3"),
+        first_name: "Michael".to_string(),
+        last_name: "Jorge".to_string(),
+    };
+
+    assert_eq!(entity, expected);
 }
 
-impl Deserialize for Person {
-    fn deserialize(edn: &edn_rs::Edn) -> Result<Self, EdnError> {
-        Ok(Self {
-            crux__db___id: edn_rs::from_edn(&edn[":crux.db/id"])?,
-            first_name: edn_rs::from_edn(&edn[":first-name"])?,
-            last_name: edn_rs::from_edn(&edn[":last-name"])?,
-        })
-    }
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[allow(non_snake_case)]
+pub struct Person {
+    crux__db___id: CruxId,
+    first_name: String,
+    last_name: String,
 }

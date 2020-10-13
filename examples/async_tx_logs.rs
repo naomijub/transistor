@@ -1,14 +1,19 @@
 use transistor::client::Crux;
+use transistor::types::response::TxLogsResponse;
 
-#[tokio::main]
-async fn main() {
+async fn tx_logs() -> TxLogsResponse {
     let body = Crux::new("localhost", "3000")
         .http_client()
         .tx_logs()
         .await
         .unwrap();
+    return body;
+}
 
-    println!("Body = {:#?}", body);
+#[tokio::main]
+async fn main() {
+    let tx_logs = tx_logs().await;
+    println!("Body = {:#?}", tx_logs);
     // Body = TxLogsResponse {
     //     tx_events: [
     //         TxLogResponse {
@@ -40,4 +45,10 @@ async fn main() {
     //         ...
     //     ]
     // }
+}
+
+#[tokio::test]
+async fn test_tx_logs() {
+    let tx_logs = tx_logs().await;
+    assert!(tx_logs.tx_events.len() > 0)
 }

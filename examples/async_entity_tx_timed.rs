@@ -1,11 +1,12 @@
 use chrono::prelude::*;
+use edn_derive::Serialize;
 use transistor::client::Crux;
-use transistor::edn_rs::{ser_struct, Deserialize, EdnError, Serialize};
-use transistor::types::http::Action;
+use transistor::edn_rs::EdnError;
+use transistor::types::response::EntityTxResponse;
+use transistor::types::Actions;
 use transistor::types::CruxId;
 
-#[tokio::main]
-async fn main() {
+async fn entity_tx_timed() -> EntityTxResponse {
     let person1 = Person {
         crux__db___id: CruxId::new("calor-jorge-3"),
         first_name: "Calors Michael".to_string(),
@@ -23,54 +24,48 @@ async fn main() {
         .parse::<DateTime<FixedOffset>>()
         .unwrap();
 
-    let action1 = Action::Put(edn_rs::to_string(person1.clone()), Some(timed));
-    let action2 = Action::Put(edn_rs::to_string(person2), Some(timed));
+    let actions = Actions::new()
+        .append_put_timed(person1.clone(), timed.clone())
+        .append_put_timed(person2, timed.clone());
 
     let _ = Crux::new("localhost", "3000")
         .http_client()
-        .tx_log(vec![action1, action2])
+        .tx_log(actions)
         .await
         .unwrap();
 
-    let edn_body = client
-        .entity_tx_timed(edn_rs::to_string(person1.crux__db___id), None, Some(timed))
+    let entity_tx_body = client
+        .entity_tx_timed(person1.crux__db___id, None, Some(timed))
         .await
         .unwrap();
 
-    println!("\n Edn Body = {:#?}", edn_body);
-    // Edn Body = Map(
-    //     Map(
-    //         {
-    //             ":crux.db/id": Key(
-    //                 ":hello-entity",
-    //             ),
-    //             ":first-name": Str(
-    //                 "Hello",
-    //             ),
-    //             ":last-name": Str(
-    //                 "World",
-    //             ),
-    //         },
-    //     ),
-    // )
+    return entity_tx_body;
 }
 
-ser_struct! {
-    #[derive(Debug, Clone)]
-    #[allow(non_snake_case)]
-    pub struct Person {
-        crux__db___id: CruxId,
-        first_name: String,
-        last_name: String
-    }
+#[tokio::main]
+async fn main() {
+    let entity = entity_tx_timed().await;
+    println!("\n Edn Body = {:#?}", entity);
+    // Edn Body = EntityTxResponse {
+    //     db___id: "f936408359776345394b07809bf1fd9bf0f70046",
+    //     db___content_hash: "621f30a89898d2c55bc81b0b1e0db0be2878486c",
+    //     db___valid_time: 2014-11-29T06:00:09+00:00,
+    //     tx___tx_id: 111,
+    //     tx___tx_time: 2020-09-30T13:22:02.795+00:00,
+    // }
 }
 
-impl Deserialize for Person {
-    fn deserialize(edn: &edn_rs::Edn) -> Result<Self, EdnError> {
-        Ok(Self {
-            crux__db___id: edn_rs::from_edn(&edn[":crux.db/id"])?,
-            first_name: edn_rs::from_edn(&edn[":first-name"])?,
-            last_name: edn_rs::from_edn(&edn[":last-name"])?,
-        })
-    }
+#[tokio::test]
+async fn test_entity_tx_timed() {
+    let entity = entity_tx_timed().await;
+
+    assert!(entity.tx___tx_id > 0);
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[allow(non_snake_case)]
+pub struct Person {
+    crux__db___id: CruxId,
+    first_name: String,
+    last_name: String,
 }
