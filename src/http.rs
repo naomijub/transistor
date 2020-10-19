@@ -88,7 +88,7 @@ impl HttpClient {
         if resp.status().as_u16() < 300 {
             let resp_body = resp.text()?;
             let edn_resp = Edn::from_str(&resp_body.replace("#inst", ""));
-            edn_resp.or(Err(CruxError::BadRequestError(format!(
+            edn_resp.or(Err(CruxError::BadResponseError(format!(
                 "entity responded with {} for id \"{}\" ",
                 500, crux_id
             ))))
@@ -127,7 +127,7 @@ impl HttpClient {
         if resp.status().as_u16() < 300 {
             let resp_body = resp.text()?;
             let edn_resp = Edn::from_str(&resp_body.replace("#inst", ""));
-            edn_resp.or(Err(CruxError::BadRequestError(format!(
+            edn_resp.or(Err(CruxError::BadResponseError(format!(
                 "entity-timed responded with {} for id \"{}\" ",
                 500, crux_id
             ))))
@@ -331,7 +331,7 @@ impl HttpClient {
         if resp.status().as_u16() < 300 {
             let resp_body = resp.text().await?;
             let edn_resp = Edn::from_str(&resp_body.replace("#inst", ""));
-            edn_resp.or(Err(CruxError::BadRequestError(format!(
+            edn_resp.or(Err(CruxError::BadResponseError(format!(
                 "entity responded with {} for id \"{}\" ",
                 500, crux_id
             ))))
@@ -369,7 +369,7 @@ impl HttpClient {
         if resp.status().as_u16() < 300 {
             let resp_body = resp.text().await?;
             let edn_resp = Edn::from_str(&resp_body.replace("#inst", ""));
-            edn_resp.or(Err(CruxError::BadRequestError(format!(
+            edn_resp.or(Err(CruxError::BadResponseError(format!(
                 "entity responded with {} for id \"{}\" ",
                 500, crux_id
             ))))
