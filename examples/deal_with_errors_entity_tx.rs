@@ -24,7 +24,7 @@ fn main() {
     let entity_tx = entity_tx();
     println!("Tx Body = {:#?}", entity_tx);
     // Tx Body = Err(
-    //     BadRequestError(
+    //     BadResponse(
     //         "entity-tx responded with 404 for id :error-id",
     //     ),
     // )
@@ -41,7 +41,7 @@ fn test_entity_tx() {
             format!("{:?}", e),
             format!(
                 "{:?}",
-                CruxError::BadRequestError(
+                CruxError::BadResponse(
                     "entity-tx responded with 404 for id \":error-id\" ".to_string()
                 )
             )

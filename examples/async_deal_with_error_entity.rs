@@ -22,7 +22,7 @@ async fn main() {
 
     println!("\n Edn Body = {:#?}", edn_body);
     // Edn Body = Err(
-    //     BadRequestError(
+    //     BadResponse(
     //         "entity responded with 404 for id \":unknown-id\" ",
     //     ),
     // )
@@ -38,7 +38,7 @@ async fn test_entity_timed() {
             format!("{:?}", e),
             format!(
                 "{:?}",
-                CruxError::BadRequestError(
+                CruxError::BadResponse(
                     "entity responded with 404 for id \":unknown-id\" ".to_string()
                 )
             )
