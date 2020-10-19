@@ -13,7 +13,9 @@ pub enum CruxError {
     /// Error originated by `reqwest` crate. Failed to make HTTP request.
     RequestError(Error),
     /// Error originated by `reqwest` crate. Failed to make HTTP request.
-    BadRequestError(String),
+    BadResponse(String),
+    /// Error originated by undefined behavior when parsing Crux response.
+    ResponseFailed(String),
     /// Query response error, most likely a Clojure stacktrace from Crux response.
     QueryError(String),
     /// Provided Query struct did not match schema.
@@ -28,7 +30,8 @@ impl std::error::Error for CruxError {
             CruxError::ParseEdnError(s) => &s,
             CruxError::DeserializeError(s) => &s,
             CruxError::RequestError(_) => "HTTP request to Crux failed",
-            CruxError::BadRequestError(s) => &s,
+            CruxError::BadResponse(s) => &s,
+            CruxError::ResponseFailed(s) => &s,
             CruxError::QueryError(s) => &s,
             CruxError::QueryFormatError(s) => &s,
             CruxError::IterError(s) => &s,
@@ -47,7 +50,8 @@ impl std::fmt::Display for CruxError {
             CruxError::ParseEdnError(s) => write!(f, "{}", &s),
             CruxError::DeserializeError(s) => write!(f, "{}", &s),
             CruxError::RequestError(e) => write!(f, "{:?}", &e),
-            CruxError::BadRequestError(e) => write!(f, "{}", &e),
+            CruxError::BadResponse(e) => write!(f, "{}", &e),
+            CruxError::ResponseFailed(e) => write!(f, "{}", &e),
             CruxError::QueryError(s) => write!(f, "{}", &s),
             CruxError::QueryFormatError(s) => write!(f, "{}", &s),
             CruxError::IterError(s) => write!(f, "{}", &s),
