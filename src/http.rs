@@ -10,7 +10,7 @@ use crate::types::{
     CruxId,
 };
 use chrono::prelude::*;
-use edn_rs::{edn, Edn, Map};
+use edn_rs::Edn;
 #[cfg(not(feature = "async"))]
 use reqwest::blocking;
 use reqwest::header::HeaderMap;
@@ -72,9 +72,6 @@ impl HttpClient {
     /// Response is a `reqwest::Result<edn_rs::Edn>` with the last Entity with that ID.
     pub fn entity(&self, id: CruxId) -> Result<Edn, CruxError> {
         let crux_id = edn_rs::to_string(id);
-        if !crux_id.starts_with(":") {
-            return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
-        }
 
         let mut s = String::new();
         s.push_str("{:eid ");
@@ -86,11 +83,24 @@ impl HttpClient {
             .post(&format!("{}/entity", self.uri))
             .headers(self.headers.clone())
             .body(s)
-            .send()?
-            .text()?;
+            .send()?;
 
-        let edn_resp = Edn::from_str(&resp.replace("#inst", ""));
-        edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
+        if resp.status().as_u16() < 300 {
+            let resp_body = resp.text()?;
+            let edn_resp = Edn::from_str(&resp_body.replace("#inst", ""));
+            edn_resp.or_else(|_| {
+                Err(CruxError::ResponseFailed(format!(
+                    "entity responded with {} for id \"{}\" ",
+                    500, crux_id
+                )))
+            })
+        } else {
+            Err(CruxError::BadResponse(format!(
+                "entity responded with {} for id \"{}\" ",
+                resp.status().as_u16(),
+                crux_id
+            )))
+        }
     }
 
     /// Function `entity_timed` is like `entity` but with two optional fields `transaction_time` and `valid_time` that are of type `Option<DateTime<FixedOffset>>`.
@@ -101,9 +111,6 @@ impl HttpClient {
         valid_time: Option<DateTime<FixedOffset>>,
     ) -> Result<Edn, CruxError> {
         let crux_id = edn_rs::to_string(id);
-        if !crux_id.starts_with(":") {
-            return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
-        }
 
         let mut s = String::new();
         s.push_str("{:eid ");
@@ -117,19 +124,34 @@ impl HttpClient {
             .post(&url)
             .headers(self.headers.clone())
             .body(s)
-            .send()?
-            .text()?;
+            .send()?;
 
-        let edn_resp = Edn::from_str(&resp.replace("#inst", ""));
-        edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
+        if resp.status().as_u16() < 300 {
+            let resp_body = resp.text()?;
+            let edn_resp = Edn::from_str(&resp_body.replace("#inst", ""));
+            edn_resp.or_else(|_| {
+                Err(CruxError::ResponseFailed(format!(
+                    "entity-timed responded with {} for id \"{}\" ",
+                    500, crux_id
+                )))
+            })
+        } else {
+            Err(CruxError::BadResponse(format!(
+                "entity-timed responded with {} for id \"{}\" ",
+                resp.status().as_u16(),
+                crux_id
+            )))
+        }
     }
 
     /// Function `entity_tx` requests endpoint `/entity-tx` via `POST` which retrieves the docs and tx infos
     /// for the last document for that ID saved in CruxDB.
     pub fn entity_tx(&self, id: CruxId) -> Result<EntityTxResponse, CruxError> {
+        let crux_id = edn_rs::to_string(id);
+
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&edn_rs::to_string(id));
+        s.push_str(&crux_id);
         s.push_str("}");
 
         let resp = self
@@ -137,10 +159,18 @@ impl HttpClient {
             .post(&format!("{}/entity-tx", self.uri))
             .headers(self.headers.clone())
             .body(s)
-            .send()?
-            .text()?;
+            .send()?;
 
-        EntityTxResponse::from_str(&resp.replace("#inst", ""))
+        if resp.status().as_u16() < 300 {
+            let resp_body = resp.text()?;
+            EntityTxResponse::from_str(&resp_body.replace("#inst", ""))
+        } else {
+            Err(CruxError::BadResponse(format!(
+                "entity-tx responded with {} for id \"{}\" ",
+                resp.status().as_u16(),
+                crux_id
+            )))
+        }
     }
 
     /// Function `entity_tx_timed` is like `entity_tx` but with two optional fields `transaction_time` and `valid_time` that are of type `Option<DateTime<FixedOffset>>`.
@@ -150,9 +180,11 @@ impl HttpClient {
         transaction_time: Option<DateTime<FixedOffset>>,
         valid_time: Option<DateTime<FixedOffset>>,
     ) -> Result<EntityTxResponse, CruxError> {
+        let crux_id = edn_rs::to_string(id);
+
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&edn_rs::to_string(id));
+        s.push_str(&crux_id);
         s.push_str("}");
 
         let url = build_timed_url(self.uri.clone(), "entity-tx", transaction_time, valid_time);
@@ -162,10 +194,18 @@ impl HttpClient {
             .post(&url)
             .headers(self.headers.clone())
             .body(s)
-            .send()?
-            .text()?;
+            .send()?;
 
-        EntityTxResponse::from_str(&resp.replace("#inst", ""))
+        if resp.status().as_u16() < 300 {
+            let resp_body = resp.text()?;
+            EntityTxResponse::from_str(&resp_body.replace("#inst", ""))
+        } else {
+            Err(CruxError::BadResponse(format!(
+                "entity-tx responded with {} for id \"{}\" ",
+                resp.status().as_u16(),
+                crux_id
+            )))
+        }
     }
 
     /// Function `entity_history` requests endpoint `/entity-history` via `GET` which returns a list with all entity's transaction history.
@@ -278,9 +318,6 @@ impl HttpClient {
 
     pub async fn entity(&self, id: CruxId) -> Result<Edn, CruxError> {
         let crux_id = edn_rs::to_string(id);
-        if !crux_id.starts_with(":") {
-            return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
-        }
 
         let mut s = String::new();
         s.push_str("{:eid ");
@@ -293,12 +330,24 @@ impl HttpClient {
             .headers(self.headers.clone())
             .body(s)
             .send()
-            .await?
-            .text()
             .await?;
 
-        let edn_resp = Edn::from_str(&resp.replace("#inst", ""));
-        edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
+        if resp.status().as_u16() < 300 {
+            let resp_body = resp.text().await?;
+            let edn_resp = Edn::from_str(&resp_body.replace("#inst", ""));
+            edn_resp.or_else(|_| {
+                Err(CruxError::ResponseFailed(format!(
+                    "entity responded with {} for id \"{}\" ",
+                    500, crux_id
+                )))
+            })
+        } else {
+            Err(CruxError::BadResponse(format!(
+                "entity responded with {} for id \"{}\" ",
+                resp.status().as_u16(),
+                crux_id
+            )))
+        }
     }
 
     pub async fn entity_timed(
@@ -308,9 +357,6 @@ impl HttpClient {
         valid_time: Option<DateTime<FixedOffset>>,
     ) -> Result<Edn, CruxError> {
         let crux_id = edn_rs::to_string(id);
-        if !crux_id.starts_with(":") {
-            return Ok(edn!({:status ":bad-request", :message "ID required", :code 400}));
-        }
 
         let mut s = String::new();
         s.push_str("{:eid ");
@@ -324,18 +370,31 @@ impl HttpClient {
             .headers(self.headers.clone())
             .body(s)
             .send()
-            .await?
-            .text()
             .await?;
 
-        let edn_resp = Edn::from_str(&resp.replace("#inst", ""));
-        edn_resp.or(Ok(edn!({:status ":internal-server-error", :code 500})))
+        if resp.status().as_u16() < 300 {
+            let resp_body = resp.text().await?;
+            let edn_resp = Edn::from_str(&resp_body.replace("#inst", ""));
+            edn_resp.or_else(|_| {
+                Err(CruxError::ResponseFailed(format!(
+                    "entity responded with {} for id \"{}\" ",
+                    500, crux_id
+                )))
+            })
+        } else {
+            Err(CruxError::BadResponse(format!(
+                "entity responded with {} for id \"{}\" ",
+                resp.status().as_u16(),
+                crux_id
+            )))
+        }
     }
 
     pub async fn entity_tx(&self, id: CruxId) -> Result<EntityTxResponse, CruxError> {
+        let crux_id = edn_rs::to_string(id);
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&edn_rs::to_string(id));
+        s.push_str(&crux_id);
         s.push_str("}");
 
         let resp = self
@@ -344,11 +403,18 @@ impl HttpClient {
             .headers(self.headers.clone())
             .body(s)
             .send()
-            .await?
-            .text()
             .await?;
 
-        EntityTxResponse::from_str(&resp.replace("#inst", ""))
+        if resp.status().as_u16() < 300 {
+            let resp_body = resp.text().await?;
+            EntityTxResponse::from_str(&resp_body.replace("#inst", ""))
+        } else {
+            Err(CruxError::BadResponse(format!(
+                "entity-tx responded with {} for id \"{}\" ",
+                resp.status().as_u16(),
+                crux_id
+            )))
+        }
     }
 
     pub async fn entity_tx_timed(
@@ -357,9 +423,10 @@ impl HttpClient {
         transaction_time: Option<DateTime<FixedOffset>>,
         valid_time: Option<DateTime<FixedOffset>>,
     ) -> Result<EntityTxResponse, CruxError> {
+        let crux_id = edn_rs::to_string(id);
         let mut s = String::new();
         s.push_str("{:eid ");
-        s.push_str(&edn_rs::to_string(id));
+        s.push_str(&crux_id);
         s.push_str("}");
 
         let url = build_timed_url(self.uri.clone(), "entity-tx", transaction_time, valid_time);
@@ -370,11 +437,18 @@ impl HttpClient {
             .headers(self.headers.clone())
             .body(s)
             .send()
-            .await?
-            .text()
             .await?;
 
-        EntityTxResponse::from_str(&resp.replace("#inst", ""))
+        if resp.status().as_u16() < 300 {
+            let resp_body = resp.text().await?;
+            EntityTxResponse::from_str(&resp_body.replace("#inst", ""))
+        } else {
+            Err(CruxError::BadResponse(format!(
+                "entity-tx responded with {} for id \"{}\" ",
+                resp.status().as_u16(),
+                crux_id
+            )))
+        }
     }
 
     pub async fn entity_history(

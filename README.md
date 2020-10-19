@@ -42,7 +42,7 @@ To add this crate to your project you should add one of the following line to yo
 >
 > ```
 > [dependencies]
-> transistor = "2.0.0"
+> transistor = "2.1.0"
 > ```
 
 ## Creating a Crux Client
@@ -473,7 +473,7 @@ fn test_actions() -> Actions {
 
 **Async feature is still in BETA** as it depends heavily on `unwraps`.
 
-It is possible to use `async/await` http client, for that it is necessary to enable feature `async` in transistor, `transistor = { version = "2.0.0", features = ["async"] }`. With this feature enabled the `HttpClient` will use `reqwest::Client` instead of `reqwest::blocking::Client`. The default async runtime for `reqwest::Client` is `tokio`, so it is good to have `tokio` with feature `macros`, as well as `futures`, in your `Cargo.toml`:
+It is possible to use `async/await` http client, for that it is necessary to enable feature `async` in transistor, `transistor = { version = "2.1.0", features = ["async"] }`. With this feature enabled the `HttpClient` will use `reqwest::Client` instead of `reqwest::blocking::Client`. The default async runtime for `reqwest::Client` is `tokio`, so it is good to have `tokio` with feature `macros`, as well as `futures`, in your `Cargo.toml`:
 
 ```toml
 futures = {version = "0.3.5" }
@@ -553,7 +553,7 @@ Note `use tokio::prelude::*;` and `#[tokio::main] \n async fn main()`.
 It is possible to use receive the responses (`TxLogResponse`, `EntityTxResponse`, `EntityHistoryElement`) time dates as Strings, to do so you have to enable feature `time_as_str`:
 
 ```toml
-transistor = { version = "2.0.0", features = ["time_as_str"] }
+transistor = { version = "2.1.0", features = ["time_as_str"] }
 ```
 
 ## Possible Features

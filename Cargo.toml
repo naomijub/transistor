@@ -1,6 +1,6 @@
 [package]
 name = "transistor"
-version = "2.0.0"
+version = "2.1.0"
 authors = ["Julia Naomi <jnboeira@outlook.com>", "Otavio Pace <otaviopp8@gmail.com>"]
 description = "Crux Datalog DB Client"
 readme = "README.md"
@@ -19,7 +19,7 @@ async = ["tokio", "futures"]
 
 [dependencies]
 reqwest = { version = "0.10.6", features = ["blocking"] }
-edn-rs = { version = "0.16.7", features = ["async"]}
+edn-rs = { version = "0.16.10", features = ["async"]}
 edn-derive = "0.5.0"
 mockito = {version = "0.26", optional = true }
 chrono = "0.4"
@@ -58,4 +58,8 @@ required-features = ["async"]
 
 [[example]]
 name = "async_query"
+required-features = ["async"]
+
+[[example]]
+name = "async_deal_with_error_entity"
 required-features = ["async"]
