@@ -549,7 +549,7 @@ pub struct Database {
 
 Note `use tokio::prelude::*;` and `#[tokio::main] \n async fn main()`.
 
-## Enababling feature `time_as_str`
+## Enabling feature `time_as_str`
 It is possible to use receive the responses (`TxLogResponse`, `EntityTxResponse`, `EntityHistoryElement`) time dates as Strings, to do so you have to enable feature `time_as_str`:
 
 ```toml
