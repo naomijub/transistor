@@ -18,6 +18,7 @@ pub struct Query {
     order_by: Option<OrderBy>,
     limit: Option<Limit>,
     offset: Option<Offset>,
+    rules: Option<Rules>,
     full_results: bool,
 }
 #[derive(Clone, Debug)]
@@ -32,6 +33,10 @@ struct OrderBy(Vec<String>);
 struct Limit(usize);
 #[derive(Clone, Debug)]
 struct Offset(usize);
+#[derive(Clone, Debug)]
+struct Rules(Vec<Rule>);
+#[derive(Clone, Debug)]
+pub struct Rule(String, String);
 
 impl Query {
     /// `find` is the function responsible for defining the `:find` key in the query.
@@ -59,6 +64,7 @@ impl Query {
             order_by: None,
             limit: None,
             offset: None,
+            rules: None,
             full_results: false,
         })
     }
@@ -172,6 +178,12 @@ impl Query {
     /// `with_full_results` adds `:full-results? true` to the query map to easily retrieve the source documents relating to the entities in the result set.
     pub fn with_full_results(mut self) -> Self {
         self.full_results = true;
+        self
+    }
+
+    /// `rules` is the function responsible for defining the optional `:rules` key in the query.
+    pub fn rules(mut self, rules: Vec<Rule>) -> Self {
+        // TODO
         self
     }
 
