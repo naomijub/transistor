@@ -632,4 +632,22 @@ mod test {
 
         assert_eq!(edn_rs::to_string(q), expected);
     }
+
+    #[test]
+    #[should_panic(
+        expected = "All elements of find clause should start with \\\'?\\\', element \\\'(min e)\\\' doesn\\\'t conform"
+    )]
+    fn query_with_aggregates_error() {
+        let _ = Query::find_by_aggregates(vec![
+            Aggregate::Min("e".to_string()),
+            Aggregate::Max("?e".to_string()),
+            Aggregate::Count("?e".to_string()),
+            Aggregate::MinN(5, "?e".to_string()),
+            Aggregate::CountDistinct("?e".to_string()),
+        ])
+        .unwrap()
+        .where_clause(vec!["?e :type :burger"])
+        .unwrap()
+        .build();
+    }
 }
