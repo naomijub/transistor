@@ -13,6 +13,7 @@ use std::convert::TryFrom;
 #[derive(Clone, Debug)]
 pub struct Query {
     find: Find,
+    aggregates: Option<std::collections::HashSet<String>>,
     where_: Option<Where>,
     args: Option<Args>,
     order_by: Option<OrderBy>,
@@ -32,6 +33,81 @@ struct OrderBy(Vec<String>);
 struct Limit(usize);
 #[derive(Clone, Debug)]
 struct Offset(usize);
+
+/// `Aggregate` is an enum of possible aggregation to use with `find_by_aggregates` clause.
+#[derive(Clone)]
+pub enum Aggregate {
+    /// Accumulates as single value via the Clojure + function
+    Sum(String),
+    /// Return the single minimal value via the Clojure compare function which may operates on many types (integers, strings, collections etc.)
+    Min(String),
+    /// Return the single maximal value via the Clojure compare function which may operates on many types (integers, strings, collections etc.)
+    Max(String),
+    /// Returns a sorted set of the N minimum items. N must be a positive integer and cannot be referenced via an additional logic-var.
+    MinN(usize, String),
+    /// Returns a sorted set of the N maximum items. N must be a positive integer and cannot be referenced via an additional logic-var.
+    MaxN(usize, String),
+    /// Returns a single count of all values including any duplicates
+    Count(String),
+    /// Returns a single count of all unique values
+    CountDistinct(String),
+    /// Returns a single value equivalent to `sum / count`
+    Avg(String),
+    /// Return single value corresponding to the statistical definition of median
+    Median(String),
+    /// Return single value corresponding to the statistical definition of variance
+    Variance(String),
+    /// Return single value corresponding to the statistical definition of stddev
+    Stddev(String),
+    /// Returns a vector of exactly N values, where some values may be duplicates if N is larger than the range
+    Rand(usize, String),
+    /// Returns a vector of at-most N distinct values
+    Sample(usize, String),
+    /// Returns a set of distinct values
+    Distinct(String),
+}
+
+impl Aggregate {
+    fn string_value(&self) -> String {
+        match self {
+            Aggregate::Sum(s) => s.to_string(),
+            Aggregate::Min(s) => s.to_string(),
+            Aggregate::Max(s) => s.to_string(),
+            Aggregate::MinN(_, s) => s.to_string(),
+            Aggregate::MaxN(_, s) => s.to_string(),
+            Aggregate::Count(s) => s.to_string(),
+            Aggregate::CountDistinct(s) => s.to_string(),
+            Aggregate::Avg(s) => s.to_string(),
+            Aggregate::Median(s) => s.to_string(),
+            Aggregate::Variance(s) => s.to_string(),
+            Aggregate::Stddev(s) => s.to_string(),
+            Aggregate::Rand(_, s) => s.to_string(),
+            Aggregate::Sample(_, s) => s.to_string(),
+            Aggregate::Distinct(s) => s.to_string(),
+        }
+    }
+}
+
+impl std::fmt::Display for Aggregate {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Aggregate::Sum(s) => write!(f, "(sum {})", &s),
+            Aggregate::Min(s) => write!(f, "(min {})", &s),
+            Aggregate::Max(s) => write!(f, "(max {})", &s),
+            Aggregate::MinN(n, s) => write!(f, "(min {} {})", n, &s),
+            Aggregate::MaxN(n, s) => write!(f, "(max {} {})", n, &s),
+            Aggregate::Count(s) => write!(f, "(count {})", &s),
+            Aggregate::CountDistinct(s) => write!(f, "(count-distinct {})", &s),
+            Aggregate::Avg(s) => write!(f, "(avg {})", &s),
+            Aggregate::Median(s) => write!(f, "(median {})", &s),
+            Aggregate::Variance(s) => write!(f, "(variance {})", &s),
+            Aggregate::Stddev(s) => write!(f, "(stddev {})", &s),
+            Aggregate::Rand(n, s) => write!(f, "(rand {} {})", n, &s),
+            Aggregate::Sample(n, s) => write!(f, "(sample {} {})", n, &s),
+            Aggregate::Distinct(s) => write!(f, "(distinct {})", &s),
+        }
+    }
+}
 
 impl Query {
     /// `find` is the function responsible for defining the `:find` key in the query.
@@ -54,6 +130,63 @@ impl Query {
             find: Find {
                 0: find.into_iter().map(String::from).collect::<Vec<String>>(),
             },
+            aggregates: None,
+            where_: None,
+            args: None,
+            order_by: None,
+            limit: None,
+            offset: None,
+            full_results: false,
+        })
+    }
+
+    /// `find_by_aggregates` is the function responsible for defining the `:find` key in the query similar to `find`.
+    ///  However, it supports sending aggregates to `:find` keys.
+    /// Input should be the elements to be queried by the `where_clause`.
+    /// Ex: `vec![(Sum("?heads"), Min("?heads"), Max("?heads"), Count("?heads"),  CountDistinct("?heads")]`.
+    /// Becomes: `:find [(sum ?heads) (min ?heads) (max ?heads) (count ?heads)  (count-distinct ?heads)]`.
+    ///
+    /// Error cases:
+    /// * All elements should start with `?`, example `vec!["(min ?heads)"]`. If theey do not start the CruxError::QueryFormatError containing `All elements of find clause should start with '?', element '{}' doesn't conform` is thrown.
+    pub fn find_by_aggregates(find: Vec<Aggregate>) -> Result<Self, CruxError> {
+        // if find.iter()
+        //     .any(|e| !e.starts_with("?")) {
+        //     let error = find.iter().find(|e| !e.starts_with("?")).unwrap();
+        //     return Err(CruxError::QueryFormatError(format!(
+        //         "All elements of find clause should start with '?', element '{}' doesn't conform",
+        //         error
+        //     )));
+        // }
+        if find
+            .iter()
+            .map(|a| a.string_value())
+            .any(|e| !e.starts_with("?"))
+        {
+            let error = find
+                .iter()
+                .filter(|e| !e.string_value().starts_with("?"))
+                .take(1)
+                .next()
+                .unwrap();
+            return Err(CruxError::QueryFormatError(format!(
+                "All elements of find clause should start with '?', element '{}' doesn't conform",
+                error
+            )));
+        }
+        let aggregates = Some(
+            find.iter()
+                .map(|a| a.string_value())
+                .collect::<std::collections::HashSet<String>>(),
+        );
+
+        Ok(Self {
+            find: Find {
+                0: find
+                    .into_iter()
+                    .map(|a| a.to_string())
+                    .collect::<Vec<String>>(),
+            },
+            aggregates: aggregates,
             where_: None,
             args: None,
             order_by: None,
@@ -72,7 +205,7 @@ impl Query {
     /// Error cases:
     /// * All elements present in find clause should be present in where clause. If your find clause is `"?p", "?n", "?s"`, and your where clause is `"?p1 :alpha ?n", "?p1 :beta true"` an error `Not all element of find, `"?p", "?n", "?s"`, are present in the where clause, ?s is missing` is thrown.
     pub fn where_clause(mut self, where_: Vec<&str>) -> Result<Self, CruxError> {
-        if self.find.0.iter().any(|e| !where_.join(" ").contains(e)) {
+        if self.aggregates.is_none() && self.find.0.iter().any(|e| !where_.join(" ").contains(e)) {
             let error = self
                 .find
                 .0
@@ -85,6 +218,21 @@ impl Query {
                 error
             )));
         }
+
+        if self.clone().aggregates.is_some()
+            && self
+                .aggregates
+                .clone()
+                .unwrap_or(std::collections::HashSet::new())
+                .iter()
+                .any(|e| !where_.join(" ").contains(e))
+        {
+            return Err(CruxError::QueryFormatError(format!(
+                "Not all element of find, {}, are present in the where clause",
+                self.find.0.join(", "),
+            )));
+        }
+
         let w = where_
             .iter()
             .map(|s| s.replace("[", "").replace("]", ""))
@@ -301,7 +449,7 @@ fn args_key_bset(args: &Vec<&str>) -> BTreeSet<String> {
 
 #[cfg(test)]
 mod test {
-    use super::Query;
+    use super::{Aggregate, Query};
     use crate::client::Crux;
 
     #[test]
@@ -464,5 +612,24 @@ mod test {
             .build();
 
         assert_eq!(edn_rs::to_string(q.unwrap()), expected);
+    }
+
+    #[test]
+    fn query_with_aggregates() {
+        let expected = "{:query\n {:find [(min ?e) (max ?e) (count ?e) (min 5 ?e) (count-distinct ?e)]\n:where [[?e :type :burger]]\n}}";
+        let q = Query::find_by_aggregates(vec![
+            Aggregate::Min("?e".to_string()),
+            Aggregate::Max("?e".to_string()),
+            Aggregate::Count("?e".to_string()),
+            Aggregate::MinN(5, "?e".to_string()),
+            Aggregate::CountDistinct("?e".to_string()),
+        ])
+        .unwrap()
+        .where_clause(vec!["?e :type :burger"])
+        .unwrap()
+        .build()
+        .unwrap();
+
+        assert_eq!(edn_rs::to_string(q), expected);
     }
 }
