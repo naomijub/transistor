@@ -19,7 +19,7 @@ async = ["tokio", "futures"]
 
 [dependencies]
 reqwest = { version = "0.10.6", features = ["blocking"] }
-edn-rs = { version = "0.16.10", features = ["async"]}
+edn-rs = { version = "0.16.11", features = ["async"]}
 edn-derive = "0.5.0"
 mockito = {version = "0.26", optional = true }
 chrono = "0.4"
