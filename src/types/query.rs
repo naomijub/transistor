@@ -65,6 +65,8 @@ pub enum Aggregate {
     Sample(usize, String),
     /// Returns a set of distinct values
     Distinct(String),
+    /// Adds a simple element without function calls
+    NonAggregative(String),
 }
 
 impl Aggregate {
@@ -84,6 +86,7 @@ impl Aggregate {
             Aggregate::Rand(_, s) => s.to_string(),
             Aggregate::Sample(_, s) => s.to_string(),
             Aggregate::Distinct(s) => s.to_string(),
+            Aggregate::NonAggregative(s) => s.to_string(),
         }
     }
 }
@@ -105,6 +108,7 @@ impl std::fmt::Display for Aggregate {
             Aggregate::Rand(n, s) => write!(f, "(rand {} {})", n, &s),
             Aggregate::Sample(n, s) => write!(f, "(sample {} {})", n, &s),
             Aggregate::Distinct(s) => write!(f, "(distinct {})", &s),
+            Aggregate::NonAggregative(s) => write!(f, "{}", &s),
         }
     }
 }
@@ -616,13 +620,14 @@ mod test {
 
     #[test]
     fn query_with_aggregates() {
-        let expected = "{:query\n {:find [(min ?e) (max ?e) (count ?e) (min 5 ?e) (count-distinct ?e)]\n:where [[?e :type :burger]]\n}}";
+        let expected = "{:query\n {:find [(min ?e) (max ?e) (count ?e) (min 5 ?e) (count-distinct ?e) ?e]\n:where [[?e :type :burger]]\n}}";
         let q = Query::find_by_aggregates(vec![
             Aggregate::Min("?e".to_string()),
             Aggregate::Max("?e".to_string()),
             Aggregate::Count("?e".to_string()),
             Aggregate::MinN(5, "?e".to_string()),
             Aggregate::CountDistinct("?e".to_string()),
+            Aggregate::NonAggregative("?e".to_string()),
         ])
         .unwrap()
         .where_clause(vec!["?e :type :burger"])
