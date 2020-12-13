@@ -48,11 +48,16 @@ impl HttpClient {
             .post(&format!("{}/tx-log", self.uri))
             .headers(self.headers.clone())
             .body(body)
-            .send()?
-            .text()?;
-
-        let clean_resp = resp.replace("#inst", "");
-        edn_rs::from_str(&clean_resp).map_err(|e| e.into())
+            .send()?;
+        if resp.status().as_u16() < 300 {
+            let resp_body = resp.text()?.replace("#inst", "");
+            edn_rs::from_str(&resp_body).map_err(|e| e.into())
+        } else {
+            Err(CruxError::BadResponse(format!(
+                "tx_log responded with {}",
+                resp.status().as_u16(),
+            )))
+        }
     }
 
     /// Function `tx_logs` requests endpoint `/tx-log` via `GET` and returns a list of all transactions
@@ -61,9 +66,17 @@ impl HttpClient {
             .client
             .get(&format!("{}/tx-log", self.uri))
             .headers(self.headers.clone())
-            .send()?
-            .text()?;
-        TxLogsResponse::from_str(&resp)
+            .send()?;
+
+        if resp.status().as_u16() < 300 {
+            let resp_body = resp.text()?;
+            TxLogsResponse::from_str(&resp_body)
+        } else {
+            Err(CruxError::BadResponse(format!(
+                "tx_logs responded with {}",
+                resp.status().as_u16(),
+            )))
+        }
     }
 
     /// Function `entity` requests endpoint `/entity` via `POST` which retrieves the last document
@@ -201,7 +214,7 @@ impl HttpClient {
             EntityTxResponse::from_str(&resp_body.replace("#inst", ""))
         } else {
             Err(CruxError::BadResponse(format!(
-                "entity-tx responded with {} for id \"{}\" ",
+                "entity-tx-timed responded with {} for id \"{}\" ",
                 resp.status().as_u16(),
                 crux_id
             )))
@@ -223,14 +236,18 @@ impl HttpClient {
             edn_rs::to_string(order),
             with_docs
         );
-        let resp = self
-            .client
-            .get(&url)
-            .headers(self.headers.clone())
-            .send()?
-            .text()?;
+        let resp = self.client.get(&url).headers(self.headers.clone()).send()?;
 
-        EntityHistoryResponse::from_str(&resp.replace("#inst", ""))
+        if resp.status().as_u16() < 300 {
+            let resp_body = resp.text()?;
+            EntityHistoryResponse::from_str(&resp_body.replace("#inst", ""))
+        } else {
+            Err(CruxError::BadResponse(format!(
+                "entity-history responded with {} for hash \"{}\" ",
+                resp.status().as_u16(),
+                hash
+            )))
+        }
     }
 
     /// Function `entity_history_timed` is an txtension of the function `entity_history`.
@@ -252,14 +269,18 @@ impl HttpClient {
             edn_rs::to_string(time).replace("[", "").replace("]", ""),
         );
 
-        let resp = self
-            .client
-            .get(&url)
-            .headers(self.headers.clone())
-            .send()?
-            .text()?;
+        let resp = self.client.get(&url).headers(self.headers.clone()).send()?;
 
-        EntityHistoryResponse::from_str(&resp.replace("#inst", ""))
+        if resp.status().as_u16() < 300 {
+            let resp_body = resp.text()?;
+            EntityHistoryResponse::from_str(&resp_body.replace("#inst", ""))
+        } else {
+            Err(CruxError::BadResponse(format!(
+                "entity-hisotry-timed responded with {} for hash \"{}\" ",
+                resp.status().as_u16(),
+                hash
+            )))
+        }
     }
 
     /// Function `query` requests endpoint `/query` via `POST` which retrives a Set containing a vector of the values defined by the function [`Query::find` - github example](https://github.com/naomijub/transistor/blob/master/examples/simple_query.rs#L53).
@@ -270,12 +291,19 @@ impl HttpClient {
             .post(&format!("{}/query", self.uri))
             .headers(self.headers.clone())
             .body(edn_rs::to_string(query))
-            .send()?
-            .text()?;
+            .send()?;
 
-        let query_response: QueryResponse = edn_rs::from_str(&resp)?;
+        if resp.status().as_u16() < 300 {
+            let resp_body = resp.text()?;
+            let query_response: QueryResponse = edn_rs::from_str(&resp_body)?;
 
-        Ok(query_response.0)
+            Ok(query_response.0)
+        } else {
+            Err(CruxError::BadResponse(format!(
+                "query responded with {}",
+                resp.status().as_u16(),
+            )))
+        }
     }
 }
 
@@ -444,7 +472,7 @@ impl HttpClient {
             EntityTxResponse::from_str(&resp_body.replace("#inst", ""))
         } else {
             Err(CruxError::BadResponse(format!(
-                "entity-tx responded with {} for id \"{}\" ",
+                "entity-tx-timed responded with {} for id \"{}\" ",
                 resp.status().as_u16(),
                 crux_id
             )))
@@ -460,7 +488,7 @@ impl HttpClient {
         let url = format!(
             "{}/entity-history/{}?sort-order={}&with-docs={}",
             self.uri,
-            hash,
+            hash.clone(),
             edn_rs::to_string(order),
             with_docs
         );
@@ -469,11 +497,18 @@ impl HttpClient {
             .get(&url)
             .headers(self.headers.clone())
             .send()
-            .await?
-            .text()
             .await?;
 
-        EntityHistoryResponse::from_str(&resp.replace("#inst", ""))
+        if resp.status().as_u16() < 300 {
+            let resp_body = resp.text().await?;
+            EntityHistoryResponse::from_str(&resp_body.replace("#inst", ""))
+        } else {
+            Err(CruxError::BadResponse(format!(
+                "entity-history responded with {} for hash \"{}\" ",
+                resp.status().as_u16(),
+                hash
+            )))
+        }
     }
 
     pub async fn entity_history_timed(
@@ -486,7 +521,7 @@ impl HttpClient {
         let url = format!(
             "{}/entity-history/{}?sort-order={}&with-docs={}{}",
             self.uri,
-            hash,
+            hash.clone(),
             edn_rs::to_string(order),
             with_docs,
             edn_rs::to_string(time).replace("[", "").replace("]", ""),
@@ -497,11 +532,18 @@ impl HttpClient {
             .get(&url)
             .headers(self.headers.clone())
             .send()
-            .await?
-            .text()
             .await?;
 
-        EntityHistoryResponse::from_str(&resp.replace("#inst", ""))
+        if resp.status().as_u16() < 300 {
+            let resp_body = resp.text().await?;
+            EntityHistoryResponse::from_str(&resp_body.replace("#inst", ""))
+        } else {
+            Err(CruxError::BadResponse(format!(
+                "entity-history-timed responded with {} for hash \"{}\" ",
+                resp.status().as_u16(),
+                hash
+            )))
+        }
     }
 
     pub async fn query(&self, query: Query) -> Result<BTreeSet<Vec<String>>, CruxError> {
@@ -511,13 +553,19 @@ impl HttpClient {
             .headers(self.headers.clone())
             .body(edn_rs::to_string(query))
             .send()
-            .await?
-            .text()
             .await?;
 
-        let query_response: QueryAsyncResponse = edn_rs::from_str(&resp)?;
+        if resp.status().as_u16() < 300 {
+            let resp_body = resp.text().await?;
+            let query_response: QueryAsyncResponse = edn_rs::from_str(&resp_body)?;
 
-        Ok(query_response.0)
+            Ok(query_response.0)
+        } else {
+            Err(CruxError::BadResponse(format!(
+                "query responded with {}",
+                resp.status().as_u16(),
+            )))
+        }
     }
 }
 
@@ -703,6 +751,25 @@ mod http {
             response,
             "{[\":mysql\", \"MySQL\", \"true\"], [\":postgres\", \"Postgres\", \"true\"]}"
         );
+    }
+
+    #[test]
+    fn simple_query_error() {
+        let _m = mock("POST", "/query")
+            .with_status(400)
+            .with_header("content-type", "application/edn")
+            .create();
+
+        let query = Query::find(vec!["?p1", "?n", "?s"])
+            .unwrap()
+            .where_clause(vec!["?p1 :name ?n", "?p1 :is-sql ?s", "?p1 :is-sql true"])
+            .unwrap()
+            .build();
+        let body = Crux::new("localhost", "3000")
+            .http_client()
+            .query(query.unwrap());
+
+        assert!(body.is_err())
     }
 
     #[test]

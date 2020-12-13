@@ -1,6 +1,6 @@
 [package]
 name = "transistor"
-version = "2.1.1"
+version = "2.1.2"
 authors = ["Julia Naomi <jnboeira@outlook.com>", "Otavio Pace <otaviopp8@gmail.com>"]
 description = "Crux Datalog DB Client"
 readme = "README.md"
