@@ -6,14 +6,11 @@ A Rust Crux Client crate/lib. For now, this crate intends to support 2 ways to i
 - [x] Via `Docker` with a [`crux-standalone`](https://opencrux.com/reference/building.html#_docker) version [docker-hub](https://hub.docker.com/r/juxt/crux-standalone). Current Docker image `juxt/crux-standalone:20.09-1.11.0`.
 - [x] Via [`HTTP`](https://opencrux.com/reference/http.html#start-http-server) using the [`HTTP API`](https://opencrux.com/reference/http.html#http-api).
 - [x] Async support.
-- [ ] Clojure.api. (To be evaluated.)
-- [ ] FFI. (To be evaluated.)
-
-> Other solutions may be added after the first release.
 
 * [**Crux Getting Started**](https://opencrux.com/reference/get-started.html)
 * [**Crux FAQs**](https://opencrux.com/about/faq.html)
 * For examples on usage, please refer to [examples directory](https://github.com/naomijub/transistor/tree/master/examples) or to the [`ATM Crux`](https://github.com/naomijub/atm-crux) for more complete and interactive example.
+* supported version is currently at `20.09-1.11.0`. Docker standalone newer versions are required to upgrade the code.
 
 ## Bitemporal Crux
 
